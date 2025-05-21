@@ -23,7 +23,7 @@ import {
 import { defaultMarkdown as generateMarkdownForService, getSummary as getServiceSummary } from './utils/services';
 import { defaultMarkdown as generateMarkdownForDomain } from './utils/domains';
 import { defaultMarkdown as generateMarkdownForChannel, getChannelProtocols } from './utils/channels';
-import checkLicense from './checkLicense';
+import checkLicense from '../../../shared/checkLicense';
 
 import { EventType, MessageOperations } from './types';
 import { join } from 'node:path';
@@ -81,7 +81,9 @@ export default async (config: any, options: Props) => {
     throw new Error('Please provide catalog url (env variable PROJECT_DIR)');
   }
 
-  await checkLicense(options.licenseKey);
+  // Check for license and package update
+  const LICENSE_KEY: string = process.env.EVENTCATALOG_LICENSE_KEY_ASYNCAPI || options.licenseKey || '';
+  await checkLicense(pkgJSON.name, LICENSE_KEY);
   await checkForPackageUpdate(pkgJSON.name);
 
   const {

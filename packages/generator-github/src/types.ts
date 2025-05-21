@@ -32,6 +32,11 @@ export type Channel = {
 
 export type GeneratorProps = {
   /**
+   * The license key for the plugin
+   */
+  licenseKey?: string;
+
+  /**
    * The repository to clone
    */
   source: string;

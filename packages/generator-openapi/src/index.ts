@@ -10,7 +10,7 @@ import { getOperationsByType } from './utils/openapi';
 import { Domain, Service } from './types';
 import { getMessageTypeUtils } from './utils/catalog-shorthand';
 import { OpenAPI } from 'openapi-types';
-import checkLicense from './utils/checkLicense';
+import checkLicense from '../../../shared/checkLicense';
 import yaml from 'js-yaml';
 import { join } from 'node:path';
 import pkgJSON from '../package.json';
@@ -43,7 +43,8 @@ export default async (_: any, options: Props) => {
   }
 
   // Check if the license is valid
-  await checkLicense(options.licenseKey);
+  const LICENSE_KEY: string = process.env.EVENTCATALOG_LICENSE_KEY_OPENAPI || options.licenseKey || '';
+  await checkLicense(pkgJSON.name, LICENSE_KEY);
   await checkForPackageUpdate(pkgJSON.name);
   const {
     getDomain,

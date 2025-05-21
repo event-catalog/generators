@@ -10,7 +10,7 @@ import {
 } from '@aws-sdk/client-schemas';
 import { EventCatalogConfig, Event, GeneratorProps, EventMap } from './types';
 import { filterEvents } from './utils/filters';
-import checkLicense from './checkLicense';
+import checkLicense from '../../../shared/checkLicense';
 
 import { defaultMarkdown as generateMarkdownForService } from './utils/services';
 import { defaultMarkdown as generateMarkdownForDomain } from './utils/domains';
@@ -146,7 +146,9 @@ export default async (config: EventCatalogConfig, options: GeneratorProps) => {
     throw new Error('Please provide catalog url (env variable PROJECT_DIR)');
   }
 
-  await checkLicense(options.licenseKey);
+  // Check for license and package update
+  const LICENSE_KEY: string = process.env.EVENTCATALOG_LICENSE_KEY_EVENTBRIDGE || options.licenseKey || '';
+  await checkLicense(pkgJSON.name, LICENSE_KEY);
   await checkForPackageUpdate(pkgJSON.name);
   // EventCatalog SDK (https://www.eventcatalog.dev/docs/sdk)
   const {

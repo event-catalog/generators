@@ -45,7 +45,9 @@ export default async (_: EventCatalogConfig, options: GeneratorProps) => {
   const includeSchemas = options.includeSchemas ?? true;
   const debug = options.debug ?? false;
 
-  // await checkLicense(options.licenseKey);
+  // Check for license and package update
+  // const LICENSE_KEY: string = process.env.EVENTCATALOG_LICENSE_KEY_FEDERATION || options.licenseKey || '';
+  // await checkLicense(pkgJSON.name, LICENSE_KEY);
   await checkForPackageUpdate(pkgJSON.name);
 
   const { getEvents, getUsers, getServices, getDomains, getCommands, getQueries, getTeams, getCustomDocs } = utils(

@@ -3,7 +3,7 @@ import chalk from 'chalk';
 import path, { join } from 'node:path';
 import fs from 'fs/promises';
 import fsExtra from 'fs-extra';
-import checkLicense from './utils/checkLicense';
+import checkLicense from '../../../shared/checkLicense';
 import os from 'node:os';
 import pkgJSON from '../package.json';
 import { checkForPackageUpdate } from '../../../shared/check-for-package-update';
@@ -33,7 +33,9 @@ export default async (_: EventCatalogConfig, options: GeneratorProps) => {
     throw new Error('Please provide a repository to clone');
   }
 
-  await checkLicense();
+  // Check for license and package update
+  const LICENSE_KEY: string = process.env.EVENTCATALOG_LICENSE_KEY_GITHUB || options.licenseKey || '';
+  await checkLicense(pkgJSON.name, LICENSE_KEY);
   await checkForPackageUpdate(pkgJSON.name);
 
   // Remove the tmpDir if it exists

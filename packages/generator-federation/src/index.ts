@@ -4,7 +4,7 @@ import { execSync } from 'node:child_process';
 import path, { join } from 'node:path';
 import fs from 'fs/promises';
 import fsExtra from 'fs-extra';
-import checkLicense from './utils/checkLicense';
+import checkLicense from '../../../shared/checkLicense';
 import fm from 'front-matter';
 import os from 'node:os';
 import pkgJSON from '../package.json';
@@ -114,7 +114,9 @@ export default async (_: EventCatalogConfig, options: GeneratorProps) => {
     throw new Error('Please provide catalog url (env variable PROJECT_DIR)');
   }
 
-  await checkLicense(options.licenseKey);
+  // Check for license and package update
+  const LICENSE_KEY: string = process.env.EVENTCATALOG_LICENSE_KEY_FEDERATION || options.licenseKey || '';
+  await checkLicense(pkgJSON.name, LICENSE_KEY);
   await checkForPackageUpdate(pkgJSON.name);
 
   // Remove the tmpDir if it exists

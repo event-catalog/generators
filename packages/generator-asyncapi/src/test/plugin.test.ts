@@ -12,7 +12,7 @@ let catalogDir: string;
 const asyncAPIExamplesDir = join(__dirname, 'asyncapi-files');
 
 // Add mock for the local checkLicense module
-vi.mock('../checkLicense', () => ({
+vi.mock('../../../../shared/checkLicense', () => ({
   default: () => Promise.resolve(),
 }));
 

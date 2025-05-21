@@ -6,7 +6,7 @@ import { writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import chalk from 'chalk';
 import fs from 'fs/promises';
-import checkLicense from './checkLicense';
+import checkLicense from '../../../shared/checkLicense';
 import pkgJSON from '../package.json';
 import { checkForPackageUpdate } from '../../../shared/check-for-package-update';
 
@@ -42,7 +42,9 @@ export default async (_: any, options: Props) => {
     throw new Error('Please provide catalog url (env variable PROJECT_DIR)');
   }
 
-  await checkLicense(options.licenseKey);
+  // Check for license and package update
+  const LICENSE_KEY: string  = process.env.EVENTCATALOG_LICENSE_KEY_AMAZON_APIGATEWAY || options.licenseKey || '';
+  await checkLicense(pkgJSON.name, LICENSE_KEY);
   await checkForPackageUpdate(pkgJSON.name);
 
   const outputDir = options.output

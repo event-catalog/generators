@@ -6,7 +6,7 @@ import fs from 'fs/promises';
 import { existsSync } from 'node:fs';
 import schemasMock from './mock-data/schemas.json';
 // Add mock for the local checkLicense module
-vi.mock('../checkLicense', () => ({
+vi.mock('../../../../shared/checkLicense', () => ({
   default: () => Promise.resolve(),
 }));
 

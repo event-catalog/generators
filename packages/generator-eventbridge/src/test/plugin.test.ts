@@ -16,7 +16,7 @@ import { DescribeEventBusCommand, DescribeEventBusCommandOutput } from '@aws-sdk
 import { existsSync } from 'node:fs';
 
 // Add mock for the local checkLicense module
-vi.mock('../checkLicense', () => ({
+vi.mock('../../../../shared/checkLicense', () => ({
   default: () => Promise.resolve(),
 }));
 

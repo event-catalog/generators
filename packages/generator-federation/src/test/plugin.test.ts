@@ -12,7 +12,7 @@ const eventCatalogConfig = {
 let catalogDir: string;
 
 // Add mock for the local checkLicense module
-vi.mock('../utils/checkLicense', () => ({
+vi.mock('../../../../shared/checkLicense', () => ({
   default: () => Promise.resolve(),
 }));
 
