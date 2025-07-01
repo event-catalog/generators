@@ -11,6 +11,21 @@ export const getChannelProtocols = (channel: ChannelInterface): string[] => {
   return protocols;
 };
 
+export const getChannelTags = (channel: ChannelInterface): string[] => {
+  const tags: string[] = [];
+  const jsonTags = channel.json()?.tags;
+
+  if (Array.isArray(jsonTags)) {
+    for (const tag of jsonTags) {
+      if (tag.name && !tags.includes(tag.name)) {
+        tags.push(tag.name);
+      }
+    }
+  }
+
+  return tags;
+};
+
 export const defaultMarkdown = (_document: AsyncAPIDocumentInterface, channel: ChannelInterface) => {
   return `
   ${

@@ -37,7 +37,7 @@
   "types": "./dist/index.d.ts",
   "dependencies": {
     "@asyncapi/avro-schema-parser": "^3.0.24",
-    "@asyncapi/parser": "^3.3.0",
+    "@asyncapi/parser": "^3.4.0",
     "@eventcatalog/sdk": "^2.5.5",
     "chalk": "^4",
     "fs-extra": "^11.2.0",
@@ -46,7 +46,6 @@
     "js-yaml": "^4.1.0",
     "lodash": "^4.17.21",
     "minimist": "^1.2.8",
-    "node-fetch": "^3.3.2",
     "slugify": "^1.6.6",
     "update-notifier": "^7.3.1",
     "zod": "^3.23.8"

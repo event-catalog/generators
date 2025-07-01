@@ -69,7 +69,6 @@ All plugins require a license key. You can get a license key from [EventCatalog 
 
 - [Integrate AWS Glue Schema Registry into EventCatalog](./examples/generator-glue-registry/basic/)
 
-
 **Multi Generator Example**
 
 - [Integrate multiple generators (AsyncAPI and OpenAPI) into EventCatalog](./examples/multi-generator-example/)
