@@ -1501,6 +1501,35 @@ describe('OpenAPI EventCatalog Plugin', () => {
       });
     });
 
+    describe('path-level parameters handling', () => {
+      it('should not create redundant PARAMETERS folders when OpenAPI spec has path-level parameters', async () => {
+        const { getService } = utils(catalogDir);
+
+        await plugin(config, {
+          services: [{ path: join(openAPIExamples, 'path-parameters-example.yml'), id: 'generic-api' }],
+        });
+
+        const service = await getService('generic-api', '1.0.0');
+        expect(service).toBeDefined();
+
+        // Check that only legitimate query folders are created
+        const queriesDir = join(catalogDir, 'services', 'generic-api', 'queries');
+        const queriesFolders = await fs.readdir(queriesDir);
+        
+        // Should only have the actual operations, not PARAMETERS folders
+        expect(queriesFolders).toEqual(['getItem', 'updateItem']);
+        
+        // Verify no PARAMETERS folders exist
+        const parametersFolder = queriesFolders.filter(folder => folder.includes('PARAMETERS'));
+        expect(parametersFolder).toHaveLength(0);
+
+        // Verify the actual operations are properly created
+        expect(queriesFolders).not.toContain('generic-api_PARAMETERS_v0_items_{itemId}');
+        expect(queriesFolders).toContain('getItem');
+        expect(queriesFolders).toContain('updateItem');
+      });
+    });
+
     describe('parsing multiple OpenAPI files to the same service', () => {
       it('when multiple OpenAPI files are parsed to the same service, the services and messages are written to the correct locations', async () => {
         const { getService } = utils(catalogDir);
