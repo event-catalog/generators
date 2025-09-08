@@ -1,7 +1,9 @@
 import SwaggerParser from '@apidevtools/swagger-parser';
-import { OpenAPIDocument, OpenAPIOperation, OpenAPIParameter, Operation } from '../types';
 import { HTTP_METHOD, HTTP_METHOD_TO_MESSAGE_TYPE } from '../index';
+import { OpenAPIDocument, OpenAPIOperation, OpenAPIParameter, Operation } from '../types';
 const DEFAULT_MESSAGE_TYPE = 'query';
+// Valid HTTP methods in OpenAPI 3.0
+const validHttpMethods = ['get', 'put', 'post', 'delete', 'options', 'head', 'patch', 'trace'];
 
 export async function getSchemasByOperationId(filePath: string, operationId: string): Promise<OpenAPIOperation | undefined> {
   try {
@@ -16,9 +18,6 @@ export async function getSchemasByOperationId(filePath: string, operationId: str
       requestBody: null,
       responses: {},
     };
-
-    // Valid HTTP methods in OpenAPI 3.0
-    const validHttpMethods = ['get', 'put', 'post', 'delete', 'options', 'head', 'patch', 'trace'];
 
     // Iterate through paths and operations
     for (const [path, pathItem] of Object.entries(api.paths)) {
@@ -88,9 +87,6 @@ export async function getOperationsByType(openApiPath: string, httpMethodsToMess
     const api = await SwaggerParser.validate(openApiPath);
 
     const operations = [];
-
-    // Valid HTTP methods in OpenAPI 3.0
-    const validHttpMethods = ['get', 'put', 'post', 'delete', 'options', 'head', 'patch', 'trace'];
 
     // Iterate through paths
     for (const path in api.paths) {
