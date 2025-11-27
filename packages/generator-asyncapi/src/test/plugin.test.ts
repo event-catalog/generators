@@ -1379,6 +1379,32 @@ describe('AsyncAPI EventCatalog Plugin', () => {
           expect(event.schemaPath).toEqual('schema.json');
         });
       });
+
+      describe('headers', () => {
+        it('when a message has headers defined in the AsyncAPI file, the headers schema is documented in EventCatalog', async () => {
+          await plugin(config, { services: [{ path: join(asyncAPIExamplesDir, 'simple.asyncapi.yml'), id: 'account-service' }] });
+
+          const headersSchema = await fs.readFile(
+            join(catalogDir, 'services', 'account-service', 'events', 'UserSignedUp', 'headers.json'),
+            'utf8'
+          );
+
+          expect(headersSchema).toBeDefined();
+          const parsedHeaders = JSON.parse(headersSchema);
+          expect(parsedHeaders.type).toEqual('object');
+          expect(parsedHeaders.properties).toHaveProperty('ec-message-type');
+        });
+
+        it('when a message has headers defined, the event markdown contains an Attributes section', async () => {
+          const { getEvent } = utils(catalogDir);
+
+          await plugin(config, { services: [{ path: join(asyncAPIExamplesDir, 'simple.asyncapi.yml'), id: 'account-service' }] });
+          const event = await getEvent('UserSignedUp', '1.0.0');
+
+          expect(event.markdown).toContain('## Attributes');
+          expect(event.markdown).toContain('<SchemaViewer file="headers.json"');
+        });
+      });
     });
 
     describe('channels', () => {
