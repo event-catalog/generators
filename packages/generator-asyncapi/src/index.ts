@@ -19,6 +19,8 @@ import {
   getSummary as getMessageSummary,
   getSchemaFileName,
   messageHasSchema,
+  messageHasHeaders,
+  getHeadersSchemaFileName,
 } from './utils/messages';
 import { defaultMarkdown as generateMarkdownForService, getSummary as getServiceSummary } from './utils/services';
 import { defaultMarkdown as generateMarkdownForDomain } from './utils/domains';
@@ -492,6 +494,21 @@ export default async (config: any, options: Props) => {
               messageVersion
             );
             console.log(chalk.cyan(` - Schema added to message (v${messageVersion})`));
+          }
+
+          // Check if the message has headers, if it does then document in EventCatalog
+          if (messageHasHeaders(message)) {
+            const headersSchema = message.headers()?.json();
+
+            await addSchemaToMessage(
+              messageId,
+              {
+                fileName: getHeadersSchemaFileName(message),
+                schema: JSON.stringify(headersSchema, null, 4),
+              },
+              messageVersion
+            );
+            console.log(chalk.cyan(` - Headers schema added to message (v${messageVersion})`));
           }
         } else {
           // Message is not owned by this service, therefore we don't need to document it

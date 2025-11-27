@@ -1,0 +1,78 @@
+asyncapi: 3.0.0
+info:
+  title: Test Service with Headers
+  version: 1.0.0
+  description: A test service to verify message headers support
+
+channels:
+  userSignedUp:
+    address: user.signup
+    messages:
+      UserSignedUp:
+        $ref: '#/components/messages/UserSignedUp'
+
+operations:
+  publishUserSignedUp:
+    action: send
+    channel:
+      $ref: '#/channels/userSignedUp'
+    messages:
+      - $ref: '#/components/messages/UserSignedUp'
+
+components:
+  messages:
+    UserSignedUp:
+      name: UserSignedUp
+      title: User Signed Up
+      summary: Event triggered when a new user signs up
+      contentType: application/json
+      headers:
+        type: object
+        properties:
+          correlation-id:
+            type: string
+            description: Unique identifier for correlating requests
+            pattern: '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+          message-id:
+            type: string
+            description: Unique message identifier
+          timestamp:
+            type: integer
+            description: Unix timestamp when the message was created
+            format: int64
+          content-type:
+            type: string
+            description: Content type of the message payload
+            enum:
+              - application/json
+              - application/xml
+          priority:
+            type: string
+            description: Message priority level
+            enum:
+              - high
+              - medium
+              - low
+            default: medium
+        required:
+          - correlation-id
+          - message-id
+          - timestamp
+      payload:
+        type: object
+        properties:
+          userId:
+            type: string
+            description: The unique identifier of the user
+          email:
+            type: string
+            format: email
+            description: The email address of the user
+          signupDate:
+            type: string
+            format: date-time
+            description: The date and time when the user signed up
+        required:
+          - userId
+          - email
+          - signupDate

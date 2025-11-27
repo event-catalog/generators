@@ -30,6 +30,15 @@ ${
 }
 
 ${
+  messageHasHeaders(message)
+    ? `
+## Attributes
+<SchemaViewer file="${getHeadersSchemaFileName(message)}" title="Message Attributes Schema" maxHeight="500" />
+`
+    : ''
+}
+
+${
   message.externalDocs()
     ? `
 ## External documentation
@@ -61,6 +70,15 @@ export const messageHasSchema = (message: MessageInterface) => {
 export const messageIsJSON = (message: MessageInterface) => {
   const fileName = getSchemaFileName(message);
   return fileName.endsWith('.json');
+};
+
+export const messageHasHeaders = (message: MessageInterface) => {
+  return message.hasHeaders();
+};
+
+export const getHeadersSchemaFileName = (message: MessageInterface) => {
+  const extension = getFileExtentionFromSchemaFormat(message.schemaFormat());
+  return `headers.${extension}`;
 };
 
 export const getSchemaFileName = (message: MessageInterface) => {
