@@ -12,6 +12,6 @@
   },
   "dependencies": {
     "@eventcatalog/core": "^2.37.4",
-    "@eventcatalog/generator-github": "^0.0.7"
+    "@eventcatalog/generator-github": "^0.2.3"
   }
 }
