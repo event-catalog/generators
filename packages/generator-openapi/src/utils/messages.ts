@@ -167,9 +167,10 @@ export const buildMessage = async (
   generateMarkdown?: ({}: { operation: Operation; markdown: string }) => string,
   messageIdConfig?: MessageIdConfig,
   serviceId?: string,
-  serviceVersion?: string
+  serviceVersion?: string,
+  headers?: Record<string, string>
 ) => {
-  const requestBodiesAndResponses = await getSchemasByOperationId(pathToFile, operation.operationId);
+  const requestBodiesAndResponses = await getSchemasByOperationId(pathToFile, operation.operationId, headers);
   const extensions = operation.extensions || {};
 
   const operationTags = operation.tags.map((badge) => ({

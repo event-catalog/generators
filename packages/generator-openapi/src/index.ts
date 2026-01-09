@@ -80,8 +80,38 @@ export default async (_: any, options: Props) => {
 
     const specs = specFiles.map(async (specFile) => {
       try {
-        await SwaggerParser.validate(specFile);
-        const document = await SwaggerParser.dereference(specFile);
+        console.log(chalk.gray(`\nProcessing OpenAPI file: ${specFile}`));
+
+        // If the file is a URL and headers are provided, download it with fetch
+        let apiContent: string | any = specFile;
+        if (typeof specFile === 'string' && specFile.startsWith('http') && serviceSpec.headers) {
+          console.log(chalk.gray(`Downloading OpenAPI file with custom headers...`));
+          const response = await fetch(specFile, {
+            headers: serviceSpec.headers,
+            method: 'GET',
+          });
+
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          }
+
+          const contentType = response.headers.get('content-type') || '';
+          if (contentType.includes('json')) {
+            apiContent = (await response.json()) as any;
+          } else {
+            apiContent = await response.text();
+          }
+          console.log(chalk.green(`Successfully downloaded OpenAPI file`));
+        }
+
+        console.log(chalk.gray(`Validating OpenAPI file...`));
+        await SwaggerParser.validate(apiContent);
+
+        console.log(chalk.gray(`Dereferencing OpenAPI file...`));
+        const document = await SwaggerParser.dereference(apiContent);
+
+        console.log(chalk.green(`Successfully parsed OpenAPI file`));
+
         return {
           document,
           path: specFile,
@@ -206,6 +236,7 @@ export default async (_: any, options: Props) => {
         isDraft: isServiceMarkedAsDraft,
         serviceId: service.id,
         serviceVersion: service.version,
+        headers: serviceSpec.headers,
       });
 
       let owners = service.owners || [];
@@ -313,9 +344,10 @@ const processMessagesForOpenAPISpec = async (
     isDraft?: boolean;
     serviceId?: string;
     serviceVersion?: string;
+    headers?: Record<string, string>;
   }
 ) => {
-  const operations = await getOperationsByType(pathToSpec, options.httpMethodsToMessages);
+  const operations = await getOperationsByType(pathToSpec, options.httpMethodsToMessages, options.headers);
   const sidebarBadgeType = options.sidebarBadgeType || 'HTTP_METHOD';
   const version = options.serviceVersion || document.info.version;
   const preserveExistingMessages = options.preserveExistingMessages ?? true;
@@ -333,7 +365,8 @@ const processMessagesForOpenAPISpec = async (
       options.messages?.generateMarkdown,
       options.messages?.id,
       options.serviceId,
-      version
+      version,
+      options.headers
     );
     let messageMarkdown = message.markdown;
     const messageType = operation.type;
@@ -470,7 +503,11 @@ const getParsedSpecFile = (service: Service, document: OpenAPI.Document) => {
 const getRawSpecFile = async (service: Service) => {
   const specPath = service.path as string;
   if (specPath.startsWith('http')) {
-    const file = await fetch(specPath, { method: 'GET' });
+    const fetchOptions: any = { method: 'GET' };
+    if (service.headers) {
+      fetchOptions.headers = service.headers;
+    }
+    const file = await fetch(specPath, fetchOptions);
     if (!file.ok) {
       throw new Error(`Failed to fetch file: ${specPath}, status: ${file.status}`);
     }

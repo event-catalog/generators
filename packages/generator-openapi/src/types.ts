@@ -20,6 +20,7 @@ export type Service = {
   name?: string;
   summary?: string;
   path: string | string[];
+  headers?: Record<string, string>;
   owners?: string[];
   setMessageOwnersToServiceOwners?: boolean;
   draft?: boolean;

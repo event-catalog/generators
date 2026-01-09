@@ -3,10 +3,34 @@ import { OpenAPIDocument, OpenAPIOperation, OpenAPIParameter, Operation } from '
 import { HTTP_METHOD, HTTP_METHOD_TO_MESSAGE_TYPE } from '../index';
 const DEFAULT_MESSAGE_TYPE = 'query';
 
-export async function getSchemasByOperationId(filePath: string, operationId: string): Promise<OpenAPIOperation | undefined> {
+export async function getSchemasByOperationId(
+  filePath: string,
+  operationId: string,
+  headers?: Record<string, string>
+): Promise<OpenAPIOperation | undefined> {
   try {
+    // Download with headers if necessary
+    let apiContent: string | any = filePath;
+    if (typeof filePath === 'string' && filePath.startsWith('http') && headers) {
+      const response = await fetch(filePath, {
+        headers: headers,
+        method: 'GET',
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const contentType = response.headers.get('content-type') || '';
+      if (contentType.includes('json')) {
+        apiContent = (await response.json()) as any;
+      } else {
+        apiContent = await response.text();
+      }
+    }
+
     // Parse and resolve all references in the OpenAPI document
-    const api = (await SwaggerParser.dereference(filePath)) as OpenAPIDocument;
+    const api = (await SwaggerParser.dereference(apiContent)) as OpenAPIDocument;
     const schemas: {
       parameters: OpenAPIParameter[];
       requestBody: any;
@@ -74,10 +98,34 @@ function getDeprecatedValues(openAPIOperation: any) {
   return deprecated;
 }
 
-export async function getOperationsByType(openApiPath: string, httpMethodsToMessages?: HTTP_METHOD_TO_MESSAGE_TYPE) {
+export async function getOperationsByType(
+  openApiPath: string,
+  httpMethodsToMessages?: HTTP_METHOD_TO_MESSAGE_TYPE,
+  headers?: Record<string, string>
+) {
   try {
+    // Download with headers if necessary
+    let apiContent: string | any = openApiPath;
+    if (typeof openApiPath === 'string' && openApiPath.startsWith('http') && headers) {
+      const response = await fetch(openApiPath, {
+        headers: headers,
+        method: 'GET',
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const contentType = response.headers.get('content-type') || '';
+      if (contentType.includes('json')) {
+        apiContent = (await response.json()) as any;
+      } else {
+        apiContent = await response.text();
+      }
+    }
+
     // Parse the OpenAPI document
-    const api = await SwaggerParser.validate(openApiPath);
+    const api = await SwaggerParser.validate(apiContent);
 
     const operations = [];
 
