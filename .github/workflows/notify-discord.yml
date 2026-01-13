@@ -14,7 +14,8 @@ jobs:
     if: >
       github.event_name == 'workflow_dispatch' ||
       (github.event.workflow_run.conclusion == 'success' &&
-      startsWith(github.event.workflow_run.head_commit.message, 'Version Packages'))
+      (startsWith(github.event.workflow_run.head_commit.message, 'Version Packages') ||
+      contains(github.event.workflow_run.head_commit.message, 'changeset-release')))
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
