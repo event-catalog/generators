@@ -83,10 +83,13 @@ examples/**/**/.eventcatalog-core
 examples/**/**/.git
 examples/**/**/.github
 
-scripts/
-
 examples/generator-amazon-apigateway/basic/amazon-api-gateway-output
 
+scripts/
 
 
 !examples/generator-glue-registry/basic/scripts
+
+.claude/agents
+.claude/commands
+pr-descriptions/

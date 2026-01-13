@@ -48,6 +48,7 @@ const optionsSchema = z.object({
       writesTo: z.array(z.object({ id: z.string(), version: z.string().optional() })).optional(),
       readsFrom: z.array(z.object({ id: z.string(), version: z.string().optional() })).optional(),
       owners: z.array(z.string()).optional(),
+      headers: z.record(z.string()).optional(),
       generateMarkdown: z
         .function()
         .args(
@@ -220,7 +221,7 @@ export default async (config: any, options: Props) => {
     console.log(chalk.gray(`Processing ${service.path}`));
 
     const { document, diagnostics } = service.path.startsWith('http')
-      ? await fromURL(parser, service.path).parse({
+      ? await fromURL(parser, service.path, { headers: service.headers }).parse({
           parseSchemas,
         })
       : await fromFile(parser, service.path).parse({
@@ -621,7 +622,14 @@ const getParsedSpecFile = (service: Service, document: AsyncAPIDocumentInterface
 const getRawSpecFile = async (service: Service) => {
   if (service.path.startsWith('http')) {
     try {
-      const response = await fetch(service.path);
+      const fetchOptions: RequestInit = { method: 'GET' };
+      if (service.headers && Object.keys(service.headers).length > 0) {
+        fetchOptions.headers = service.headers;
+      }
+      const response = await fetch(service.path, fetchOptions);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
       return response.text();
     } catch (error) {
       console.log(chalk.red(`\nFailed to request AsyncAPI file from ${service.path}`));

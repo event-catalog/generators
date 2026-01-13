@@ -26,6 +26,7 @@ export type Service = {
   writesTo?: Pointer[];
   readsFrom?: Pointer[];
   generateMarkdown?: ({}: { service: Service; document: OpenAPI.Document; markdown: string }) => string;
+  headers?: Record<string, string>;
 };
 
 export type MessageIdConfig = {

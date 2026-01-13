@@ -169,7 +169,8 @@ export const buildMessage = async (
   serviceId?: string,
   serviceVersion?: string
 ) => {
-  const requestBodiesAndResponses = await getSchemasByOperationId(pathToFile, operation.operationId);
+  // Pass the document to avoid re-parsing (needed for authenticated URLs)
+  const requestBodiesAndResponses = await getSchemasByOperationId(pathToFile, operation.operationId, document as any);
   const extensions = operation.extensions || {};
 
   const operationTags = operation.tags.map((badge) => ({
