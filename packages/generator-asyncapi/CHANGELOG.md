@@ -1,5 +1,11 @@
 # @eventcatalog/sdk
 
+## 5.3.0
+
+### Minor Changes
+
+- 6f65dee: Add headers support for authenticated URL fetching in OpenAPI and AsyncAPI generators. This enables fetching specs from protected endpoints like SwaggerHub with API keys.
+
 ## 5.2.0
 
 ### Minor Changes
