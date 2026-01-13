@@ -152,14 +152,14 @@ function buildDiscordPayload(releaseTag, releaseBody, releaseUrl) {
   const sections = parseReleaseNotes(releaseBody);
   const formattedChanges = formatSections(sections);
 
-  let content = `\n🚀 **${packageName} v${version}** is now out!\n\n`;
+  let content = `\n🚀 \`${packageName}\` **v${version}** is now out!\n\n`;
   content += formattedChanges || 'Check the release notes for details.';
   content += `\n\n**GitHub Release**\n<${releaseUrl}>`;
 
   // Discord message limit is 2000 characters
   if (content.length > 1900) {
     const truncatedChanges = formattedChanges.slice(0, 1500);
-    content = `\n🚀 **${packageName} v${version}** is now out!\n\n${truncatedChanges}\n\n*... and more*\n\n**GitHub Release**\n<${releaseUrl}>`;
+    content = `\n🚀 \`${packageName}\` **v${version}** is now out!\n\n${truncatedChanges}\n\n*... and more*\n\n**GitHub Release**\n<${releaseUrl}>`;
   }
 
   return {
