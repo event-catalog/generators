@@ -20,7 +20,7 @@ const EVENTCATALOG_AVATAR_URL = 'https://avatars.githubusercontent.com/u/1716615
 const DISCORD_WEBHOOK_URL = process.env.DISCORD_WEBHOOK_URL;
 const RELEASE_TAG = process.env.RELEASE_TAG || 'Unknown';
 const RELEASE_BODY = process.env.RELEASE_BODY || 'No release notes provided.';
-const RELEASE_URL = process.env.RELEASE_URL || 'https://github.com/event-catalog/eventcatalog/releases';
+const RELEASE_URL = process.env.RELEASE_URL || 'https://github.com/event-catalog/generators/releases';
 
 if (!DISCORD_WEBHOOK_URL) {
   console.error('Error: DISCORD_WEBHOOK_URL environment variable is required');
@@ -81,7 +81,7 @@ function parseReleaseNotes(body) {
 
       // Append PR links at the end if found (use angle brackets for Discord auto-linking)
       if (prNumbers.length > 0) {
-        const prLinks = prNumbers.map((n) => `<https://github.com/event-catalog/eventcatalog/pull/${n}>`).join(' ');
+        const prLinks = prNumbers.map((n) => `<https://github.com/event-catalog/generators/pull/${n}>`).join(' ');
         content = `${content}\n${prLinks}`;
       }
 
@@ -135,21 +135,31 @@ function extractVersion(tag) {
 }
 
 /**
+ * Extract package name from release tag
+ */
+function extractPackageName(tag) {
+  // Handle tags like "@eventcatalog/generator-asyncapi@3.2.0"
+  const match = tag.match(/^(@[\w-]+\/[\w-]+)@/);
+  return match?.[1] ?? 'EventCatalog';
+}
+
+/**
  * Build the Discord payload as plain text (no embed box)
  */
 function buildDiscordPayload(releaseTag, releaseBody, releaseUrl) {
   const version = extractVersion(releaseTag);
+  const packageName = extractPackageName(releaseTag);
   const sections = parseReleaseNotes(releaseBody);
   const formattedChanges = formatSections(sections);
 
-  let content = `**EventCatalog v${version}**\n\n`;
+  let content = `**${packageName} v${version}**\n\n`;
   content += formattedChanges || 'Check the release notes for details.';
   content += `\n\n<${releaseUrl}>`;
 
   // Discord message limit is 2000 characters
   if (content.length > 1900) {
     const truncatedChanges = formattedChanges.slice(0, 1500);
-    content = `**EventCatalog v${version}**\n\n${truncatedChanges}\n\n*... and more*\n\n<${releaseUrl}>`;
+    content = `**${packageName} v${version}**\n\n${truncatedChanges}\n\n*... and more*\n\n<${releaseUrl}>`;
   }
 
   return {
