@@ -1409,6 +1409,73 @@ describe('AsyncAPI EventCatalog Plugin', () => {
       });
     });
 
+    describe('bindings', () => {
+      it('when a message has Google PubSub bindings defined, the bindings are rendered as markdown in the message documentation', async () => {
+        const { getEvent } = utils(catalogDir);
+
+        await plugin(config, {
+          services: [{ path: join(asyncAPIExamplesDir, 'google-pubsub.yml'), id: 'pubsub-service' }],
+        });
+
+        const event = await getEvent('orderCreated', '1.0.0');
+
+        // Check that bindings are rendered in markdown
+        expect(event.markdown).toContain('## Bindings');
+        expect(event.markdown).toContain('### Google PubSub');
+        expect(event.markdown).toContain('| Property | Value |');
+        expect(event.markdown).toContain('attributes.eventType');
+        expect(event.markdown).toContain('attributes.correlationId');
+        expect(event.markdown).toContain('attributes.source');
+      });
+
+      it('when a message has Kafka bindings defined, the bindings are rendered as markdown in the message documentation', async () => {
+        const { getEvent } = utils(catalogDir);
+
+        await plugin(config, {
+          services: [{ path: join(asyncAPIExamplesDir, 'kafka-bindings.yml'), id: 'kafka-service' }],
+        });
+
+        const event = await getEvent('userCreated', '1.0.0');
+
+        // Check that Kafka bindings are rendered in markdown
+        expect(event.markdown).toContain('## Bindings');
+        expect(event.markdown).toContain('### Kafka');
+        expect(event.markdown).toContain('| Property | Value |');
+        expect(event.markdown).toContain('schemaIdLocation');
+        expect(event.markdown).toContain('schemaIdPayloadEncoding');
+      });
+
+      it('when a message has AMQP bindings defined, the bindings are rendered as markdown in the message documentation', async () => {
+        const { getEvent } = utils(catalogDir);
+
+        await plugin(config, {
+          services: [{ path: join(asyncAPIExamplesDir, 'amqp-bindings.yml'), id: 'amqp-service' }],
+        });
+
+        const event = await getEvent('notificationSent', '1.0.0');
+
+        // Check that AMQP bindings are rendered in markdown
+        expect(event.markdown).toContain('## Bindings');
+        expect(event.markdown).toContain('### AMQP');
+        expect(event.markdown).toContain('| Property | Value |');
+        expect(event.markdown).toContain('contentEncoding');
+        expect(event.markdown).toContain('messageType');
+      });
+
+      it('when a message has no bindings defined, no bindings section is added to the markdown', async () => {
+        const { getEvent } = utils(catalogDir);
+
+        await plugin(config, {
+          services: [{ path: join(asyncAPIExamplesDir, 'simple.asyncapi.yml'), id: 'account-service' }],
+        });
+
+        const event = await getEvent('UserSignedUp', '1.0.0');
+
+        // No bindings section should be present
+        expect(event.markdown).not.toContain('## Bindings');
+      });
+    });
+
     describe('channels', () => {
       describe('when `channels` is set to true in the generator configuration file', () => {
         it('all channels in the AsyncAPI file are documented in EventCatalog', async () => {

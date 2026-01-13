@@ -1,0 +1,43 @@
+asyncapi: 3.0.0
+info:
+  title: Kafka Service
+  version: 1.0.0
+  description: A service that publishes messages to Kafka
+
+servers:
+  kafka:
+    host: localhost:9092
+    protocol: kafka
+
+channels:
+  user-events:
+    address: user-events
+    messages:
+      userCreated:
+        $ref: '#/components/messages/userCreated'
+
+operations:
+  publishUserCreated:
+    action: send
+    channel:
+      $ref: '#/channels/user-events'
+    messages:
+      - $ref: '#/channels/user-events/messages/userCreated'
+
+components:
+  messages:
+    userCreated:
+      bindings:
+        kafka:
+          key:
+            type: string
+          schemaIdLocation: header
+          schemaIdPayloadEncoding: confluent
+      contentType: application/json
+      payload:
+        type: object
+        properties:
+          userId:
+            type: string
+          email:
+            type: string

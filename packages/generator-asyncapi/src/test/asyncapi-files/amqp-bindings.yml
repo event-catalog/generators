@@ -1,0 +1,44 @@
+asyncapi: 3.0.0
+info:
+  title: AMQP Service
+  version: 1.0.0
+  description: A service that publishes messages to RabbitMQ
+
+servers:
+  rabbitmq:
+    host: localhost:5672
+    protocol: amqp
+
+channels:
+  notifications:
+    address: notifications
+    messages:
+      notificationSent:
+        $ref: '#/components/messages/notificationSent'
+
+operations:
+  publishNotification:
+    action: send
+    channel:
+      $ref: '#/channels/notifications'
+    messages:
+      - $ref: '#/channels/notifications/messages/notificationSent'
+
+components:
+  messages:
+    notificationSent:
+      bindings:
+        amqp:
+          contentEncoding: utf-8
+          messageType: notification.sent
+          bindingVersion: 0.3.0
+      contentType: application/json
+      payload:
+        type: object
+        properties:
+          notificationId:
+            type: string
+          message:
+            type: string
+          recipient:
+            type: string
