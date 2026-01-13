@@ -11,7 +11,7 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
-    "@eventcatalog/core": "^2.35.9",
+    "@eventcatalog/core": "latest",
     "@eventcatalog/generator-confluent-schema-registry": "^0.0.6"
   }
 }
