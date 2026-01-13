@@ -1,5 +1,11 @@
 # @eventcatalog/generator-amazon-apigateway
 
+## 1.2.6
+
+### Patch Changes
+
+- 9cdd0a8: [Snyk] Upgrade aws-cdk-lib from 2.172.0 to 2.227.0
+
 ## 1.2.5
 
 ### Patch Changes
