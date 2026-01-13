@@ -1,5 +1,15 @@
 # @eventcatalog/generator-openapi
 
+## 7.7.0
+
+### Minor Changes
+
+- 6f65dee: Add headers support for authenticated URL fetching in OpenAPI and AsyncAPI generators. This enables fetching specs from protected endpoints like SwaggerHub with API keys.
+
+### Patch Changes
+
+- ed07a6e: chore: removed meow console log....
+
 ## 7.6.5
 
 ### Patch Changes
