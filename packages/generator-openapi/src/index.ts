@@ -242,8 +242,6 @@ export default async (_: any, options: Props) => {
               toUniqueArray([...latestServiceInCatalog.receives, ...receives])
             : receives;
 
-          console.log('MEOW', 'HELLO', latestServiceInCatalog.writesTo, serviceWritesTo);
-
           serviceWritesTo = latestServiceInCatalog.writesTo
             ? toUniqueArray([...latestServiceInCatalog.writesTo, ...configuredWritesTo])
             : configuredWritesTo;
