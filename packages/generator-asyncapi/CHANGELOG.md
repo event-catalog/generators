@@ -1,5 +1,11 @@
 # @eventcatalog/sdk
 
+## 5.4.0
+
+### Minor Changes
+
+- 5be7664: Add support for displaying AsyncAPI message bindings (Google PubSub, Kafka, AMQP, etc.) as markdown tables in generated event documentation
+
 ## 5.3.0
 
 ### Minor Changes
