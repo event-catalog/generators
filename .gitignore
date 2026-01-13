@@ -90,3 +90,6 @@ examples/generator-amazon-apigateway/basic/amazon-api-gateway-output
 
 
 !examples/generator-glue-registry/basic/scripts
+
+.claude/agents
+.claude/commands

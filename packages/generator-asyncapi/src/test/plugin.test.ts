@@ -1770,6 +1770,86 @@ describe('AsyncAPI EventCatalog Plugin', () => {
       });
     });
 
+    describe('headers option', () => {
+      it('passes headers to fetch when fetching authenticated URLs', async () => {
+        const yamlContent = await fs.readFile(join(asyncAPIExamplesDir, 'simple.asyncapi.yml'), 'utf8');
+        const mockFetch = vi.fn().mockResolvedValue({
+          ok: true,
+          text: () => Promise.resolve(yamlContent),
+        });
+        const originalFetch = global.fetch;
+        global.fetch = mockFetch;
+
+        try {
+          const { getService } = utils(catalogDir);
+          await plugin(config, {
+            services: [
+              {
+                path: 'https://api.example.com/specs/asyncapi',
+                id: 'authenticated-asyncapi-service',
+                headers: {
+                  Authorization: 'Bearer test-token',
+                  'X-Custom-Header': 'custom-value',
+                },
+              },
+            ],
+          });
+
+          const service = await getService('authenticated-asyncapi-service', '1.0.0');
+          expect(service).toBeDefined();
+
+          // Verify fetch was called with headers for getRawSpecFile
+          expect(mockFetch).toHaveBeenCalled();
+          const fetchCalls = mockFetch.mock.calls.filter(
+            (call: any[]) => typeof call[0] === 'string' && call[0].includes('api.example.com')
+          );
+          expect(fetchCalls.length).toBeGreaterThan(0);
+          const [, fetchOptions] = fetchCalls[0];
+          expect(fetchOptions.headers).toEqual({
+            Authorization: 'Bearer test-token',
+            'X-Custom-Header': 'custom-value',
+          });
+        } finally {
+          global.fetch = originalFetch;
+        }
+      });
+
+      it('does not set headers when none are provided for URL-based specs', async () => {
+        const yamlContent = await fs.readFile(join(asyncAPIExamplesDir, 'simple.asyncapi.yml'), 'utf8');
+        const mockFetch = vi.fn().mockResolvedValue({
+          ok: true,
+          text: () => Promise.resolve(yamlContent),
+        });
+        const originalFetch = global.fetch;
+        global.fetch = mockFetch;
+
+        try {
+          const { getService } = utils(catalogDir);
+          await plugin(config, {
+            services: [
+              {
+                path: 'https://api.example.com/specs/asyncapi',
+                id: 'no-headers-service',
+              },
+            ],
+          });
+
+          const service = await getService('no-headers-service', '1.0.0');
+          expect(service).toBeDefined();
+
+          // Verify fetch was called without headers
+          const fetchCalls = mockFetch.mock.calls.filter(
+            (call: any[]) => typeof call[0] === 'string' && call[0].includes('api.example.com')
+          );
+          expect(fetchCalls.length).toBeGreaterThan(0);
+          const [, fetchOptions] = fetchCalls[0];
+          expect(fetchOptions?.headers).toBeUndefined();
+        } finally {
+          global.fetch = originalFetch;
+        }
+      });
+    });
+
     describe('AsyncAPI files as external urls', () => {
       it('when the `path` value is a URL then the plugin fetches the file and processes it', async () => {
         const { getService } = utils(catalogDir);

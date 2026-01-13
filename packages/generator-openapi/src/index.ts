@@ -38,6 +38,31 @@ const toUniqueArray = (array: Pointer[]) => {
   return array.filter((item, index, self) => index === self.findIndex((t) => t.id === item.id && t.version === item.version));
 };
 
+// Helper to fetch authenticated URLs and parse the spec in memory
+const fetchAuthenticatedSpec = async (specUrl: string, headers: Record<string, string>): Promise<OpenAPI.Document> => {
+  const response = await fetch(specUrl, { method: 'GET', headers });
+  if (!response.ok) {
+    throw new Error(`Failed to fetch file: ${specUrl}, status: ${response.status}`);
+  }
+  const content = await response.text();
+  const contentType = response.headers.get('content-type') || '';
+
+  // Use Content-Type header if available, otherwise try JSON then YAML
+  if (contentType.includes('json')) {
+    return JSON.parse(content) as OpenAPI.Document;
+  }
+  if (contentType.includes('yaml')) {
+    return yaml.load(content) as OpenAPI.Document;
+  }
+
+  // Fallback: try JSON first, then YAML
+  try {
+    return JSON.parse(content) as OpenAPI.Document;
+  } catch {
+    return yaml.load(content) as OpenAPI.Document;
+  }
+};
+
 // Helper to merge openapi path into existing specifications, preserving format (array or object)
 const mergeOpenApiIntoSpecifications = (existingSpecs: any, openapiFileName: string): any => {
   if (Array.isArray(existingSpecs)) {
@@ -80,8 +105,21 @@ export default async (_: any, options: Props) => {
 
     const specs = specFiles.map(async (specFile) => {
       try {
-        await SwaggerParser.validate(specFile);
-        const document = await SwaggerParser.dereference(specFile);
+        const isUrl = specFile.startsWith('http');
+        const hasHeaders = serviceSpec.headers && Object.keys(serviceSpec.headers).length > 0;
+
+        let document: OpenAPI.Document;
+
+        // If URL with headers, fetch and parse in memory
+        if (isUrl && hasHeaders) {
+          const parsedSpec = await fetchAuthenticatedSpec(specFile, serviceSpec.headers!);
+          await SwaggerParser.validate(parsedSpec);
+          document = await SwaggerParser.dereference(parsedSpec);
+        } else {
+          await SwaggerParser.validate(specFile);
+          document = await SwaggerParser.dereference(specFile);
+        }
+
         return {
           document,
           path: specFile,
@@ -313,7 +351,8 @@ const processMessagesForOpenAPISpec = async (
     serviceVersion?: string;
   }
 ) => {
-  const operations = await getOperationsByType(pathToSpec, options.httpMethodsToMessages);
+  // Pass document to avoid re-parsing (needed for authenticated URLs)
+  const operations = await getOperationsByType(pathToSpec, options.httpMethodsToMessages, document);
   const sidebarBadgeType = options.sidebarBadgeType || 'HTTP_METHOD';
   const version = options.serviceVersion || document.info.version;
   const preserveExistingMessages = options.preserveExistingMessages ?? true;
@@ -468,7 +507,11 @@ const getParsedSpecFile = (service: Service, document: OpenAPI.Document) => {
 const getRawSpecFile = async (service: Service) => {
   const specPath = service.path as string;
   if (specPath.startsWith('http')) {
-    const file = await fetch(specPath, { method: 'GET' });
+    const fetchOptions: RequestInit = { method: 'GET' };
+    if (service.headers && Object.keys(service.headers).length > 0) {
+      fetchOptions.headers = service.headers;
+    }
+    const file = await fetch(specPath, fetchOptions);
     if (!file.ok) {
       throw new Error(`Failed to fetch file: ${specPath}, status: ${file.status}`);
     }

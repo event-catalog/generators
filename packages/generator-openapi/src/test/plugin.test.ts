@@ -419,6 +419,144 @@ describe('OpenAPI EventCatalog Plugin', () => {
         expect(schema).toBeDefined();
       });
 
+      describe('headers option', () => {
+        it('passes headers to fetch when fetching authenticated URLs', async () => {
+          const yamlContent = await fs.readFile(join(openAPIExamples, 'petstore.yml'), 'utf8');
+          const mockFetch = vi.fn().mockResolvedValue({
+            ok: true,
+            text: () => Promise.resolve(yamlContent),
+            headers: new Headers({ 'content-type': 'application/yaml' }),
+          });
+          const originalFetch = global.fetch;
+          global.fetch = mockFetch;
+
+          try {
+            const { getService } = utils(catalogDir);
+            await plugin(config, {
+              services: [
+                {
+                  path: 'https://api.example.com/specs/openapi',
+                  id: 'authenticated-service',
+                  headers: {
+                    Authorization: 'Bearer test-token',
+                    'X-Custom-Header': 'custom-value',
+                  },
+                },
+              ],
+            });
+
+            const service = await getService('authenticated-service', '1.0.0');
+            expect(service).toBeDefined();
+
+            // Verify fetch was called with headers
+            expect(mockFetch).toHaveBeenCalled();
+            const fetchCalls = mockFetch.mock.calls.filter(
+              (call: any[]) => typeof call[0] === 'string' && call[0].includes('api.example.com')
+            );
+            expect(fetchCalls.length).toBeGreaterThan(0);
+            const [, fetchOptions] = fetchCalls[0];
+            expect(fetchOptions.headers).toEqual({
+              Authorization: 'Bearer test-token',
+              'X-Custom-Header': 'custom-value',
+            });
+          } finally {
+            global.fetch = originalFetch;
+          }
+        });
+
+        it('parses JSON content when Content-Type is application/json', async () => {
+          const jsonContent = JSON.stringify({
+            openapi: '3.0.0',
+            info: { title: 'JSON API', version: '2.0.0' },
+            paths: {},
+          });
+          const mockFetch = vi.fn().mockResolvedValue({
+            ok: true,
+            text: () => Promise.resolve(jsonContent),
+            headers: new Headers({ 'content-type': 'application/json' }),
+          });
+          const originalFetch = global.fetch;
+          global.fetch = mockFetch;
+
+          try {
+            const { getService } = utils(catalogDir);
+            await plugin(config, {
+              services: [
+                {
+                  path: 'https://api.example.com/specs/openapi.json',
+                  id: 'json-service',
+                  headers: { Authorization: 'Bearer token' },
+                },
+              ],
+            });
+
+            const service = await getService('json-service', '2.0.0');
+            expect(service).toBeDefined();
+            expect(service.name).toEqual('JSON API');
+          } finally {
+            global.fetch = originalFetch;
+          }
+        });
+
+        it('parses YAML content when Content-Type includes yaml', async () => {
+          const yamlContent = await fs.readFile(join(openAPIExamples, 'petstore.yml'), 'utf8');
+          const mockFetch = vi.fn().mockResolvedValue({
+            ok: true,
+            text: () => Promise.resolve(yamlContent),
+            headers: new Headers({ 'content-type': 'text/yaml' }),
+          });
+          const originalFetch = global.fetch;
+          global.fetch = mockFetch;
+
+          try {
+            const { getService } = utils(catalogDir);
+            await plugin(config, {
+              services: [
+                {
+                  path: 'https://api.example.com/specs/openapi',
+                  id: 'yaml-service',
+                  headers: { Authorization: 'Bearer token' },
+                },
+              ],
+            });
+
+            const service = await getService('yaml-service', '1.0.0');
+            expect(service).toBeDefined();
+          } finally {
+            global.fetch = originalFetch;
+          }
+        });
+
+        it('falls back to trying JSON then YAML when Content-Type is not set', async () => {
+          const yamlContent = await fs.readFile(join(openAPIExamples, 'petstore.yml'), 'utf8');
+          const mockFetch = vi.fn().mockResolvedValue({
+            ok: true,
+            text: () => Promise.resolve(yamlContent),
+            headers: new Headers({}), // No content-type
+          });
+          const originalFetch = global.fetch;
+          global.fetch = mockFetch;
+
+          try {
+            const { getService } = utils(catalogDir);
+            await plugin(config, {
+              services: [
+                {
+                  path: 'https://api.example.com/specs/openapi',
+                  id: 'fallback-service',
+                  headers: { Authorization: 'Bearer token' },
+                },
+              ],
+            });
+
+            const service = await getService('fallback-service', '1.0.0');
+            expect(service).toBeDefined();
+          } finally {
+            global.fetch = originalFetch;
+          }
+        });
+      });
+
       it('the original openapi file is added to the service by default instead of parsed version', async () => {
         const { getService } = utils(catalogDir);
         await plugin(config, { services: [{ path: join(openAPIExamples, 'petstore.yml'), id: 'swagger-petstore' }] });

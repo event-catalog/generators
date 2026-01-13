@@ -3,10 +3,14 @@ import { OpenAPIDocument, OpenAPIOperation, OpenAPIParameter, Operation } from '
 import { HTTP_METHOD, HTTP_METHOD_TO_MESSAGE_TYPE } from '../index';
 const DEFAULT_MESSAGE_TYPE = 'query';
 
-export async function getSchemasByOperationId(filePath: string, operationId: string): Promise<OpenAPIOperation | undefined> {
+export async function getSchemasByOperationId(
+  filePath: string,
+  operationId: string,
+  parsedDocument?: OpenAPIDocument
+): Promise<OpenAPIOperation | undefined> {
   try {
-    // Parse and resolve all references in the OpenAPI document
-    const api = (await SwaggerParser.dereference(filePath)) as OpenAPIDocument;
+    // Use pre-parsed document if provided, otherwise parse from file
+    const api = parsedDocument || ((await SwaggerParser.dereference(filePath)) as OpenAPIDocument);
     const schemas: {
       parameters: OpenAPIParameter[];
       requestBody: any;
@@ -35,12 +39,13 @@ export async function getSchemasByOperationId(filePath: string, operationId: str
             schemas.requestBody = typedOperation.requestBody.content[contentType].schema;
           }
 
-          // Extract response schemas
+          // Extract response schemas (clone to avoid mutating the original document)
           if (typedOperation.responses) {
             for (const [statusCode, response] of Object.entries(typedOperation.responses)) {
               if (response.content) {
                 const contentType = Object.keys(response.content)[0];
-                schemas.responses[statusCode] = response.content[contentType].schema || response.content[contentType];
+                const schemaOrContent = response.content[contentType].schema || response.content[contentType];
+                schemas.responses[statusCode] = { ...schemaOrContent };
                 schemas.responses[statusCode].isSchema = !!response.content[contentType].schema;
               }
             }
@@ -74,10 +79,14 @@ function getDeprecatedValues(openAPIOperation: any) {
   return deprecated;
 }
 
-export async function getOperationsByType(openApiPath: string, httpMethodsToMessages?: HTTP_METHOD_TO_MESSAGE_TYPE) {
+export async function getOperationsByType(
+  openApiPath: string,
+  httpMethodsToMessages?: HTTP_METHOD_TO_MESSAGE_TYPE,
+  parsedDocument?: any
+) {
   try {
-    // Parse the OpenAPI document
-    const api = await SwaggerParser.validate(openApiPath);
+    // Use pre-parsed document if provided, otherwise parse from file
+    const api = parsedDocument || (await SwaggerParser.validate(openApiPath));
 
     const operations = [];
 
