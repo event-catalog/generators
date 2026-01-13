@@ -93,3 +93,4 @@ examples/generator-amazon-apigateway/basic/amazon-api-gateway-output
 
 .claude/agents
 .claude/commands
+pr-descriptions/
