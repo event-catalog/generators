@@ -1,7 +1,9 @@
 import SwaggerParser from '@apidevtools/swagger-parser';
-import { OpenAPIDocument, OpenAPIOperation, OpenAPIParameter, Operation } from '../types';
 import { HTTP_METHOD, HTTP_METHOD_TO_MESSAGE_TYPE } from '../index';
+import { OpenAPIDocument, OpenAPIOperation, OpenAPIParameter, Operation } from '../types';
 const DEFAULT_MESSAGE_TYPE = 'query';
+// Valid HTTP methods in OpenAPI 3.0
+const validHttpMethods = ['get', 'put', 'post', 'delete', 'options', 'head', 'patch', 'trace'];
 
 export async function getSchemasByOperationId(
   filePath: string,
@@ -24,6 +26,11 @@ export async function getSchemasByOperationId(
     // Iterate through paths and operations
     for (const [path, pathItem] of Object.entries(api.paths)) {
       for (const [method, operation] of Object.entries(pathItem)) {
+        // Skip non-HTTP method properties like 'parameters', 'summary', 'description', '$ref', 'servers'
+        if (!validHttpMethods.includes(method.toLowerCase())) {
+          continue;
+        }
+
         // Cast operation to OpenAPIOperation type
         const typedOperation = operation as OpenAPIOperation;
 
@@ -94,8 +101,13 @@ export async function getOperationsByType(
     for (const path in api.paths) {
       const pathItem = api.paths[path];
 
-      // Iterate through each HTTP method in the path
+      // Iterate through each HTTP method in the path, but skip non-HTTP method properties
       for (const method in pathItem) {
+        // Skip non-HTTP method properties like 'parameters', 'summary', 'description', '$ref', 'servers'
+        if (!validHttpMethods.includes(method.toLowerCase())) {
+          continue;
+        }
+
         // @ts-ignore
         const openAPIOperation = pathItem[method];
 
