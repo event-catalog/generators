@@ -170,4 +170,4 @@ Raise a GitHub issue on this project, or contact us on [our Discord server](http
 
 # Commercial Use
 
-This generator requires a license to be used with EventCatalog. You can get a 14 day free trial at https://eventcatalog.cloud or email us at `hello@eventcatalog.dev`
+This generator requires a license to be used with EventCatalog. You can get a 14 day free trial at https://eventcatalog.cloud or email us at `hello@eventcatalog.dev`.
