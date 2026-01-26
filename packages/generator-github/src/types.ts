@@ -42,6 +42,12 @@ export type GeneratorProps = {
   source: string;
 
   /**
+   * GitHub personal access token for private repository access.
+   * Can also be set via EVENTCATALOG_GITHUB_TOKEN environment variable.
+   */
+  token?: string;
+
+  /**
    * The branch to clone
    */
   branch?: string;

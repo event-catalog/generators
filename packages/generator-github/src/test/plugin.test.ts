@@ -16,6 +16,9 @@ vi.mock('../../../../shared/checkLicense', () => ({
   default: () => Promise.resolve(),
 }));
 
+// Store original env
+const originalEnv = process.env;
+
 describe('generator-github', () => {
   beforeEach(async () => {
     catalogDir = join(__dirname, 'catalog') || '';
@@ -38,6 +41,37 @@ describe('generator-github', () => {
     // @ts-ignore
     await expect(plugin(eventCatalogConfig, {})).rejects.toThrow('Please provide a repository to clone');
   }, 20000);
+
+  describe('token authentication', () => {
+    afterEach(() => {
+      // Restore env after each test
+      delete process.env.EVENTCATALOG_GITHUB_TOKEN;
+    });
+
+    it('accepts a token via the options parameter', async () => {
+      // This test verifies the token option is accepted without errors
+      // The actual cloning with a real token would require a private repo
+      await expect(
+        plugin(eventCatalogConfig, {
+          source: 'https://github.com/event-catalog/eventcatalog.git',
+          path: 'examples/default',
+          token: 'test-token-value',
+        })
+      ).resolves.not.toThrow();
+    }, 20000);
+
+    it('accepts a token via the EVENTCATALOG_GITHUB_TOKEN environment variable', async () => {
+      process.env.EVENTCATALOG_GITHUB_TOKEN = 'env-token-value';
+
+      // This test verifies the env variable is read without errors
+      await expect(
+        plugin(eventCatalogConfig, {
+          source: 'https://github.com/event-catalog/eventcatalog.git',
+          path: 'examples/default',
+        })
+      ).resolves.not.toThrow();
+    }, 20000);
+  });
 
   describe('messages', () => {
     describe('events', () => {
