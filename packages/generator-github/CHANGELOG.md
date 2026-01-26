@@ -1,5 +1,11 @@
 # @eventcatalog/generator-github
 
+## 1.0.0
+
+### Major Changes
+
+- 6af7821: chore(plugin): major version of github plugin
+
 ## 0.2.5
 
 ### Patch Changes
