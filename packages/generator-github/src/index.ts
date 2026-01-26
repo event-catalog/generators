@@ -44,12 +44,15 @@ export default async (_: EventCatalogConfig, options: GeneratorProps) => {
     await fsExtra.mkdir(tmpDir, { recursive: true });
   }
 
+  // Get GitHub token from options or environment variable
+  const GITHUB_TOKEN = options.token || process.env.EVENTCATALOG_GITHUB_TOKEN;
+
   // If its already cloned dont clone it again
   if (fsExtra.existsSync(join(tmpDir, options.path || ''))) {
     console.log(chalk.green(`${options.source} already cloned..., skipping clone`));
   } else {
     console.log(chalk.green(`Cloning ${options.source}...`));
-    await cloneRepo(options.source, tmpDir, options.branch || 'main', options.path);
+    await cloneRepo(options.source, tmpDir, options.branch || 'main', options.path, GITHUB_TOKEN);
   }
 
   // Process the messages
