@@ -1,5 +1,11 @@
 # @eventcatalog/generator-github
 
+## 0.2.5
+
+### Patch Changes
+
+- 8f68055: Add GitHub token authentication for private repository access
+
 ## 0.2.4
 
 ### Patch Changes
