@@ -1879,6 +1879,46 @@ describe('OpenAPI EventCatalog Plugin', () => {
           })
         );
       });
+
+      it('when the OpenAPI service is already defined in EventCatalog and the versions match, the diagrams are persisted and not overwritten', async () => {
+        // Create a service with the same name and version as the OpenAPI file for testing
+        const { writeService, getService } = utils(catalogDir);
+
+        await writeService(
+          {
+            id: 'swagger-petstore-diagrams',
+            version: '1.0.0',
+            name: 'Random Name',
+            markdown: 'Here is my original markdown, please do not override this!',
+            diagrams: [
+              {
+                id: 'my-custom-diagram',
+                title: 'My Custom Diagram',
+              },
+            ],
+          },
+          { path: 'Swagger Petstore' }
+        );
+
+        await plugin(config, { services: [{ path: join(openAPIExamples, 'petstore.yml'), id: 'swagger-petstore-diagrams' }] });
+
+        const service = await getService('swagger-petstore-diagrams', '1.0.0');
+        expect(service).toEqual(
+          expect.objectContaining({
+            id: 'swagger-petstore-diagrams',
+            name: 'Swagger Petstore',
+            version: '1.0.0',
+            summary: 'This is a sample server Petstore server.',
+            markdown: 'Here is my original markdown, please do not override this!',
+            diagrams: [
+              {
+                id: 'my-custom-diagram',
+                title: 'My Custom Diagram',
+              },
+            ],
+          })
+        );
+      });
     });
 
     describe('parsing multiple OpenAPI files to the same service', () => {

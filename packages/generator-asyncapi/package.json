@@ -38,7 +38,7 @@
   "dependencies": {
     "@asyncapi/avro-schema-parser": "3.0.24",
     "@asyncapi/parser": "3.4.0",
-    "@eventcatalog/sdk": "2.9.6",
+    "@eventcatalog/sdk": "2.12.1",
     "chalk": "4.1.2",
     "fs-extra": "^11.2.0",
     "glob": "^11.0.0",
