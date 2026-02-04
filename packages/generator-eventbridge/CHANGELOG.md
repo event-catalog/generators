@@ -1,5 +1,11 @@
 # @eventcatalog/generator-eventbridge
 
+## 3.3.2
+
+### Patch Changes
+
+- e112b3a: fix(eventbridge): allow writing events when version exists in versioned folder
+
 ## 3.3.1
 
 ### Patch Changes

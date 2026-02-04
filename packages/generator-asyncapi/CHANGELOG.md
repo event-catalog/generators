@@ -1,5 +1,11 @@
 # @eventcatalog/sdk
 
+## 5.4.1
+
+### Patch Changes
+
+- 5650b9d: Persist diagrams property during service regeneration (fixes event-catalog/eventcatalog#2056)
+
 ## 5.4.0
 
 ### Minor Changes
