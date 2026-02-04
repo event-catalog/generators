@@ -2147,6 +2147,45 @@ describe('AsyncAPI EventCatalog Plugin', () => {
           })
         );
       });
+
+      it('when the AsyncAPI service is already defined in EventCatalog and the versions match, the diagrams are persisted and not overwritten', async () => {
+        // Create a service with the same name and version as the AsyncAPI file for testing
+        const { writeService, getService } = utils(catalogDir);
+
+        await writeService({
+          id: 'account-service-diagrams',
+          version: '1.0.0',
+          name: 'Random Name',
+          markdown: 'Here is my original markdown, please do not override this!',
+          diagrams: [
+            {
+              id: 'my-custom-diagram',
+              title: 'My Custom Diagram',
+            },
+          ],
+        });
+
+        await plugin(config, {
+          services: [{ path: join(asyncAPIExamplesDir, 'simple.asyncapi.yml'), id: 'account-service-diagrams' }],
+        });
+
+        const service = await getService('account-service-diagrams', '1.0.0');
+        expect(service).toEqual(
+          expect.objectContaining({
+            id: 'account-service-diagrams',
+            name: 'Account Service',
+            version: '1.0.0',
+            summary: 'This service is in charge of processing user signups',
+            markdown: 'Here is my original markdown, please do not override this!',
+            diagrams: [
+              {
+                id: 'my-custom-diagram',
+                title: 'My Custom Diagram',
+              },
+            ],
+          })
+        );
+      });
     });
   });
 });
