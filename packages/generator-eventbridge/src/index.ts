@@ -421,7 +421,7 @@ const processEvents = async (events: Event[], options: GeneratorProps, servicePa
         ...(messageAttachments && { attachments: messageAttachments }),
         ...(eventChannel.length > 0 && { channels: eventChannel }),
       },
-      { path: messagePath, format }
+      { path: messagePath, format, override: true }
     );
 
     console.log(chalk.cyan(` - Event (${event.id} v${event.version}) created`));
