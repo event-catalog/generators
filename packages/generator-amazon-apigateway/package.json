@@ -32,8 +32,8 @@
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
   "dependencies": {
-    "@aws-sdk/client-api-gateway": "^3.743.0",
-    "@aws-sdk/credential-provider-node": "^3.743.0",
+    "@aws-sdk/client-api-gateway": "^3.894.0",
+    "@aws-sdk/credential-provider-node": "^3.894.0",
     "@changesets/cli": "^2.27.7",
     "@eventcatalog/sdk": "^2.9.6",
     "chalk": "4.1.2",

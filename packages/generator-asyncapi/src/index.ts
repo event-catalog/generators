@@ -258,6 +258,7 @@ export default async (config: any, options: Props) => {
     let repository = null;
     let badges = null;
     let attachments = null;
+    let diagrams = null;
 
     let serviceSpecifications: any = {};
     let serviceSpecificationsFiles: Array<{ fileName: string; content: string }> = [];
@@ -531,6 +532,7 @@ export default async (config: any, options: Props) => {
       styles = latestServiceInCatalog.styles || null;
       badges = latestServiceInCatalog.badges || null;
       attachments = latestServiceInCatalog.attachments || null;
+      diagrams = latestServiceInCatalog.diagrams || null;
       // persist writesTo and readsFrom
       serviceWritesTo = latestServiceInCatalog.writesTo ? latestServiceInCatalog.writesTo : configuredWritesTo;
       serviceReadsFrom = latestServiceInCatalog.readsFrom ? latestServiceInCatalog.readsFrom : configuredReadsFrom;
@@ -574,6 +576,7 @@ export default async (config: any, options: Props) => {
         ...(owners && { owners }),
         ...(repository && { repository }),
         ...(styles && { styles }),
+        ...(diagrams && { diagrams }),
         ...(isServiceMarkedAsDraft && { draft: true }),
         ...(attachments && { attachments }),
         ...(serviceWritesTo.length > 0 ? { writesTo: serviceWritesTo } : {}),
