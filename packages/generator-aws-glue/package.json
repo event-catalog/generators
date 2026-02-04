@@ -1,6 +1,6 @@
 {
   "name": "@eventcatalog/generator-aws-glue",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "AWS Glue Schema Registry generator for EventCatalog",
   "scripts": {
     "build": "tsup",

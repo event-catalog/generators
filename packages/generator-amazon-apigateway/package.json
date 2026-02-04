@@ -1,6 +1,6 @@
 {
   "name": "@eventcatalog/generator-amazon-apigateway",
-  "version": "1.2.6",
+  "version": "1.2.7",
   "description": "Generator for Amazon API Gateway",
   "scripts": {
     "build": "tsup",

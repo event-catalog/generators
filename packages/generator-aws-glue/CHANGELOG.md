@@ -1,5 +1,11 @@
 # @eventcatalog/generator-aws-glue
 
+## 0.1.5
+
+### Patch Changes
+
+- f37ffa4: [Snyk] Security upgrade @aws-sdk/client-glue from 3.830.0 to 3.894.0
+
 ## 0.1.4
 
 ### Patch Changes

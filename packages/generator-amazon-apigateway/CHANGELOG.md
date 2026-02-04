@@ -1,5 +1,11 @@
 # @eventcatalog/generator-amazon-apigateway
 
+## 1.2.7
+
+### Patch Changes
+
+- 0d327ce: [Snyk] Fix for 1 vulnerabilities
+
 ## 1.2.6
 
 ### Patch Changes
