@@ -555,6 +555,52 @@ describe('EventBridge EventCatalog Plugin', () => {
         expect(orderPlaced).toBeDefined();
         expect(userLoggedIn).toBeDefined();
       });
+
+      it('when an event version already exists in the versioned folder, writing the same version should not fail', async () => {
+        const { getEvent, writeEvent } = utils(catalogDir);
+
+        // Simulate the scenario where an event has been versioned before:
+        // - Event v1 exists in versioned/1 folder (from a previous generator run)
+        // - Event v3 is the latest version
+        // - A new service tries to write v1 again
+        await writeEvent(
+          {
+            id: 'UserSignedUp',
+            name: 'UserSignedUp',
+            version: '1',
+            markdown: 'Version 1 from previous run',
+          },
+          { path: 'events/UserSignedUp/versioned/1' }
+        );
+
+        await writeEvent(
+          {
+            id: 'UserSignedUp',
+            name: 'UserSignedUp',
+            version: '3',
+            markdown: 'Version 3 is latest',
+          },
+          { path: 'events/UserSignedUp' }
+        );
+
+        // Now run the plugin - a service sends an event that maps to v1
+        // This should NOT fail even though v1 already exists in versioned folder
+        await plugin(config, {
+          region: 'us-east-1',
+          registryName: 'discovered-schemas',
+          writeFilesToRoot: true,
+          services: [
+            {
+              id: 'ServiceA',
+              version: '1.0.0',
+              sends: [{ detailType: 'UserSignedUp' }],
+            },
+          ],
+        });
+
+        const event = await getEvent('UserSignedUp');
+        expect(event).toBeDefined();
+      });
     });
 
     describe('subscribes to events (receives)', () => {
