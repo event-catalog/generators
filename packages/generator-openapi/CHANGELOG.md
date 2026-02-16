@@ -1,5 +1,11 @@
 # @eventcatalog/generator-openapi
 
+## 7.7.2
+
+### Patch Changes
+
+- 5e106e2: feat(generator-openapi): preserve AsyncAPI specs and support multi-OpenAPI specifications
+
 ## 7.7.1
 
 ### Patch Changes
