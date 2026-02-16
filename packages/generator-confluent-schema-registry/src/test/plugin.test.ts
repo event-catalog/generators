@@ -18,28 +18,30 @@ const config = {
 let catalogDir: string;
 
 // mock out axios get request
+const mockAxiosGet = vi.fn((url: string) => {
+  if (url.endsWith('/schemas')) {
+    return Promise.resolve({ data: schemasMock });
+  }
+  if (url.endsWith('/versions/latest')) {
+    const subject = url.split('/')[4];
+    const version = subject.includes('analytics-event-view-value') ? 5 : 1;
+    return Promise.resolve({
+      data: {
+        subject: subject,
+        version: version,
+        id: 20,
+        schemaType: 'PROTOBUF',
+        schema: `syntax = "proto3";\npackage com.example;\n\nmessage ${subject} {\n  string id = 1;\n  string name = 2;\n}\n`,
+      },
+    });
+  }
+  // Add other endpoints if needed, or return a default mock response
+  return Promise.resolve({ data: {} });
+});
+
 vi.mock('axios', () => ({
   default: {
-    get: vi.fn((url: string) => {
-      if (url.endsWith('/schemas')) {
-        return Promise.resolve({ data: schemasMock });
-      }
-      if (url.endsWith('/versions/latest')) {
-        const subject = url.split('/')[4];
-        const version = subject.includes('analytics-event-view-value') ? 5 : 1;
-        return Promise.resolve({
-          data: {
-            subject: subject,
-            version: version,
-            id: 20,
-            schemaType: 'PROTOBUF',
-            schema: `syntax = "proto3";\npackage com.example;\n\nmessage ${subject} {\n  string id = 1;\n  string name = 2;\n}\n`,
-          },
-        });
-      }
-      // Add other endpoints if needed, or return a default mock response
-      return Promise.resolve({ data: {} });
-    }),
+    get: (...args: any[]) => mockAxiosGet(...args),
   },
 }));
 
@@ -64,6 +66,61 @@ describe('Confluent Schema Registry EventCatalog Plugin', () => {
   it('when no url is provided, it throws an error', async () => {
     // @ts-ignore
     await expect(plugin(config, {})).rejects.toThrow('Please provide a url for the Confluent Schema Registry');
+  });
+
+  describe('authentication', () => {
+    it('passes basic auth credentials to both /schemas and /subjects endpoints', async () => {
+      process.env.CONFLUENT_SCHEMA_REGISTRY_KEY = 'my-api-key';
+      process.env.CONFLUENT_SCHEMA_REGISTRY_SECRET = 'my-api-secret';
+
+      mockAxiosGet.mockClear();
+
+      await plugin(config, {
+        schemaRegistryUrl: 'http://localhost:8081',
+      });
+
+      // Find the /schemas call
+      const schemasCall = mockAxiosGet.mock.calls.find(([url]: [string]) => url.endsWith('/schemas'));
+      expect(schemasCall).toBeDefined();
+      expect(schemasCall![1]).toEqual(
+        expect.objectContaining({
+          auth: { username: 'my-api-key', password: 'my-api-secret' },
+        })
+      );
+
+      // Find a /subjects/.../versions/latest call
+      const subjectCall = mockAxiosGet.mock.calls.find(([url]: [string]) => url.endsWith('/versions/latest'));
+      expect(subjectCall).toBeDefined();
+      expect(subjectCall![1]).toEqual(
+        expect.objectContaining({
+          auth: { username: 'my-api-key', password: 'my-api-secret' },
+        })
+      );
+
+      // Clean up
+      delete process.env.CONFLUENT_SCHEMA_REGISTRY_KEY;
+      delete process.env.CONFLUENT_SCHEMA_REGISTRY_SECRET;
+    });
+
+    it('sends empty credentials when environment variables are not set', async () => {
+      delete process.env.CONFLUENT_SCHEMA_REGISTRY_KEY;
+      delete process.env.CONFLUENT_SCHEMA_REGISTRY_SECRET;
+
+      mockAxiosGet.mockClear();
+
+      await plugin(config, {
+        schemaRegistryUrl: 'http://localhost:8081',
+      });
+
+      // Find a /subjects/.../versions/latest call
+      const subjectCall = mockAxiosGet.mock.calls.find(([url]: [string]) => url.endsWith('/versions/latest'));
+      expect(subjectCall).toBeDefined();
+      expect(subjectCall![1]).toEqual(
+        expect.objectContaining({
+          auth: { username: '', password: '' },
+        })
+      );
+    });
   });
 
   describe(
