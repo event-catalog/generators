@@ -17,7 +17,7 @@ import { join } from 'node:path';
 import pkgJSON from '../package.json';
 import { checkForPackageUpdate } from '../../../shared/check-for-package-update';
 import { isVersionGreaterThan, isVersionLessThan } from './utils/versions';
-import { mergeSpecifications } from './utils/specifications';
+import { mergeSpecifications, type Specification, type Specifications } from './utils/specifications';
 
 type MESSAGE_TYPE = 'command' | 'query' | 'event';
 export type HTTP_METHOD = 'POST' | 'GET' | 'PUT' | 'DELETE' | 'PATCH' | 'HEAD' | 'OPTIONS';
@@ -144,8 +144,8 @@ export default async (_: any, options: Props) => {
       );
 
       let serviceMarkdown = service.markdown;
-      let serviceSpecificationsFiles = [];
-      let serviceSpecifications = service.specifications;
+      let serviceSpecificationsFiles: Array<{ fileName: string; content: string }> = [];
+      let serviceSpecifications: Specifications = service.specifications;
       let serviceBadges = null;
       let serviceAttachments = null;
       let configuredWritesTo = service.writesTo || ([] as any);
@@ -242,10 +242,7 @@ export default async (_: any, options: Props) => {
 
       if (latestServiceInCatalog) {
         serviceMarkdown = latestServiceInCatalog.markdown;
-        serviceSpecificationsFiles = await getExistingSpecificationFiles(
-          service.id,
-          latestServiceInCatalog.specifications as any
-        );
+        serviceSpecificationsFiles = await getExistingSpecificationFiles(service.id, latestServiceInCatalog.specifications);
         sends = latestServiceInCatalog.sends || ([] as any);
         owners = latestServiceInCatalog.owners || ([] as any);
         repository = latestServiceInCatalog.repository || null;
@@ -258,13 +255,9 @@ export default async (_: any, options: Props) => {
         // persist any specifications that are already in the catalog,
         // while adding newly generated OpenAPI specs without losing existing AsyncAPI/GraphQL specs
         if (persistPreviousSpecificationFiles) {
-          serviceSpecifications = mergeSpecifications(
-            latestServiceInCatalog.specifications as any,
-            serviceSpecifications as any,
-            {
-              preferArray: true,
-            }
-          );
+          serviceSpecifications = mergeSpecifications(latestServiceInCatalog.specifications, serviceSpecifications, {
+            preferArray: true,
+          });
         }
 
         // Match found, override it
@@ -334,14 +327,14 @@ export default async (_: any, options: Props) => {
   }
 };
 
-const toSpecificationEntries = (specifications: any): Array<{ type: string; path: string }> => {
+const toSpecificationEntries = (specifications: Specifications): Specification[] => {
   if (!specifications) return [];
 
   if (Array.isArray(specifications)) {
-    return specifications.filter((spec) => spec?.type && spec?.path).map((spec) => ({ type: spec.type, path: spec.path }));
+    return specifications.filter((spec): spec is Specification => Boolean(spec?.type && spec?.path));
   }
 
-  const entries: Array<{ type: string; path: string }> = [];
+  const entries: Specification[] = [];
 
   if (specifications.openapiPath) entries.push({ type: 'openapi', path: specifications.openapiPath });
   if (specifications.asyncapiPath) entries.push({ type: 'asyncapi', path: specifications.asyncapiPath });
@@ -350,7 +343,7 @@ const toSpecificationEntries = (specifications: any): Array<{ type: string; path
   return entries;
 };
 
-const getExistingSpecificationFiles = async (serviceId: string, specifications: any) => {
+const getExistingSpecificationFiles = async (serviceId: string, specifications: Specifications) => {
   const entries = toSpecificationEntries(specifications);
   const uniqueEntries = entries.filter(
     (entry, index, all) => all.findIndex((candidate) => candidate.path === entry.path) === index
