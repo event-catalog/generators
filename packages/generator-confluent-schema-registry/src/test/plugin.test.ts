@@ -69,9 +69,11 @@ describe('Confluent Schema Registry EventCatalog Plugin', () => {
   });
 
   describe('authentication', () => {
-    it('passes basic auth credentials to both /schemas and /subjects endpoints', async () => {
+    it('passes basic auth header to both /schemas and /subjects endpoints', async () => {
       process.env.CONFLUENT_SCHEMA_REGISTRY_KEY = 'my-api-key';
       process.env.CONFLUENT_SCHEMA_REGISTRY_SECRET = 'my-api-secret';
+
+      const expectedToken = Buffer.from('my-api-key:my-api-secret').toString('base64');
 
       mockAxiosGet.mockClear();
 
@@ -82,27 +84,19 @@ describe('Confluent Schema Registry EventCatalog Plugin', () => {
       // Find the /schemas call
       const schemasCall = mockAxiosGet.mock.calls.find(([url]: [string]) => url.endsWith('/schemas'));
       expect(schemasCall).toBeDefined();
-      expect(schemasCall![1]).toEqual(
-        expect.objectContaining({
-          auth: { username: 'my-api-key', password: 'my-api-secret' },
-        })
-      );
+      expect(schemasCall![1].headers).toEqual({ Authorization: `Basic ${expectedToken}` });
 
       // Find a /subjects/.../versions/latest call
       const subjectCall = mockAxiosGet.mock.calls.find(([url]: [string]) => url.endsWith('/versions/latest'));
       expect(subjectCall).toBeDefined();
-      expect(subjectCall![1]).toEqual(
-        expect.objectContaining({
-          auth: { username: 'my-api-key', password: 'my-api-secret' },
-        })
-      );
+      expect(subjectCall![1].headers).toEqual({ Authorization: `Basic ${expectedToken}` });
 
       // Clean up
       delete process.env.CONFLUENT_SCHEMA_REGISTRY_KEY;
       delete process.env.CONFLUENT_SCHEMA_REGISTRY_SECRET;
     });
 
-    it('sends empty credentials when environment variables are not set', async () => {
+    it('does not send auth header when environment variables are not set', async () => {
       delete process.env.CONFLUENT_SCHEMA_REGISTRY_KEY;
       delete process.env.CONFLUENT_SCHEMA_REGISTRY_SECRET;
 
@@ -115,11 +109,7 @@ describe('Confluent Schema Registry EventCatalog Plugin', () => {
       // Find a /subjects/.../versions/latest call
       const subjectCall = mockAxiosGet.mock.calls.find(([url]: [string]) => url.endsWith('/versions/latest'));
       expect(subjectCall).toBeDefined();
-      expect(subjectCall![1]).toEqual(
-        expect.objectContaining({
-          auth: { username: '', password: '' },
-        })
-      );
+      expect(subjectCall![1].headers).toEqual({});
     });
   });
 
