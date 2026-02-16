@@ -43,7 +43,7 @@ export type Message = {
 export type Operation = {
   path: string;
   method: string;
-  operationId: string;
+  operationId?: string;
   summary?: string;
   description?: string;
   type: string;

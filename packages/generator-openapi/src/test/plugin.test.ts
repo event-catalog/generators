@@ -1424,6 +1424,38 @@ describe('OpenAPI EventCatalog Plugin', () => {
         expect(getCommandMessage).toBeDefined();
       });
 
+      it('when operationIds are missing, schemas and parameters are resolved by path+method (not first undefined operationId)', async () => {
+        const { getQuery } = utils(catalogDir);
+
+        await plugin(config, { services: [{ path: join(openAPIExamples, 'without-operationIds.yml'), id: 'product-api' }] });
+
+        const listProducts = await getQuery('product-api_GET');
+        const getProductById = await getQuery('product-api_GET_{productId}');
+
+        const listProductsResponseSchema = await fs.readFile(
+          join(catalogDir, 'services', 'product-api', 'queries', 'product-api_GET', 'response-200.json'),
+          'utf8'
+        );
+
+        const getProductByIdResponseSchema = await fs.readFile(
+          join(catalogDir, 'services', 'product-api', 'queries', 'product-api_GET_{productId}', 'response-200.json'),
+          'utf8'
+        );
+
+        const getProductByIdMarkdown = await fs.readFile(
+          join(catalogDir, 'services', 'product-api', 'queries', 'product-api_GET_{productId}', 'index.mdx'),
+          'utf8'
+        );
+
+        expect(listProducts).toBeDefined();
+        expect(getProductById).toBeDefined();
+        expect(listProductsResponseSchema).toContain('"type": "array"');
+        expect(getProductByIdResponseSchema).not.toContain('"type": "array"');
+        expect(getProductByIdResponseSchema).toContain('"type": "object"');
+        expect(getProductByIdMarkdown).toContain('### Parameters');
+        expect(getProductByIdMarkdown).toContain('productId');
+      });
+
       it('when the service has owners, the messages are given the same owners', async () => {
         const { getCommand } = utils(catalogDir);
 

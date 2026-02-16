@@ -5,8 +5,9 @@ const DEFAULT_MESSAGE_TYPE = 'query';
 
 export async function getSchemasByOperationId(
   filePath: string,
-  operationId: string,
-  parsedDocument?: OpenAPIDocument
+  operationId: string | undefined,
+  parsedDocument?: OpenAPIDocument,
+  operationLookup?: { path: string; method: string }
 ): Promise<OpenAPIOperation | undefined> {
   try {
     // Use pre-parsed document if provided, otherwise parse from file
@@ -27,7 +28,12 @@ export async function getSchemasByOperationId(
         // Cast operation to OpenAPIOperation type
         const typedOperation = operation as OpenAPIOperation;
 
-        if (typedOperation.operationId === operationId) {
+        const matchesByOperationId = operationId ? typedOperation.operationId === operationId : false;
+        const matchesByPathAndMethod = operationLookup
+          ? path === operationLookup.path && method.toUpperCase() === operationLookup.method.toUpperCase()
+          : false;
+
+        if (matchesByOperationId || matchesByPathAndMethod) {
           // Extract query parameters
           if (typedOperation.parameters) {
             schemas.parameters = typedOperation.parameters;
@@ -56,7 +62,11 @@ export async function getSchemasByOperationId(
       }
     }
 
-    throw new Error(`Operation with ID "${operationId}" not found.`);
+    throw new Error(
+      operationId
+        ? `Operation with ID "${operationId}" not found.`
+        : `Operation not found for ${operationLookup?.method || 'UNKNOWN'} ${operationLookup?.path || ''}.`
+    );
   } catch (error) {
     console.error('Error parsing OpenAPI file or finding operation:', error);
     return;
