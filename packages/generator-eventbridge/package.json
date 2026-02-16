@@ -33,7 +33,7 @@
   "types": "./dist/index.d.ts",
   "dependencies": {
     "@aws-sdk/client-eventbridge": "^3.906.0",
-    "@aws-sdk/client-schemas": "^3.906.0",
+    "@aws-sdk/client-schemas": "^3.974.0",
     "@aws-sdk/util-arn-parser": "^3.568.0",
     "@changesets/cli": "^2.27.8",
     "@eventcatalog/sdk": "^2.9.6",
