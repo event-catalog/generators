@@ -1,5 +1,12 @@
 # @eventcatalog/generator-confluent-schema-registry
 
+## 0.2.7
+
+### Patch Changes
+
+- 27aeabf: Fix authentication for Confluent Schema Registry by passing basic auth credentials to the /subjects endpoint
+- 7a07c15: fix(confluent-schema-registry): pass basic auth credentials to /subjects endpoint
+
 ## 0.2.6
 
 ### Patch Changes
