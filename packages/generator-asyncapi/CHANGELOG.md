@@ -1,5 +1,11 @@
 # @eventcatalog/sdk
 
+## 5.4.2
+
+### Patch Changes
+
+- c4cd4b2: fix(generator-asyncapi): support operation-level ownership role
+
 ## 5.4.1
 
 ### Patch Changes
