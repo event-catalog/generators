@@ -2,6 +2,7 @@ import { OpenAPI } from 'openapi-types';
 import slugify from 'slugify';
 import { Service } from '../types';
 import path from 'path';
+import type { Specification } from './specifications';
 
 export const defaultMarkdown = (document: OpenAPI.Document, fileName: string) => {
   return `
@@ -43,9 +44,7 @@ export const buildService = (
     name: document.info.title,
     summary: getSummary(document),
     schemaPath,
-    specifications: {
-      openapiPath: schemaPath,
-    },
+    specifications: [{ type: 'openapi', path: schemaPath }] as Specification[],
     markdown: generateMarkdown
       ? generateMarkdown({ service: serviceOptions, document, markdown: generatedMarkdownForService })
       : generatedMarkdownForService,

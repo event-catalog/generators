@@ -600,13 +600,65 @@ describe('OpenAPI EventCatalog Plugin', () => {
       });
 
       it('the openapi file is added to the specifications list in eventcatalog', async () => {
-        const { getService, writeService } = utils(catalogDir);
+        const { getService } = utils(catalogDir);
 
         await plugin(config, { services: [{ path: join(openAPIExamples, 'petstore.yml'), id: 'swagger-petstore' }] });
 
         const service = await getService('swagger-petstore', '1.0.0');
 
-        expect(service.specifications?.openapiPath).toEqual('petstore.yml');
+        expect(service.specifications).toEqual([{ type: 'openapi', path: 'petstore.yml' }]);
+      });
+
+      it('when processing multiple OpenAPI contracts for the same service, all OpenAPI specifications are preserved', async () => {
+        const { getService } = utils(catalogDir);
+
+        await plugin(config, {
+          services: [
+            { path: join(openAPIExamples, 'petstore.yml'), id: 'swagger-petstore' },
+            { path: join(openAPIExamples, 'without-operationIds.yml'), id: 'swagger-petstore' },
+          ],
+        });
+
+        const service = await getService('swagger-petstore', '1.0.0');
+
+        expect(service.specifications).toEqual([
+          { type: 'openapi', path: 'petstore.yml' },
+          { type: 'openapi', path: 'without-operationIds.yml' },
+        ]);
+      });
+
+      it('when a service already has one or many AsyncAPI specs, they are preserved while adding OpenAPI specs', async () => {
+        const { getService, writeService, addFileToService } = utils(catalogDir);
+
+        await writeService({
+          id: 'swagger-petstore',
+          version: '1.0.0',
+          name: 'Swagger Petstore',
+          specifications: [
+            { type: 'asyncapi', path: 'asyncapi-1.yml' },
+            { type: 'asyncapi', path: 'asyncapi-2.yml' },
+          ],
+          markdown: '',
+        });
+
+        await addFileToService('swagger-petstore', { fileName: 'asyncapi-1.yml', content: 'Async API 1' }, '1.0.0');
+        await addFileToService('swagger-petstore', { fileName: 'asyncapi-2.yml', content: 'Async API 2' }, '1.0.0');
+
+        await plugin(config, {
+          services: [
+            { path: join(openAPIExamples, 'petstore.yml'), id: 'swagger-petstore' },
+            { path: join(openAPIExamples, 'without-operationIds.yml'), id: 'swagger-petstore' },
+          ],
+        });
+
+        const service = await getService('swagger-petstore', '1.0.0');
+
+        expect(service.specifications).toEqual([
+          { type: 'asyncapi', path: 'asyncapi-1.yml' },
+          { type: 'asyncapi', path: 'asyncapi-2.yml' },
+          { type: 'openapi', path: 'petstore.yml' },
+          { type: 'openapi', path: 'without-operationIds.yml' },
+        ]);
       });
 
       it('if the service already has specifications they are persisted and the openapi one is added on', async () => {
@@ -638,12 +690,14 @@ describe('OpenAPI EventCatalog Plugin', () => {
 
         const service = await getService('swagger-petstore', '1.0.0');
 
-        expect(service.specifications?.asyncapiPath).toEqual('asyncapi.yml');
-        expect(service.specifications?.openapiPath).toEqual('petstore.yml');
+        expect(service.specifications).toEqual([
+          { type: 'asyncapi', path: 'asyncapi.yml' },
+          { type: 'openapi', path: 'petstore.yml' },
+        ]);
       });
 
       it('if the service already has specifications attached to it, the openapi spec file is added to this list', async () => {
-        const { writeService, getService, addFileToService, getSpecificationFilesForService } = utils(catalogDir);
+        const { writeService, getService, addFileToService } = utils(catalogDir);
 
         const existingVersion = '1.0.0';
         await writeService({
@@ -666,30 +720,24 @@ describe('OpenAPI EventCatalog Plugin', () => {
         await plugin(config, { services: [{ path: join(openAPIExamples, 'petstore.yml'), id: 'swagger-petstore' }] });
 
         const service = await getService('swagger-petstore', '1.0.0');
-        const specs = await getSpecificationFilesForService('swagger-petstore', existingVersion);
+        const [openapiContent, asyncapiContent] = await Promise.all([
+          fs.readFile(join(catalogDir, 'services', 'swagger-petstore', 'petstore.yml'), 'utf8'),
+          fs.readFile(join(catalogDir, 'services', 'swagger-petstore', 'simple.asyncapi.yml'), 'utf8'),
+        ]);
 
-        expect(specs).toHaveLength(2);
-        expect(specs[0]).toEqual({
-          key: 'openapiPath',
-          content: expect.anything(),
-          fileName: 'petstore.yml',
-          path: expect.anything(),
-        });
-        expect(specs[1]).toEqual({
-          key: 'asyncapiPath',
-          content: 'Some content',
-          fileName: 'simple.asyncapi.yml',
-          path: expect.anything(),
-        });
+        expect(openapiContent).toBeTruthy();
+        expect(asyncapiContent).toEqual('Some content');
 
-        expect(service.specifications).toEqual({
-          openapiPath: 'petstore.yml',
-          asyncapiPath: 'simple.asyncapi.yml',
-        });
+        expect(service.specifications).toEqual(
+          expect.arrayContaining([
+            { type: 'asyncapi', path: 'simple.asyncapi.yml' },
+            { type: 'openapi', path: 'petstore.yml' },
+          ])
+        );
       });
 
       it('if the service already has specifications attached to it including an AsyncAPI spec file the asyncapi file is overridden', async () => {
-        const { writeService, getService, addFileToService, getSpecificationFilesForService } = utils(catalogDir);
+        const { writeService, getService, addFileToService } = utils(catalogDir);
 
         const existingVersion = '1.0.0';
         await writeService({
@@ -720,29 +768,22 @@ describe('OpenAPI EventCatalog Plugin', () => {
         await plugin(config, { services: [{ path: join(openAPIExamples, 'petstore.yml'), id: 'swagger-petstore' }] });
 
         const service = await getService('swagger-petstore', '1.0.0');
-        const specs = await getSpecificationFilesForService('swagger-petstore', existingVersion);
+        const [openapiContent, asyncapiContent] = await Promise.all([
+          fs.readFile(join(catalogDir, 'services', 'swagger-petstore', 'petstore.yml'), 'utf8'),
+          fs.readFile(join(catalogDir, 'services', 'swagger-petstore', 'simple.asyncapi.yml'), 'utf8'),
+        ]);
 
-        expect(specs).toHaveLength(2);
-        expect(specs[0]).toEqual({
-          key: 'openapiPath',
-          content: expect.anything(),
-          fileName: 'petstore.yml',
-          path: expect.anything(),
-        });
-        expect(specs[1]).toEqual({
-          key: 'asyncapiPath',
-          content: 'Some content',
-          fileName: 'simple.asyncapi.yml',
-          path: expect.anything(),
-        });
+        expect(asyncapiContent).toEqual('Some content');
 
-        // Verify that the asyncapi file is overriden content
-        expect(specs[0].content).not.toEqual('old contents');
+        // Verify that the openapi file content is overridden
+        expect(openapiContent).not.toEqual('old contents');
 
-        expect(service.specifications).toEqual({
-          openapiPath: 'petstore.yml',
-          asyncapiPath: 'simple.asyncapi.yml',
-        });
+        expect(service.specifications).toEqual(
+          expect.arrayContaining([
+            { type: 'asyncapi', path: 'simple.asyncapi.yml' },
+            { type: 'openapi', path: 'petstore.yml' },
+          ])
+        );
       });
 
       it('if the service already has specifications in array format, the array format is preserved and openapi file is updated', async () => {
@@ -783,28 +824,34 @@ describe('OpenAPI EventCatalog Plugin', () => {
         const service = await getService('swagger-petstore', '1.0.0');
         const specs = await getSpecificationFilesForService('swagger-petstore', existingVersion);
 
-        expect(specs).toHaveLength(2);
-        expect(specs[0]).toEqual({
-          key: 'asyncapi',
-          content: 'Some content',
-          fileName: 'simple.asyncapi.yml',
-          path: expect.anything(),
-        });
-        expect(specs[1]).toEqual({
-          key: 'openapi',
-          content: expect.anything(),
-          fileName: 'petstore.yml',
-          path: expect.anything(),
-        });
-
-        // Verify that the openapi file is overridden content
-        expect(specs[1].content).not.toEqual('old contents');
+        expect(specs).toHaveLength(3);
+        expect(specs).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              key: 'asyncapi',
+              content: 'Some content',
+              fileName: 'simple.asyncapi.yml',
+            }),
+            expect.objectContaining({
+              key: 'openapi',
+              content: 'old contents',
+              fileName: 'old.openapi.yml',
+            }),
+            expect.objectContaining({
+              key: 'openapi',
+              content: expect.anything(),
+              fileName: 'petstore.yml',
+            }),
+          ])
+        );
 
         // Array format is preserved
-        expect(service.specifications).toEqual([
-          { type: 'asyncapi', path: 'simple.asyncapi.yml' },
-          { type: 'openapi', path: 'petstore.yml' },
-        ]);
+        expect(service.specifications).toEqual(
+          expect.arrayContaining([
+            { type: 'asyncapi', path: 'simple.asyncapi.yml' },
+            { type: 'openapi', path: 'petstore.yml' },
+          ])
+        );
       });
 
       it('all endpoints in the OpenAPI spec are messages the service receives', async () => {
@@ -1962,9 +2009,7 @@ describe('OpenAPI EventCatalog Plugin', () => {
           expect.objectContaining({
             id: 'swagger-petstore-2',
             version: '2.0.0',
-            specifications: {
-              openapiPath: 'petstore-v2-no-extensions.yml',
-            },
+            specifications: [{ type: 'openapi', path: 'petstore-v2-no-extensions.yml' }],
             sends: [],
             receives: [
               { id: 'listPets', version: '2.0.0' },
@@ -1981,9 +2026,7 @@ describe('OpenAPI EventCatalog Plugin', () => {
           expect.objectContaining({
             id: 'swagger-petstore-2',
             version: '1.0.0',
-            specifications: {
-              openapiPath: 'petstore-v1-no-extensions.yml',
-            },
+            specifications: [{ type: 'openapi', path: 'petstore-v1-no-extensions.yml' }],
             sends: [],
             receives: [
               { id: 'listPets', version: '1.0.0' },
