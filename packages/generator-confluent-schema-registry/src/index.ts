@@ -65,7 +65,10 @@ export default async (config: EventCatalogConfig, options: GeneratorProps) => {
   console.log(chalk.green(`Fetching latest version for each topic...`));
   // Get the latest version for each subject (schema), and hydrate the latestVersion property
   for (const subject in groupedSchemas) {
-    const latestVersion = await getLatestVersionFromSubject(options.schemaRegistryUrl, subject);
+    const latestVersion = await getLatestVersionFromSubject(options.schemaRegistryUrl, subject, {
+      username: process.env.CONFLUENT_SCHEMA_REGISTRY_KEY || '',
+      password: process.env.CONFLUENT_SCHEMA_REGISTRY_SECRET || '',
+    });
     // Find the schema in the array that has the same id as the latestVersion.id
     const schema = groupedSchemas[subject].find((s: Schema) => s.version === latestVersion.version);
     if (schema) {
