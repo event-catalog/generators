@@ -394,7 +394,7 @@ export default async (config: any, options: Props) => {
           isDomainMarkedAsDraft || isServiceMarkedAsDraft || message.extensions().get('x-eventcatalog-draft')?.value() || null;
 
         // does this service own or just consume the message?
-        const serviceOwnsMessageContract = isServiceMessageOwner(message);
+        const serviceOwnsMessageContract = isServiceMessageOwner(message, operation);
         const isReceived = operation.action() === 'receive' || operation.action() === 'subscribe';
         const isSent = operation.action() === 'send' || operation.action() === 'publish';
 
@@ -651,7 +651,11 @@ const getRawSpecFile = async (service: Service) => {
  *
  * default is provider (AsyncAPI file / service owns the message)
  */
-const isServiceMessageOwner = (message: MessageInterface): boolean => {
-  const value = message.extensions().get('x-eventcatalog-role')?.value() || 'provider';
+const isServiceMessageOwner = (message: MessageInterface, operation?: { extensions: () => any }): boolean => {
+  // Prefer operation-level override to support shared/ref'ed messages where ownership
+  // needs to be set per operation/service.
+  const operationRole = operation?.extensions?.().get?.('x-eventcatalog-role')?.value?.();
+  const messageRole = message.extensions().get('x-eventcatalog-role')?.value();
+  const value = operationRole || messageRole || 'provider';
   return value === 'provider';
 };

@@ -1,0 +1,27 @@
+asyncapi: 3.0.0
+info:
+  title: Operation Role Client Example
+  version: 1.0.0
+channels:
+  userSignedup:
+    address: user/signedup
+    messages:
+      UserSignedUp:
+        $ref: '#/components/messages/UserSignedUp'
+operations:
+  onUserSignup:
+    action: receive
+    x-eventcatalog-role: client
+    channel:
+      $ref: '#/channels/userSignedup'
+    messages:
+      - $ref: '#/channels/userSignedup/messages/UserSignedUp'
+components:
+  messages:
+    UserSignedUp:
+      description: User signed up the application
+      payload:
+        type: object
+        properties:
+          email:
+            type: string

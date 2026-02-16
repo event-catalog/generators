@@ -1189,6 +1189,21 @@ describe('AsyncAPI EventCatalog Plugin', () => {
       ]);
     });
 
+    it('when `x-eventcatalog-role` is defined on an operation and set to `client`, the message is treated as external', async () => {
+      const { getEvent } = utils(catalogDir);
+      const { getService } = utils(catalogDir);
+
+      await plugin(config, {
+        services: [{ path: join(asyncAPIExamplesDir, 'operation-role-client.asyncapi.yml'), id: 'account-service' }],
+      });
+
+      const service = await getService('account-service', '1.0.0');
+      const event = await getEvent('UserSignedUp', 'latest');
+
+      expect(event).toBeUndefined();
+      expect(service.receives).toContainEqual({ id: 'UserSignedUp', version: '1.0.0' });
+    });
+
     it('when the `x-eventcatalog-message-version` is defined on a message that version is used and not the the AsyncAPI version', async () => {
       const { getEvent } = utils(catalogDir);
       const { getService } = utils(catalogDir);
