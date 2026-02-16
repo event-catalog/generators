@@ -1,5 +1,6 @@
 import utils from '@eventcatalog/sdk';
 import { readFile } from 'node:fs/promises';
+import fs from 'node:fs/promises';
 import chalk from 'chalk';
 import SwaggerParser from '@apidevtools/swagger-parser';
 
@@ -16,6 +17,7 @@ import { join } from 'node:path';
 import pkgJSON from '../package.json';
 import { checkForPackageUpdate } from '../../../shared/check-for-package-update';
 import { isVersionGreaterThan, isVersionLessThan } from './utils/versions';
+import { mergeSpecifications } from './utils/specifications';
 
 type MESSAGE_TYPE = 'command' | 'query' | 'event';
 export type HTTP_METHOD = 'POST' | 'GET' | 'PUT' | 'DELETE' | 'PATCH' | 'HEAD' | 'OPTIONS';
@@ -63,16 +65,6 @@ const fetchAuthenticatedSpec = async (specUrl: string, headers: Record<string, s
   }
 };
 
-// Helper to merge openapi path into existing specifications, preserving format (array or object)
-const mergeOpenApiIntoSpecifications = (existingSpecs: any, openapiFileName: string): any => {
-  if (Array.isArray(existingSpecs)) {
-    return [...existingSpecs.filter((spec: any) => spec.type !== 'openapi'), { type: 'openapi', path: openapiFileName }];
-  }
-  // Remove old openapiPath and add new one first to preserve expected key order
-  const { openapiPath: _, ...rest } = existingSpecs || {};
-  return { openapiPath: openapiFileName, ...rest };
-};
-
 export default async (_: any, options: Props) => {
   if (!process.env.PROJECT_DIR) {
     process.env.PROJECT_DIR = process.cwd();
@@ -95,7 +87,6 @@ export default async (_: any, options: Props) => {
     versionService,
     writeService,
     addFileToService,
-    getSpecificationFilesForService,
   } = utils(process.env.PROJECT_DIR);
 
   const { services = [], saveParsedSpecFile = false } = options;
@@ -214,14 +205,6 @@ export default async (_: any, options: Props) => {
 
       // Check if service is already defined... if the versions do not match then create service.
       const latestServiceInCatalog = await getService(service.id, 'latest');
-      let latestVersionSpecificationFiles = [];
-
-      try {
-        latestVersionSpecificationFiles = await getSpecificationFilesForService(service.id, 'latest');
-      } catch (error) {
-        // No latest specifications found, skipping...
-      }
-
       const versionTheService = latestServiceInCatalog && isVersionGreaterThan(version, latestServiceInCatalog.version);
       console.log(chalk.blue(`Processing service: ${document.info.title} (v${version})`));
 
@@ -259,7 +242,10 @@ export default async (_: any, options: Props) => {
 
       if (latestServiceInCatalog) {
         serviceMarkdown = latestServiceInCatalog.markdown;
-        serviceSpecificationsFiles = latestVersionSpecificationFiles;
+        serviceSpecificationsFiles = await getExistingSpecificationFiles(
+          service.id,
+          latestServiceInCatalog.specifications as any
+        );
         sends = latestServiceInCatalog.sends || ([] as any);
         owners = latestServiceInCatalog.owners || ([] as any);
         repository = latestServiceInCatalog.repository || null;
@@ -269,9 +255,16 @@ export default async (_: any, options: Props) => {
         serviceDiagrams = latestServiceInCatalog.diagrams || null;
         serviceWritesTo = latestServiceInCatalog.writesTo || ([] as any);
         serviceReadsFrom = latestServiceInCatalog.readsFrom || ([] as any);
-        // persist any specifications that are already in the catalog, preserving format (array or object)
-        if (persistPreviousSpecificationFiles && latestServiceInCatalog.specifications) {
-          serviceSpecifications = mergeOpenApiIntoSpecifications(latestServiceInCatalog.specifications, service.schemaPath);
+        // persist any specifications that are already in the catalog,
+        // while adding newly generated OpenAPI specs without losing existing AsyncAPI/GraphQL specs
+        if (persistPreviousSpecificationFiles) {
+          serviceSpecifications = mergeSpecifications(
+            latestServiceInCatalog.specifications as any,
+            serviceSpecifications as any,
+            {
+              preferArray: true,
+            }
+          );
         }
 
         // Match found, override it
@@ -339,6 +332,44 @@ export default async (_: any, options: Props) => {
       console.log(chalk.cyan(` - Service (v${version}) created`));
     }
   }
+};
+
+const toSpecificationEntries = (specifications: any): Array<{ type: string; path: string }> => {
+  if (!specifications) return [];
+
+  if (Array.isArray(specifications)) {
+    return specifications.filter((spec) => spec?.type && spec?.path).map((spec) => ({ type: spec.type, path: spec.path }));
+  }
+
+  const entries: Array<{ type: string; path: string }> = [];
+
+  if (specifications.openapiPath) entries.push({ type: 'openapi', path: specifications.openapiPath });
+  if (specifications.asyncapiPath) entries.push({ type: 'asyncapi', path: specifications.asyncapiPath });
+  if (specifications.graphqlPath) entries.push({ type: 'graphql', path: specifications.graphqlPath });
+
+  return entries;
+};
+
+const getExistingSpecificationFiles = async (serviceId: string, specifications: any) => {
+  const entries = toSpecificationEntries(specifications);
+  const uniqueEntries = entries.filter(
+    (entry, index, all) => all.findIndex((candidate) => candidate.path === entry.path) === index
+  );
+
+  const files = await Promise.all(
+    uniqueEntries.map(async (entry) => {
+      const filePath = join(process.env.PROJECT_DIR as string, 'services', serviceId, entry.path);
+
+      try {
+        const content = await fs.readFile(filePath, 'utf8');
+        return { fileName: entry.path, content };
+      } catch (error) {
+        return undefined;
+      }
+    })
+  );
+
+  return files.filter(Boolean) as Array<{ fileName: string; content: string }>;
 };
 
 const processMessagesForOpenAPISpec = async (

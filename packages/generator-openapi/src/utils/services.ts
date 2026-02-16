@@ -43,9 +43,7 @@ export const buildService = (
     name: document.info.title,
     summary: getSummary(document),
     schemaPath,
-    specifications: {
-      openapiPath: schemaPath,
-    },
+    specifications: [{ type: 'openapi', path: schemaPath }],
     markdown: generateMarkdown
       ? generateMarkdown({ service: serviceOptions, document, markdown: generatedMarkdownForService })
       : generatedMarkdownForService,
