@@ -1,5 +1,11 @@
 # @eventcatalog/sdk
 
+## 5.5.0
+
+### Minor Changes
+
+- 9dec129: Add server protocol support to channel protocol detection, collecting protocols from both channel bindings and linked servers
+
 ## 5.4.2
 
 ### Patch Changes

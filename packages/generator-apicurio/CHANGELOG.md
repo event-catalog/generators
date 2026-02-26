@@ -1,5 +1,12 @@
 # @eventcatalog/generator-apicurio
 
+## 4.0.0
+
+### Patch Changes
+
+- Updated dependencies [9dec129]
+  - @eventcatalog/generator-asyncapi@5.5.0
+
 ## 3.0.0
 
 ### Patch Changes
