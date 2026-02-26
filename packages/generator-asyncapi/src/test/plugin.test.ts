@@ -1556,6 +1556,37 @@ describe('AsyncAPI EventCatalog Plugin', () => {
           });
         });
 
+        it('when a channel has multiple servers with different protocols, those protocols are added to the channel', async () => {
+          const { getChannel } = utils(catalogDir);
+
+          await plugin(config, {
+            services: [{ path: join(asyncAPIExamplesDir, 'multi-server-protocols.yml'), id: 'multi-server-protocols-service' }],
+            parseChannels: true,
+          });
+
+          const ordersChannel = await getChannel('orders');
+          expect(ordersChannel.protocols).toEqual(expect.arrayContaining(['kafka', 'ws']));
+          expect(ordersChannel.protocols).toHaveLength(2);
+        });
+
+        it('when a channel has bindings and servers, protocols from both are added to the channel', async () => {
+          const { getChannel } = utils(catalogDir);
+
+          await plugin(config, {
+            services: [
+              {
+                path: join(asyncAPIExamplesDir, 'channel-binding-and-server-protocols.yml'),
+                id: 'channel-binding-and-server-protocols-service',
+              },
+            ],
+            parseChannels: true,
+          });
+
+          const ordersChannel = await getChannel('orders');
+          expect(ordersChannel.protocols).toEqual(expect.arrayContaining(['kafka', 'ws']));
+          expect(ordersChannel.protocols).toHaveLength(2);
+        });
+
         it('when a channel (root level) defines messages, these messages are linked to that channel', async () => {
           const { getEvent, getEvents } = utils(catalogDir);
 

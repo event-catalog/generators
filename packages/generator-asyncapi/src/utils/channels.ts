@@ -1,14 +1,19 @@
 import { AsyncAPIDocumentInterface, ChannelInterface } from '@asyncapi/parser';
 
 export const getChannelProtocols = (channel: ChannelInterface): string[] => {
-  const protocols = [];
+  const protocols = new Set<string>();
 
   const bindings = channel.bindings();
   for (const binding of bindings) {
-    protocols.push(binding.protocol());
+    protocols.add(binding.protocol());
   }
 
-  return protocols;
+  const servers = channel.servers();
+  for (const server of servers) {
+    protocols.add(server.protocol());
+  }
+
+  return Array.from(protocols);
 };
 
 export const getChannelTags = (channel: ChannelInterface): string[] => {
