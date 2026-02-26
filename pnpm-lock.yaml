@@ -131,8 +131,8 @@ importers:
         specifier: ^2.27.8
         version: 2.29.5
       '@eventcatalog/generator-asyncapi':
-        specifier: '>=5.4.0'
-        version: 5.4.0(@types/node@20.19.1)
+        specifier: '>=5.5.0'
+        version: 5.5.0(@types/node@20.19.1)
       '@eventcatalog/generator-openapi':
         specifier: '>=7.7.0'
         version: 7.7.0(@types/node@20.19.1)
@@ -1202,8 +1202,8 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@eventcatalog/generator-asyncapi@5.4.0':
-    resolution: { integrity: sha512-8iU2zTnxeKNdwFVLcdq/ezsEZ7QnNSwnzpS3f+Ad6Af6gBu+Apa49ge2cCjKPP0gWfTQFyo9ZXQiYcgx+nQfjQ== }
+  '@eventcatalog/generator-asyncapi@5.5.0':
+    resolution: { integrity: sha512-pbe6DYiC1AR5tWhfI9wR6kwh92Ed7NxGjHMzprpC8Dd7Bkl5YkO4Sw5wSzwgxY/WkDFzqSWaGJRSUVdjK3iwOQ== }
 
   '@eventcatalog/generator-openapi@7.7.0':
     resolution: { integrity: sha512-rOWEpMScjJ98y2lAme7Db0h8bcVnW3554u7xz+njJPF0Lc3+3PvWTFRatDYBtBGLo4jX/xm8iOuep3iL95I+zQ== }
@@ -3041,9 +3041,6 @@ packages:
   lodash.topath@4.5.2:
     resolution: { integrity: sha512-1/W4dM+35DwvE/iEd1M9ekewOSTlpFekhw9mhAtrwjVqUr83/ilQiyAvmg4tVX7Unkcfl1KC+i9WdaT4B6aQcg== }
 
-  lodash@4.17.21:
-    resolution: { integrity: sha512-v2kDEe57lecTulaDIuNTPy3Ry4gLGJ6Z1O3vE1krgXZNrsQ+LFTGHVxVjcXPs17LhbZVGedAJv8XZ1tvj5FvSg== }
-
   lodash@4.17.23:
     resolution: { integrity: sha512-LgVTMpQtIopCi79SJeDiP0TfWi5CNEc/L/aRdTh3yIvmZXTnheWpKjSZhnvMl8iXbC1tFg9gdHHDMLoV7CnG+w== }
 
@@ -4054,7 +4051,7 @@ snapshots:
       ajv-errors: 3.0.0(ajv@8.17.1)
       ajv-formats: 2.1.1(ajv@8.17.1)
       avsc: 5.7.7
-      js-yaml: 4.1.0
+      js-yaml: 4.1.1
       jsonpath-plus: 10.3.0
       node-fetch: 2.6.7
     transitivePeerDependencies:
@@ -5306,17 +5303,17 @@ snapshots:
   '@esbuild/win32-x64@0.25.5':
     optional: true
 
-  '@eventcatalog/generator-asyncapi@5.4.0(@types/node@20.19.1)':
+  '@eventcatalog/generator-asyncapi@5.5.0(@types/node@20.19.1)':
     dependencies:
       '@asyncapi/avro-schema-parser': 3.0.24
       '@asyncapi/parser': 3.4.0
-      '@eventcatalog/sdk': 2.9.6(@types/node@20.19.1)
+      '@eventcatalog/sdk': 2.12.1(@types/node@20.19.1)
       chalk: 4.1.2
-      fs-extra: 11.3.0
+      fs-extra: 11.3.3
       glob: 11.1.0
       gray-matter: 4.0.3
-      js-yaml: 4.1.0
-      lodash: 4.17.21
+      js-yaml: 4.1.1
+      lodash: 4.17.23
       minimist: 1.2.8
       slugify: 1.6.6
       update-notifier: 7.3.1
@@ -7462,8 +7459,6 @@ snapshots:
   lodash.startcase@4.4.0: {}
 
   lodash.topath@4.5.2: {}
-
-  lodash@4.17.21: {}
 
   lodash@4.17.23: {}
 

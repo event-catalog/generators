@@ -2125,6 +2125,107 @@ describe('AsyncAPI EventCatalog Plugin', () => {
       });
     });
 
+    it('when `attachHeadersToSchema` is true, the generated schema combines message headers and payload', async () => {
+      await plugin(config, {
+        services: [{ path: join(asyncAPIExamplesDir, 'async-file-with-schema-format.yml'), id: 'my-service' }],
+        attachHeadersToSchema: true,
+      });
+
+      const schema = await fs.readFile(
+        join(catalogDir, 'services', 'my-service', 'events', 'messageProjectDeleted', 'schema.json'),
+        'utf-8'
+      );
+
+      const schemaParsed = JSON.parse(schema);
+
+      expect(schemaParsed).toMatchObject({
+        type: 'object',
+        properties: {
+          headers: {
+            type: 'object',
+            properties: {
+              __TypeId__: {
+                type: 'string',
+                description: 'Spring Type Id Header',
+              },
+            },
+          },
+          payload: {
+            type: 'object',
+            properties: {
+              projectId: {
+                type: 'string',
+                description: 'The project id',
+                example: 12345,
+              },
+              projectName: {
+                type: 'string',
+                description: 'The project name',
+                example: 'My Project',
+              },
+            },
+          },
+        },
+      });
+    });
+
+    it('when `attachHeadersToSchema` is true and no message headers exist, the payload schema stays unchanged', async () => {
+      await plugin(config, {
+        services: [{ path: join(asyncAPIExamplesDir, 'simple.asyncapi.yml'), id: 'my-service' }],
+        attachHeadersToSchema: true,
+      });
+
+      const schema = await fs.readFile(
+        join(catalogDir, 'services', 'my-service', 'commands', 'SignUpUser', 'schema.json'),
+        'utf-8'
+      );
+
+      const schemaParsed = JSON.parse(schema);
+
+      expect(schemaParsed).toMatchObject({
+        type: 'object',
+        properties: {
+          displayName: {
+            type: 'string',
+            description: 'Name of the user',
+          },
+          email: {
+            type: 'string',
+            format: 'email',
+            description: 'Email of the user',
+          },
+        },
+      });
+      expect(schemaParsed.properties).not.toHaveProperty('headers');
+      expect(schemaParsed.properties).not.toHaveProperty('payload');
+    });
+
+    it('when `attachHeadersToSchema` is true and schema format is non-JSON, headers are not attached to the schema', async () => {
+      await plugin(config, {
+        services: [{ path: join(asyncAPIExamplesDir, 'asyncapi-with-avro-and-headers.asyncapi.yml'), id: 'my-service' }],
+        attachHeadersToSchema: true,
+      });
+
+      const schema = await fs.readFile(
+        join(catalogDir, 'services', 'my-service', 'events', 'userSignedUp', 'schema.avsc'),
+        'utf-8'
+      );
+
+      const schemaParsed = JSON.parse(schema);
+
+      expect(schemaParsed).toMatchObject({
+        type: 'record',
+        name: 'UserSignedUp',
+        namespace: 'com.company',
+        fields: [
+          { name: 'userId', type: 'int' },
+          { name: 'userEmail', type: 'string' },
+        ],
+      });
+      expect(schemaParsed).not.toHaveProperty('properties.headers');
+      expect(schemaParsed).not.toHaveProperty('properties.payload');
+    });
+
     it('when the AsyncAPI file has $ values in the message name, the message is parsed and added to the catalog', async () => {
       const { getEvent } = utils(catalogDir);
 

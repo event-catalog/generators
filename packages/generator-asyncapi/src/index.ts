@@ -118,6 +118,7 @@ const optionsSchema = z.object({
   debug: z.boolean().optional(),
   parseSchemas: z.boolean().optional(),
   parseChannels: z.boolean().optional(),
+  attachHeadersToSchema: z.boolean().optional(),
   saveParsedSpecFile: z.boolean({ invalid_type_error: 'The saveParsedSpecFile is not a boolean in options' }).optional(),
 });
 
@@ -214,7 +215,13 @@ export default async (config: any, options: Props) => {
   // Should the file that is written to the catalog be parsed (https://github.com/asyncapi/parser-js) or as it is?
   validateOptions(options);
 
-  const { services, saveParsedSpecFile = false, parseSchemas = true, parseChannels = false } = options;
+  const {
+    services,
+    saveParsedSpecFile = false,
+    parseSchemas = true,
+    parseChannels = false,
+    attachHeadersToSchema = false,
+  } = options;
   // const asyncAPIFiles = Array.isArray(options.path) ? options.path : [options.path];
   console.log(chalk.green(`Processing ${services.length} AsyncAPI files...`));
   for (const service of services) {
@@ -484,14 +491,7 @@ export default async (config: any, options: Props) => {
 
           // Check if the message has a payload, if it does then document in EventCatalog
           if (messageHasSchema(message)) {
-            // Get the schema from the original payload if it exists
-            let schema = message.payload()?.extensions()?.get('x-parser-original-payload')?.json() || message.payload()?.json();
-
-            // Sometimes the payload comes back with the schema nested in the payload
-            // if thats the case, we need to extract the schema from the payload (e.g async-file-with-schema-format.yml in tests folder)
-            if (schema?.schema) {
-              schema = schema.schema;
-            }
+            const schema = getSchemaForMessage(message, attachHeadersToSchema);
 
             // Normalize path separators and remove leading relative path segments (../ or ./ for both Unix and Windows)
             const cleanedMessagePath = messagePath
@@ -641,6 +641,44 @@ const getRawSpecFile = async (service: Service) => {
   } else {
     return await readFile(service.path, 'utf8');
   }
+};
+
+const getSchemaForMessage = (message: MessageInterface, attachHeadersToSchema: boolean) => {
+  const payloadSchema = getSchemaFromMessagePart(
+    message.payload()?.extensions()?.get('x-parser-original-payload')?.json() || message.payload()?.json()
+  );
+
+  if (!attachHeadersToSchema || !message.hasHeaders() || !isJSONSchemaMessage(message)) {
+    return payloadSchema;
+  }
+
+  const headersSchema = getSchemaFromMessagePart(
+    message.headers()?.extensions()?.get('x-parser-original-payload')?.json() || message.headers()?.json()
+  );
+
+  if (!headersSchema) {
+    return payloadSchema;
+  }
+
+  return {
+    type: 'object',
+    properties: {
+      headers: headersSchema,
+      payload: payloadSchema,
+    },
+  };
+};
+
+const getSchemaFromMessagePart = (schema: any) => {
+  // Some parsers return { schemaFormat, schema }, but EventCatalog only needs the schema object itself.
+  if (schema?.schema) {
+    return schema.schema;
+  }
+  return schema;
+};
+
+const isJSONSchemaMessage = (message: MessageInterface) => {
+  return getSchemaFileName(message).endsWith('.json');
 };
 /**
  * Is the AsyncAPI specification (service) the owner of the message?
