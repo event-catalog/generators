@@ -1,5 +1,11 @@
 # @eventcatalog/sdk
 
+## 5.5.1
+
+### Patch Changes
+
+- 911da6c: add `attachHeadersToSchema` option to combine message headers and payload into a single schema
+
 ## 5.5.0
 
 ### Minor Changes

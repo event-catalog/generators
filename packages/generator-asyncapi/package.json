@@ -1,6 +1,6 @@
 {
   "name": "@eventcatalog/generator-asyncapi",
-  "version": "5.5.0",
+  "version": "5.5.1",
   "description": "AsyncAPI generator for EventCatalog",
   "scripts": {
     "build": "tsup",
