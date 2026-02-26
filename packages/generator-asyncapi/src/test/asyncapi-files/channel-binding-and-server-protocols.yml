@@ -1,0 +1,38 @@
+asyncapi: 3.0.0
+info:
+  title: Channel Binding And Server Protocols API
+  version: 1.0.0
+
+servers:
+  websocketGateway:
+    host: ws.company.com
+    protocol: ws
+
+channels:
+  orders:
+    address: orders
+    servers:
+      - $ref: '#/servers/websocketGateway'
+    bindings:
+      kafka:
+        topic: orders
+    messages:
+      orderCreated:
+        $ref: '#/components/messages/orderCreated'
+
+operations:
+  publishOrder:
+    action: send
+    channel:
+      $ref: '#/channels/orders'
+    messages:
+      - $ref: '#/channels/orders/messages/orderCreated'
+
+components:
+  messages:
+    orderCreated:
+      payload:
+        type: object
+        properties:
+          orderId:
+            type: string

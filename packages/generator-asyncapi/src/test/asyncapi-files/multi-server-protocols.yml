@@ -1,0 +1,39 @@
+asyncapi: 3.0.0
+info:
+  title: Multi Server Protocols API
+  version: 1.0.0
+
+servers:
+  kafkaBroker:
+    host: broker.company.com:9092
+    protocol: kafka
+  websocketGateway:
+    host: ws.company.com
+    protocol: ws
+
+channels:
+  orders:
+    address: orders
+    servers:
+      - $ref: '#/servers/kafkaBroker'
+      - $ref: '#/servers/websocketGateway'
+    messages:
+      orderCreated:
+        $ref: '#/components/messages/orderCreated'
+
+operations:
+  publishOrder:
+    action: send
+    channel:
+      $ref: '#/channels/orders'
+    messages:
+      - $ref: '#/channels/orders/messages/orderCreated'
+
+components:
+  messages:
+    orderCreated:
+      payload:
+        type: object
+        properties:
+          orderId:
+            type: string

@@ -1529,7 +1529,7 @@ describe('AsyncAPI EventCatalog Plugin', () => {
             markdown: expect.toMatchMarkdown(`## Overview
               The topic on which measured values may be produced and consumed.
               <ChannelInformation />`),
-            protocols: ['kafka'],
+            protocols: ['kafka', 'kafka-secure'],
             parameters: {
               streetlightId: {
                 description: 'The ID of the streetlight.',
@@ -1552,8 +1552,40 @@ describe('AsyncAPI EventCatalog Plugin', () => {
             id: 'lightsDim',
             name: 'lightsDim',
             version: '2.0.0',
+            protocols: ['kafka-secure'],
             markdown: '<ChannelInformation />',
           });
+        });
+
+        it('when a channel has multiple servers with different protocols, those protocols are added to the channel', async () => {
+          const { getChannel } = utils(catalogDir);
+
+          await plugin(config, {
+            services: [{ path: join(asyncAPIExamplesDir, 'multi-server-protocols.yml'), id: 'multi-server-protocols-service' }],
+            parseChannels: true,
+          });
+
+          const ordersChannel = await getChannel('orders');
+          expect(ordersChannel.protocols).toEqual(expect.arrayContaining(['kafka', 'ws']));
+          expect(ordersChannel.protocols).toHaveLength(2);
+        });
+
+        it('when a channel has bindings and servers, protocols from both are added to the channel', async () => {
+          const { getChannel } = utils(catalogDir);
+
+          await plugin(config, {
+            services: [
+              {
+                path: join(asyncAPIExamplesDir, 'channel-binding-and-server-protocols.yml'),
+                id: 'channel-binding-and-server-protocols-service',
+              },
+            ],
+            parseChannels: true,
+          });
+
+          const ordersChannel = await getChannel('orders');
+          expect(ordersChannel.protocols).toEqual(expect.arrayContaining(['kafka', 'ws']));
+          expect(ordersChannel.protocols).toHaveLength(2);
         });
 
         it('when a channel (root level) defines messages, these messages are linked to that channel', async () => {
