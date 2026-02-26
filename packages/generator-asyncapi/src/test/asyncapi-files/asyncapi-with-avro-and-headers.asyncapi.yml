@@ -1,0 +1,35 @@
+asyncapi: 3.0.0
+info:
+  title: User Signup API
+  version: 1.0.0
+  description: The API notifies when a new user signs up.
+operations:
+  onUserSignedUp:
+    action: receive
+    channel:
+      $ref: '#/channels/userSignedUp'
+channels:
+  userSignedUp:
+    address: user_signedup
+    messages:
+      userSignedUp:
+        $ref: '#/components/messages/userSignedUp'
+components:
+  messages:
+    userSignedUp:
+      headers:
+        type: object
+        properties:
+          eventType:
+            type: string
+      payload:
+        schemaFormat: application/vnd.apache.avro;version=1.9.0
+        schema:
+          type: record
+          name: UserSignedUp
+          namespace: com.company
+          fields:
+            - name: userId
+              type: int
+            - name: userEmail
+              type: string
