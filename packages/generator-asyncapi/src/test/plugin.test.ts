@@ -1529,7 +1529,7 @@ describe('AsyncAPI EventCatalog Plugin', () => {
             markdown: expect.toMatchMarkdown(`## Overview
               The topic on which measured values may be produced and consumed.
               <ChannelInformation />`),
-            protocols: ['kafka'],
+            protocols: ['kafka', 'kafka-secure'],
             parameters: {
               streetlightId: {
                 description: 'The ID of the streetlight.',
@@ -1552,6 +1552,7 @@ describe('AsyncAPI EventCatalog Plugin', () => {
             id: 'lightsDim',
             name: 'lightsDim',
             version: '2.0.0',
+            protocols: ['kafka-secure'],
             markdown: '<ChannelInformation />',
           });
         });
