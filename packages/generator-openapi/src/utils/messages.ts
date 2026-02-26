@@ -206,6 +206,23 @@ export const buildMessage = async (
     uniqueIdentifier = [serviceId, uniqueIdentifier].join(separator);
   }
 
+  // Build the operation frontmatter (method, path, statusCodes)
+  const validOperationMethods = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'];
+  const operationMethod = operation.method.toUpperCase();
+  let operationFrontmatter: { method?: string; path?: string; statusCodes?: string[] } | undefined;
+
+  if (validOperationMethods.includes(operationMethod)) {
+    const statusCodes = requestBodiesAndResponses?.responses
+      ? Object.keys(requestBodiesAndResponses.responses).filter((code) => code !== 'default')
+      : [];
+
+    operationFrontmatter = {
+      method: operationMethod as 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH',
+      path: operation.path,
+      ...(statusCodes.length > 0 ? { statusCodes } : {}),
+    };
+  }
+
   return {
     id: extensions['x-eventcatalog-message-id'] || uniqueIdentifier,
     version: messageVersion,
@@ -223,5 +240,6 @@ export const buildMessage = async (
     messageName,
     ...(extensions['x-eventcatalog-draft'] ? { draft: true } : {}),
     ...(operation.deprecated ? { deprecated: operation.deprecated } : {}),
+    ...(operationFrontmatter ? { operation: operationFrontmatter } : {}),
   };
 };
