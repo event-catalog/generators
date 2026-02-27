@@ -1624,6 +1624,120 @@ describe('OpenAPI EventCatalog Plugin', () => {
           expect(command.id).toEqual('hello_createPets');
         });
       });
+
+      describe('operation frontmatter', () => {
+        it('messages are generated with the operation frontmatter containing method, path, and statusCodes', async () => {
+          const { getCommand } = utils(catalogDir);
+
+          await plugin(config, { services: [{ path: join(openAPIExamples, 'petstore.yml'), id: 'swagger-petstore' }] });
+
+          const command = await getCommand('createPets');
+
+          expect((command as any).operation).toEqual({
+            method: 'POST',
+            path: '/pets',
+          });
+        });
+
+        it('messages with response status codes include statusCodes in the operation frontmatter', async () => {
+          const { getCommand } = utils(catalogDir);
+
+          await plugin(config, { services: [{ path: join(openAPIExamples, 'petstore.yml'), id: 'swagger-petstore' }] });
+
+          const command = await getCommand('updatePet');
+
+          expect((command as any).operation).toEqual({
+            method: 'PUT',
+            path: '/pets/{petId}',
+            statusCodes: ['200', '400', '404'],
+          });
+        });
+
+        it('GET messages include the operation frontmatter with method and path', async () => {
+          const { getQuery } = utils(catalogDir);
+
+          await plugin(config, { services: [{ path: join(openAPIExamples, 'petstore.yml'), id: 'swagger-petstore' }] });
+
+          const query = await getQuery('list-pets');
+
+          expect((query as any).operation).toEqual({
+            method: 'GET',
+            path: '/pets',
+            statusCodes: ['200'],
+          });
+        });
+
+        it('DELETE messages include the operation frontmatter with method and path', async () => {
+          const { getCommand } = utils(catalogDir);
+
+          await plugin(config, { services: [{ path: join(openAPIExamples, 'petstore.yml'), id: 'swagger-petstore' }] });
+
+          const command = await getCommand('deletePet');
+
+          expect((command as any).operation).toEqual({
+            method: 'DELETE',
+            path: '/pets/{petId}',
+            statusCodes: ['400', '404'],
+          });
+        });
+
+        it('operation frontmatter is always overridden and not persisted from existing messages', async () => {
+          const { writeCommand, getCommand } = utils(catalogDir);
+
+          // Write a message with a different operation value
+          await writeCommand({
+            id: 'createPets',
+            name: 'createPets',
+            version: '1.0.0',
+            summary: 'Create a pet',
+            markdown: '',
+            operation: {
+              method: 'GET',
+              path: '/old-path',
+              statusCodes: ['999'],
+            },
+          } as any);
+
+          await plugin(config, { services: [{ path: join(openAPIExamples, 'petstore.yml'), id: 'swagger-petstore' }] });
+
+          const command = await getCommand('createPets', '1.0.0');
+
+          // Operation should be overridden with the value from the OpenAPI spec, not persisted
+          expect((command as any).operation).toEqual({
+            method: 'POST',
+            path: '/pets',
+          });
+        });
+
+        it('event messages include the operation frontmatter', async () => {
+          const { getEvent } = utils(catalogDir);
+
+          await plugin(config, { services: [{ path: join(openAPIExamples, 'petstore.yml'), id: 'swagger-petstore' }] });
+
+          const event = await getEvent('petAdopted');
+
+          expect((event as any).operation).toEqual({
+            method: 'POST',
+            path: '/pets/{petId}/adopted',
+          });
+        });
+
+        it('statusCodes does not include the "default" response code', async () => {
+          const { getQuery } = utils(catalogDir);
+
+          await plugin(config, { services: [{ path: join(openAPIExamples, 'petstore.yml'), id: 'swagger-petstore' }] });
+
+          const query = await getQuery('showPetById');
+
+          // showPetById has responses: 200 and default - default should be excluded
+          expect((query as any).operation).toEqual({
+            method: 'GET',
+            path: '/pets/{petId}',
+            statusCodes: ['200'],
+          });
+          expect((query as any).operation.statusCodes).not.toContain('default');
+        });
+      });
     });
 
     describe('$ref', () => {
