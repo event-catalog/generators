@@ -1,5 +1,11 @@
 # @eventcatalog/generator-openapi
 
+## 7.8.0
+
+### Minor Changes
+
+- c1e9721: Add operation frontmatter (method, path, statusCodes) to OpenAPI-generated messages
+
 ## 7.7.2
 
 ### Patch Changes
