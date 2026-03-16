@@ -1,5 +1,11 @@
 # @eventcatalog/generator-openapi
 
+## 7.9.0
+
+### Minor Changes
+
+- 57d3fb2: Add parseExamples option to parse and add operation examples from OpenAPI files to EventCatalog
+
 ## 7.8.0
 
 ### Minor Changes
