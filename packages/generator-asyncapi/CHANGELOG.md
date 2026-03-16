@@ -1,5 +1,11 @@
 # @eventcatalog/sdk
 
+## 6.0.1
+
+### Patch Changes
+
+- 4635a61: Add support for AsyncAPI 3.1.0 by bumping @asyncapi/parser to 3.6.0
+
 ## 6.0.0
 
 ### Major Changes
