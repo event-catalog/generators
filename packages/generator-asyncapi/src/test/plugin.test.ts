@@ -478,6 +478,40 @@ describe('AsyncAPI EventCatalog Plugin', () => {
         expect(service.sends).toHaveLength(1);
         expect(service.sends).toEqual([{ id: 'SomeCoolpublishedMessage', version: '1.0.0' }]);
       });
+
+      it('when parseChannels is true, sends include `to` with the channel the message is sent through', async () => {
+        const { getService } = utils(catalogDir);
+
+        await plugin(config, {
+          services: [{ path: join(asyncAPIExamplesDir, 'simple.asyncapi.yml'), id: 'account-service' }],
+          parseChannels: true,
+        });
+
+        const service = await getService('account-service', '1.0.0');
+
+        expect(service.sends).toHaveLength(2);
+        expect(service.sends).toEqual([
+          { id: 'UserSignedUp', version: '1.0.0', to: [{ id: 'userSignedup', version: '1.0.0' }] },
+          { id: 'UserSignedOut', version: '1.0.0', to: [{ id: 'userSignedup', version: '1.0.0' }] },
+        ]);
+      });
+
+      it('when parseChannels is false, sends do not include `to`', async () => {
+        const { getService } = utils(catalogDir);
+
+        await plugin(config, {
+          services: [{ path: join(asyncAPIExamplesDir, 'simple.asyncapi.yml'), id: 'account-service' }],
+          parseChannels: false,
+        });
+
+        const service = await getService('account-service', '1.0.0');
+
+        expect(service.sends).toHaveLength(2);
+        expect(service.sends).toEqual([
+          { id: 'UserSignedUp', version: '1.0.0' },
+          { id: 'UserSignedOut', version: '1.0.0' },
+        ]);
+      });
     });
 
     describe('receives', () => {
@@ -534,6 +568,44 @@ describe('AsyncAPI EventCatalog Plugin', () => {
         expect(service.receives).toHaveLength(5);
         expect(service.receives).toEqual([
           { id: 'UserLoggedIn', version: '1.0.0' },
+          { id: 'SignUpUser', version: '2.0.0' },
+          { id: 'GetUserByEmail', version: '1.0.0' },
+          { id: 'CheckEmailAvailability', version: '1.0.0' },
+          { id: 'UserSubscribed', version: '1.0.0' },
+        ]);
+      });
+
+      it('when parseChannels is true, receives include `from` with the channel the message is received from', async () => {
+        const { getService } = utils(catalogDir);
+
+        await plugin(config, {
+          services: [{ path: join(asyncAPIExamplesDir, 'simple.asyncapi.yml'), id: 'account-service' }],
+          parseChannels: true,
+        });
+
+        const service = await getService('account-service', '1.0.0');
+
+        expect(service.receives).toHaveLength(4);
+        expect(service.receives).toEqual([
+          { id: 'SignUpUser', version: '2.0.0', from: [{ id: 'userSignedup', version: '1.0.0' }] },
+          { id: 'GetUserByEmail', version: '1.0.0', from: [{ id: 'userSignedup', version: '1.0.0' }] },
+          { id: 'CheckEmailAvailability', version: '1.0.0', from: [{ id: 'userSignedup', version: '1.0.0' }] },
+          { id: 'UserSubscribed', version: '1.0.0', from: [{ id: 'userSubscription', version: '1.0.0' }] },
+        ]);
+      });
+
+      it('when parseChannels is false, receives do not include `from`', async () => {
+        const { getService } = utils(catalogDir);
+
+        await plugin(config, {
+          services: [{ path: join(asyncAPIExamplesDir, 'simple.asyncapi.yml'), id: 'account-service' }],
+          parseChannels: false,
+        });
+
+        const service = await getService('account-service', '1.0.0');
+
+        expect(service.receives).toHaveLength(4);
+        expect(service.receives).toEqual([
           { id: 'SignUpUser', version: '2.0.0' },
           { id: 'GetUserByEmail', version: '1.0.0' },
           { id: 'CheckEmailAvailability', version: '1.0.0' },
@@ -1588,8 +1660,8 @@ describe('AsyncAPI EventCatalog Plugin', () => {
           expect(ordersChannel.protocols).toHaveLength(2);
         });
 
-        it('when a channel (root level) defines messages, these messages are linked to that channel', async () => {
-          const { getEvent, getEvents } = utils(catalogDir);
+        it('when a channel (root level) defines messages, these messages are no longer linked directly to the message', async () => {
+          const { getEvent } = utils(catalogDir);
 
           await plugin(config, {
             services: [{ path: join(asyncAPIExamplesDir, 'streetlights-kafka-asyncapi.yml'), id: 'streetlights-service' }],
@@ -1599,17 +1671,44 @@ describe('AsyncAPI EventCatalog Plugin', () => {
           const event = await getEvent('lightMeasured', '1.0.0');
 
           expect(event).toBeDefined();
-
-          expect(event.channels).toEqual([
-            {
-              id: 'lightingMeasured',
-              version: '1.0.0',
-            },
-          ]);
+          // Channels are no longer added to messages, they are added to the service sends/receives
+          expect(event.channels).toBeUndefined();
         });
 
-        it('when the channel has a `x-eventcatalog-channel-version` value, that version is used over the global AsyncAPI version', async () => {
-          const { getChannel, getEvent } = utils(catalogDir);
+        it('when parseChannels is true, channels are added to the service sends using `to` and receives using `from`', async () => {
+          const { getService } = utils(catalogDir);
+
+          await plugin(config, {
+            services: [{ path: join(asyncAPIExamplesDir, 'streetlights-kafka-asyncapi.yml'), id: 'streetlights-service' }],
+            parseChannels: true,
+          });
+
+          const service = await getService('streetlights-service', '1.0.0');
+
+          // receiveLightMeasurement is a 'receive' operation on channel lightingMeasured
+          expect(service.receives).toContainEqual({
+            id: 'lightMeasured',
+            version: '1.0.0',
+            from: [{ id: 'lightingMeasured', version: '1.0.0' }],
+          });
+
+          // turnOn is a 'send' operation on channel lightTurnOn
+          expect(service.sends).toContainEqual({
+            id: 'turnOn',
+            version: '1.0.0',
+            to: [{ id: 'lightTurnOn', version: '1.0.0' }],
+          });
+
+          // dimLight is a 'send' operation on channel lightsDim (with x-eventcatalog-channel-version: 2.0.0)
+          expect(service.sends).toContainEqual({
+            id: 'dimLight',
+            version: '1.0.0',
+            to: [{ id: 'lightsDim', version: '2.0.0' }],
+          });
+        });
+
+        it('when the channel has a `x-eventcatalog-channel-version` value, that version is used in the service sends/receives channel pointers', async () => {
+          const { getChannel, getService } = utils(catalogDir);
 
           await plugin(config, {
             services: [{ path: join(asyncAPIExamplesDir, 'streetlights-kafka-asyncapi.yml'), id: 'streetlights-service' }],
@@ -1617,15 +1716,79 @@ describe('AsyncAPI EventCatalog Plugin', () => {
           });
 
           const channel = await getChannel('lightsDim');
-          const event = await getEvent('dimLight');
-
           expect(channel.version).toEqual('2.0.0');
-          expect(event.channels).toEqual([
-            {
-              id: 'lightsDim',
-              version: '2.0.0',
-            },
-          ]);
+
+          const service = await getService('streetlights-service', '1.0.0');
+          // dimLight is sent via lightsDim channel which has x-eventcatalog-channel-version: 2.0.0
+          expect(service.sends).toContainEqual({
+            id: 'dimLight',
+            version: '1.0.0',
+            to: [{ id: 'lightsDim', version: '2.0.0' }],
+          });
+        });
+
+        it('when no `x-eventcatalog-channel-version` is set, the channel version in sends/receives defaults to the service version', async () => {
+          const { getService } = utils(catalogDir);
+
+          await plugin(config, {
+            services: [
+              {
+                path: join(asyncAPIExamplesDir, 'streetlights-kafka-asyncapi.yml'),
+                id: 'streetlights-service',
+                version: '3.0.0',
+              },
+            ],
+            parseChannels: true,
+          });
+
+          const service = await getService('streetlights-service', '3.0.0');
+
+          // lightTurnOn has no x-eventcatalog-channel-version, so it should use the service version (3.0.0)
+          expect(service.sends).toContainEqual({
+            id: 'turnOn',
+            version: '3.0.0',
+            to: [{ id: 'lightTurnOn', version: '3.0.0' }],
+          });
+
+          // lightingMeasured has no x-eventcatalog-channel-version, so it should use the service version (3.0.0)
+          expect(service.receives).toContainEqual({
+            id: 'lightMeasured',
+            version: '3.0.0',
+            from: [{ id: 'lightingMeasured', version: '3.0.0' }],
+          });
+
+          // lightsDim HAS x-eventcatalog-channel-version: 2.0.0, so it should keep that version
+          expect(service.sends).toContainEqual({
+            id: 'dimLight',
+            version: '3.0.0',
+            to: [{ id: 'lightsDim', version: '2.0.0' }],
+          });
+        });
+
+        it('when no `x-eventcatalog-channel-version` is set and no service version is configured, the channel version defaults to the AsyncAPI document version', async () => {
+          const { getService } = utils(catalogDir);
+
+          // No service.version set, so it falls back to the AsyncAPI doc version (1.0.0)
+          await plugin(config, {
+            services: [{ path: join(asyncAPIExamplesDir, 'streetlights-kafka-asyncapi.yml'), id: 'streetlights-service' }],
+            parseChannels: true,
+          });
+
+          const service = await getService('streetlights-service', '1.0.0');
+
+          // lightTurnOn has no x-eventcatalog-channel-version, so it should use the AsyncAPI doc version (1.0.0)
+          expect(service.sends).toContainEqual({
+            id: 'turnOn',
+            version: '1.0.0',
+            to: [{ id: 'lightTurnOn', version: '1.0.0' }],
+          });
+
+          // lightingMeasured has no x-eventcatalog-channel-version, so it should use the AsyncAPI doc version (1.0.0)
+          expect(service.receives).toContainEqual({
+            id: 'lightMeasured',
+            version: '1.0.0',
+            from: [{ id: 'lightingMeasured', version: '1.0.0' }],
+          });
         });
 
         it('if the channel already exists and the versions match the metadata is updated, but the markdown is not overwritten', async () => {
