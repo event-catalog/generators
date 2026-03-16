@@ -1,0 +1,841 @@
+{
+  "asyncapi": "3.1.0",
+  "info": {
+    "title": "service-a",
+    "version": "1",
+    "description": "Event-Driven API Documentation (anonymized)",
+    "license": {
+      "name": "Apache License 2.0"
+    },
+    "x-generator": "springwolf"
+  },
+  "defaultContentType": "application/json",
+  "servers": {
+    "Broker": {
+      "host": "broker:5672",
+      "protocol": "amqp"
+    }
+  },
+  "channels": {
+    "adapter.service-a.topic_a.event": {
+      "address": "adapter.service-a.topic_a.event",
+      "messages": {
+        "com.example.servicea.adapter.topic.EventA": {
+          "$ref": "#/components/messages/com.example.servicea.adapter.topic.EventA"
+        }
+      },
+      "bindings": {
+        "amqp": {
+          "is": "routingKey",
+          "exchange": {
+            "name": "adapter.service-a.topic",
+            "type": "topic",
+            "durable": true,
+            "autoDelete": false,
+            "vhost": "/"
+          },
+          "bindingVersion": "0.3.0"
+        }
+      }
+    },
+    "service-a.adapter.service-a.topic.event.excl.<exclusive>": {
+      "address": "service-a.adapter.service-a.topic.event.excl.<exclusive>",
+      "bindings": {
+        "amqp": {
+          "is": "queue",
+          "queue": {
+            "name": "service-a.adapter.service-a.topic.event.excl.<exclusive>",
+            "durable": false,
+            "exclusive": true,
+            "autoDelete": true,
+            "vhost": "/"
+          },
+          "bindingVersion": "0.3.0"
+        }
+      }
+    },
+    "service-a.headers": {
+      "address": "service-a.headers",
+      "messages": {
+        "service-a.event": {
+          "$ref": "#/components/messages/service-a.event"
+        }
+      },
+      "bindings": {}
+    },
+    "service-a.locating.arrived.excl.<exclusive>": {
+      "address": "service-a.locating.arrived.excl.<exclusive>",
+      "bindings": {
+        "amqp": {
+          "is": "queue",
+          "queue": {
+            "name": "service-a.locating.arrived.excl.<exclusive>",
+            "durable": false,
+            "exclusive": true,
+            "autoDelete": true,
+            "vhost": "/"
+          },
+          "bindingVersion": "0.3.0"
+        }
+      }
+    },
+    "service-a.locating.departed.excl.<exclusive>": {
+      "address": "service-a.locating.departed.excl.<exclusive>",
+      "bindings": {
+        "amqp": {
+          "is": "queue",
+          "queue": {
+            "name": "service-a.locating.departed.excl.<exclusive>",
+            "durable": false,
+            "exclusive": true,
+            "autoDelete": true,
+            "vhost": "/"
+          },
+          "bindingVersion": "0.3.0"
+        }
+      }
+    },
+    "service-a.locating.logical-position": {
+      "address": "service-a.locating.logical-position",
+      "bindings": {
+        "amqp": {
+          "is": "queue",
+          "queue": {
+            "name": "service-a.locating.logical-position",
+            "durable": false,
+            "exclusive": false,
+            "autoDelete": true,
+            "vhost": "/"
+          },
+          "bindingVersion": "0.3.0"
+        }
+      }
+    },
+    "cluster-api.service-a": {
+      "address": "cluster-api.service-a",
+      "messages": {
+        "cluster-api.service-a.event": {
+          "$ref": "#/components/messages/cluster-api.service-a.event"
+        }
+      },
+      "bindings": {}
+    },
+    "locating_logical_position": {
+      "address": "locating_logical_position",
+      "messages": {
+        "com.example.servicea.adapter.logicalposition.LogicalPositionEvent": {
+          "$ref": "#/components/messages/com.example.servicea.adapter.logicalposition.LogicalPositionEvent"
+        }
+      },
+      "bindings": {
+        "amqp": {
+          "is": "routingKey",
+          "exchange": {
+            "name": "locating",
+            "type": "topic",
+            "durable": true,
+            "autoDelete": false,
+            "vhost": "/"
+          },
+          "bindingVersion": "0.3.0"
+        }
+      }
+    },
+    "locating_point.arrived": {
+      "address": "locating_point.arrived",
+      "messages": {
+        "com.example.servicea.adapter.arrivaldeparture.ArrivalEvent": {
+          "$ref": "#/components/messages/com.example.servicea.adapter.arrivaldeparture.ArrivalEvent"
+        }
+      },
+      "bindings": {
+        "amqp": {
+          "is": "routingKey",
+          "exchange": {
+            "name": "locating",
+            "type": "topic",
+            "durable": true,
+            "autoDelete": false,
+            "vhost": "/"
+          },
+          "bindingVersion": "0.3.0"
+        }
+      }
+    },
+    "locating_point.departed": {
+      "address": "locating_point.departed",
+      "messages": {
+        "com.example.servicea.adapter.arrivaldeparture.DepartureEvent": {
+          "$ref": "#/components/messages/com.example.servicea.adapter.arrivaldeparture.DepartureEvent"
+        }
+      },
+      "bindings": {
+        "amqp": {
+          "is": "routingKey",
+          "exchange": {
+            "name": "locating",
+            "type": "topic",
+            "durable": true,
+            "autoDelete": false,
+            "vhost": "/"
+          },
+          "bindingVersion": "0.3.0"
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ClusterEventHeaders": {
+        "title": "ClusterEventHeaders",
+        "type": "object",
+        "properties": {
+          "block-id": {
+            "title": "block-id",
+            "type": "string",
+            "description": "Block identifier.",
+            "examples": ["<uuid>"]
+          },
+          "has-changed": {
+            "title": "has-changed",
+            "type": "string",
+            "description": "Whether a value changed.",
+            "examples": ["true"]
+          },
+          "journey-id": {
+            "title": "journey-id",
+            "type": "string",
+            "description": "Journey identifier.",
+            "examples": ["<uuid>"]
+          }
+        },
+        "examples": [
+          {
+            "block-id": "<uuid>",
+            "has-changed": "true",
+            "journey-id": "<uuid>"
+          }
+        ]
+      },
+      "EventHeaders": {
+        "title": "EventHeaders",
+        "type": "object",
+        "properties": {
+          "block-id": {
+            "title": "block-id",
+            "type": "string",
+            "description": "Block identifier.",
+            "examples": ["<uuid>"]
+          },
+          "has-changed": {
+            "title": "has-changed",
+            "type": "string",
+            "description": "Whether a value changed.",
+            "examples": ["true"]
+          },
+          "journey-id": {
+            "title": "journey-id",
+            "type": "string",
+            "description": "Journey identifier.",
+            "examples": ["<uuid>"]
+          },
+          "line-id": {
+            "title": "line-id",
+            "type": "string",
+            "description": "Line identifier.",
+            "examples": ["<uuid>"]
+          },
+          "planned-journey-start-time": {
+            "title": "planned-journey-start-time",
+            "type": "string",
+            "description": "Planned start time.",
+            "examples": ["2024-01-01T00:00:00Z"]
+          },
+          "service-type": {
+            "title": "service-type",
+            "type": "string",
+            "description": "Service type.",
+            "examples": ["SERVICE_JOURNEY"]
+          }
+        },
+        "examples": [
+          {
+            "block-id": "<uuid>",
+            "has-changed": "true",
+            "journey-id": "<uuid>",
+            "line-id": "<uuid>",
+            "planned-journey-start-time": "2024-01-01T00:00:00Z",
+            "service-type": "SERVICE_JOURNEY"
+          }
+        ]
+      },
+      "SpringRabbitListenerDefaultHeaders": {
+        "title": "SpringRabbitListenerDefaultHeaders",
+        "type": "object",
+        "properties": {},
+        "examples": [{}]
+      },
+      "com.example.servicea.adapter.arrivaldeparture.ArrivalEvent": {
+        "title": "ArrivalEvent",
+        "type": "object",
+        "properties": {
+          "blockId": {
+            "type": "string",
+            "description": "Block identifier.",
+            "examples": ["<uuid>"]
+          },
+          "journeyId": {
+            "type": "string",
+            "description": "Journey identifier.",
+            "examples": ["<uuid>"]
+          },
+          "pointId": {
+            "type": "string",
+            "description": "Point identifier.",
+            "examples": ["<uuid>"]
+          },
+          "quality": {
+            "type": "string",
+            "description": "How the event was generated.",
+            "enum": ["REAL", "OTHER"]
+          },
+          "timestamp": {
+            "type": "string",
+            "description": "Event timestamp.",
+            "format": "date-time",
+            "examples": ["2024-01-01T00:00:00Z"]
+          }
+        },
+        "description": "Notifies that the vehicle has arrived at a point.",
+        "examples": [
+          {
+            "blockId": "<uuid>",
+            "journeyId": "<uuid>",
+            "pointId": "<uuid>",
+            "quality": "REAL",
+            "timestamp": "2024-01-01T00:00:00Z"
+          }
+        ]
+      },
+      "com.example.servicea.adapter.arrivaldeparture.DepartureEvent": {
+        "title": "DepartureEvent",
+        "type": "object",
+        "properties": {
+          "blockId": {
+            "type": "string",
+            "description": "Block identifier.",
+            "examples": ["<uuid>"]
+          },
+          "journeyId": {
+            "type": "string",
+            "description": "Journey identifier.",
+            "examples": ["<uuid>"]
+          },
+          "pointId": {
+            "type": "string",
+            "description": "Point identifier.",
+            "examples": ["<uuid>"]
+          },
+          "quality": {
+            "type": "string",
+            "description": "How the event was generated.",
+            "enum": ["REAL", "OTHER"]
+          },
+          "timestamp": {
+            "type": "string",
+            "description": "Event timestamp.",
+            "format": "date-time",
+            "examples": ["2024-01-01T00:00:00Z"]
+          }
+        },
+        "description": "Notifies that the vehicle has departed from a point.",
+        "examples": [
+          {
+            "blockId": "<uuid>",
+            "journeyId": "<uuid>",
+            "pointId": "<uuid>",
+            "quality": "REAL",
+            "timestamp": "2024-01-01T00:00:00Z"
+          }
+        ]
+      },
+      "com.example.servicea.adapter.topic.EventA": {
+        "title": "EventA",
+        "type": "object",
+        "properties": {
+          "ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "examples": [
+          {
+            "ids": ["<id>"]
+          }
+        ]
+      },
+      "com.example.servicea.adapter.eventpublisher.ClusterApiPointPrediction": {
+        "title": "ClusterApiPointPrediction",
+        "type": "object",
+        "properties": {
+          "estimatedArrival": {
+            "type": "string",
+            "description": "Predicted arrival time.",
+            "format": "date-time",
+            "examples": ["2024-01-01T00:00:00Z"]
+          },
+          "estimatedDeparture": {
+            "type": "string",
+            "description": "Predicted departure time.",
+            "format": "date-time",
+            "examples": ["2024-01-01T00:00:00Z"]
+          },
+          "pointVisitId": {
+            "type": "string",
+            "description": "Point visit identifier.",
+            "examples": ["<uuid>"]
+          }
+        },
+        "examples": [
+          {
+            "estimatedArrival": "2024-01-01T00:00:00Z",
+            "estimatedDeparture": "2024-01-01T00:00:00Z",
+            "pointVisitId": "<uuid>"
+          }
+        ],
+        "required": ["pointVisitId"]
+      },
+      "com.example.servicea.adapter.eventpublisher.ClusterApiPredictionEvent": {
+        "title": "ClusterApiPredictionEvent",
+        "type": "object",
+        "properties": {
+          "blockId": {
+            "type": "string",
+            "description": "Block identifier.",
+            "examples": ["<uuid>"]
+          },
+          "journeyId": {
+            "type": "string",
+            "description": "Journey identifier.",
+            "examples": ["<uuid>"]
+          },
+          "logicalPositionTimestamp": {
+            "type": "string",
+            "description": "Timestamp of the trigger event.",
+            "format": "date-time",
+            "examples": ["2024-01-01T00:00:00Z"]
+          },
+          "predictions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/com.example.servicea.adapter.eventpublisher.ClusterApiPointPrediction"
+            }
+          }
+        },
+        "examples": [
+          {
+            "blockId": "<uuid>",
+            "journeyId": "<uuid>",
+            "logicalPositionTimestamp": "2024-01-01T00:00:00Z",
+            "predictions": [
+              {
+                "estimatedArrival": "2024-01-01T00:00:00Z",
+                "estimatedDeparture": "2024-01-01T00:00:00Z",
+                "pointVisitId": "<uuid>"
+              }
+            ]
+          }
+        ],
+        "required": ["journeyId", "predictions"]
+      },
+      "com.example.servicea.adapter.eventpublisher.PointPrediction": {
+        "title": "PointPrediction",
+        "type": "object",
+        "properties": {
+          "estimatedArrival": {
+            "type": "string",
+            "format": "date-time",
+            "examples": ["2024-01-01T00:00:00Z"]
+          },
+          "estimatedDeparture": {
+            "type": "string",
+            "format": "date-time",
+            "examples": ["2024-01-01T00:00:00Z"]
+          },
+          "pointId": {
+            "type": "string",
+            "examples": ["<uuid>"]
+          },
+          "stopPointCode": {
+            "deprecated": true,
+            "type": "string",
+            "examples": ["<code>"]
+          },
+          "tenant": {
+            "deprecated": true,
+            "type": "string",
+            "description": "Deprecated. Use org-unit headers.",
+            "examples": ["<tenant>"]
+          }
+        },
+        "examples": [
+          {
+            "estimatedArrival": "2024-01-01T00:00:00Z",
+            "estimatedDeparture": "2024-01-01T00:00:00Z",
+            "pointId": "<uuid>",
+            "stopPointCode": "<code>",
+            "tenant": "<tenant>"
+          }
+        ],
+        "required": ["pointId"]
+      },
+      "com.example.servicea.adapter.eventpublisher.PredictionEvent": {
+        "title": "PredictionEvent",
+        "type": "object",
+        "properties": {
+          "blockId": {
+            "type": "string",
+            "examples": ["<uuid>"]
+          },
+          "journeyId": {
+            "type": "string",
+            "examples": ["<uuid>"]
+          },
+          "lineId": {
+            "type": "string",
+            "examples": ["<uuid>"]
+          },
+          "logicalPositionTimestamp": {
+            "type": "string",
+            "format": "date-time",
+            "examples": ["2024-01-01T00:00:00Z"]
+          },
+          "plannedJourneyStartTime": {
+            "type": "string",
+            "format": "date-time",
+            "examples": ["2024-01-01T00:00:00Z"]
+          },
+          "predictions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/com.example.servicea.adapter.eventpublisher.PointPrediction"
+            }
+          },
+          "serviceType": {
+            "type": "string",
+            "enum": ["SERVICE_JOURNEY", "DEAD_RUN"],
+            "examples": ["SERVICE_JOURNEY"]
+          },
+          "tenantCode": {
+            "deprecated": true,
+            "type": "string",
+            "description": "Deprecated. Use org-unit headers.",
+            "examples": ["<tenant>"]
+          }
+        },
+        "examples": [
+          {
+            "blockId": "<uuid>",
+            "journeyId": "<uuid>",
+            "lineId": "<uuid>",
+            "logicalPositionTimestamp": "2024-01-01T00:00:00Z",
+            "plannedJourneyStartTime": "2024-01-01T00:00:00Z",
+            "predictions": [
+              {
+                "estimatedArrival": "2024-01-01T00:00:00Z",
+                "estimatedDeparture": "2024-01-01T00:00:00Z",
+                "pointId": "<uuid>",
+                "stopPointCode": "<code>",
+                "tenant": "<tenant>"
+              }
+            ],
+            "serviceType": "SERVICE_JOURNEY",
+            "tenantCode": "<tenant>"
+          }
+        ],
+        "required": ["journeyId", "predictions", "serviceType"]
+      },
+      "com.example.servicea.adapter.logicalposition.LogicalPositionEvent": {
+        "title": "LogicalPositionEvent",
+        "type": "object",
+        "properties": {
+          "blockId": {
+            "type": "string",
+            "examples": ["<uuid>"]
+          },
+          "drivenDistanceNormalized": {
+            "type": "number",
+            "format": "double",
+            "maximum": 0.999999,
+            "minimum": 0,
+            "examples": [0.5]
+          },
+          "journeyId": {
+            "type": "string",
+            "examples": ["<uuid>"]
+          },
+          "pointId": {
+            "type": "string",
+            "examples": ["<uuid>"]
+          },
+          "quality": {
+            "type": "string",
+            "enum": ["REAL", "OTHER"],
+            "examples": ["REAL"]
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "examples": ["2024-01-01T00:00:00Z"]
+          }
+        },
+        "examples": [
+          {
+            "blockId": "<uuid>",
+            "drivenDistanceNormalized": 0.5,
+            "journeyId": "<uuid>",
+            "pointId": "<uuid>",
+            "quality": "REAL",
+            "timestamp": "2024-01-01T00:00:00Z"
+          }
+        ]
+      }
+    },
+    "messages": {
+      "com.example.servicea.adapter.arrivaldeparture.ArrivalEvent": {
+        "headers": {
+          "$ref": "#/components/schemas/SpringRabbitListenerDefaultHeaders"
+        },
+        "payload": {
+          "schemaFormat": "application/vnd.aai.asyncapi+json;version=3.1.0",
+          "schema": {
+            "$ref": "#/components/schemas/com.example.servicea.adapter.arrivaldeparture.ArrivalEvent"
+          }
+        },
+        "name": "com.example.servicea.adapter.arrivaldeparture.ArrivalEvent",
+        "title": "ArrivalEvent",
+        "bindings": {
+          "amqp": {
+            "bindingVersion": "0.3.0"
+          }
+        }
+      },
+      "com.example.servicea.adapter.arrivaldeparture.DepartureEvent": {
+        "headers": {
+          "$ref": "#/components/schemas/SpringRabbitListenerDefaultHeaders"
+        },
+        "payload": {
+          "schemaFormat": "application/vnd.aai.asyncapi+json;version=3.1.0",
+          "schema": {
+            "$ref": "#/components/schemas/com.example.servicea.adapter.arrivaldeparture.DepartureEvent"
+          }
+        },
+        "name": "com.example.servicea.adapter.arrivaldeparture.DepartureEvent",
+        "title": "DepartureEvent",
+        "bindings": {
+          "amqp": {
+            "bindingVersion": "0.3.0"
+          }
+        }
+      },
+      "com.example.servicea.adapter.topic.EventA": {
+        "headers": {
+          "$ref": "#/components/schemas/SpringRabbitListenerDefaultHeaders"
+        },
+        "payload": {
+          "schemaFormat": "application/vnd.aai.asyncapi+json;version=3.1.0",
+          "schema": {
+            "$ref": "#/components/schemas/com.example.servicea.adapter.topic.EventA"
+          }
+        },
+        "name": "com.example.servicea.adapter.topic.EventA",
+        "title": "EventA",
+        "bindings": {
+          "amqp": {
+            "bindingVersion": "0.3.0"
+          }
+        }
+      },
+      "com.example.servicea.adapter.logicalposition.LogicalPositionEvent": {
+        "headers": {
+          "$ref": "#/components/schemas/SpringRabbitListenerDefaultHeaders"
+        },
+        "payload": {
+          "schemaFormat": "application/vnd.aai.asyncapi+json;version=3.1.0",
+          "schema": {
+            "$ref": "#/components/schemas/com.example.servicea.adapter.logicalposition.LogicalPositionEvent"
+          }
+        },
+        "name": "com.example.servicea.adapter.logicalposition.LogicalPositionEvent",
+        "title": "LogicalPositionEvent",
+        "bindings": {
+          "amqp": {
+            "bindingVersion": "0.3.0"
+          }
+        }
+      },
+      "service-a.event": {
+        "headers": {
+          "$ref": "#/components/schemas/EventHeaders"
+        },
+        "payload": {
+          "schemaFormat": "application/vnd.aai.asyncapi+json;version=3.1.0",
+          "schema": {
+            "$ref": "#/components/schemas/com.example.servicea.adapter.eventpublisher.PredictionEvent"
+          }
+        },
+        "name": "Event",
+        "title": "Event",
+        "description": "Event with headers.",
+        "bindings": {
+          "amqp": {
+            "bindingVersion": "0.3.0"
+          }
+        }
+      },
+      "cluster-api.service-a.event": {
+        "headers": {
+          "$ref": "#/components/schemas/ClusterEventHeaders"
+        },
+        "payload": {
+          "schemaFormat": "application/vnd.aai.asyncapi+json;version=3.1.0",
+          "schema": {
+            "$ref": "#/components/schemas/com.example.servicea.adapter.eventpublisher.ClusterApiPredictionEvent"
+          }
+        },
+        "name": "ClusterEvent",
+        "title": "ClusterEvent",
+        "description": "Cluster event with headers.",
+        "bindings": {
+          "amqp": {
+            "bindingVersion": "0.3.0"
+          }
+        }
+      }
+    }
+  },
+  "operations": {
+    "adapter.service-a.topic_a.event_receive": {
+      "action": "receive",
+      "channel": {
+        "$ref": "#/channels/adapter.service-a.topic_a.event"
+      },
+      "bindings": {
+        "amqp": {
+          "expiration": 0,
+          "bindingVersion": "0.3.0"
+        }
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/adapter.service-a.topic_a.event/messages/com.example.servicea.adapter.topic.EventA"
+        }
+      ]
+    },
+    "service-a.headers_send": {
+      "action": "send",
+      "channel": {
+        "$ref": "#/channels/service-a.headers"
+      },
+      "title": "service-a.headers_send",
+      "description": "Auto-generated description",
+      "bindings": {
+        "amqp": {
+          "expiration": 0,
+          "cc": [],
+          "priority": 0,
+          "deliveryMode": 1,
+          "mandatory": false,
+          "bcc": [],
+          "timestamp": false,
+          "ack": false,
+          "bindingVersion": "0.3.0"
+        }
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/service-a.headers/messages/service-a.event"
+        }
+      ]
+    },
+    "cluster-api.service-a_send": {
+      "action": "send",
+      "channel": {
+        "$ref": "#/channels/cluster-api.service-a"
+      },
+      "title": "cluster-api.service-a_send",
+      "description": "Auto-generated description",
+      "bindings": {
+        "amqp": {
+          "expiration": 0,
+          "cc": [],
+          "priority": 0,
+          "deliveryMode": 1,
+          "mandatory": false,
+          "bcc": [],
+          "timestamp": false,
+          "ack": false,
+          "bindingVersion": "0.3.0"
+        }
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/cluster-api.service-a/messages/cluster-api.service-a.event"
+        }
+      ]
+    },
+    "locating_logical_position_receive": {
+      "action": "receive",
+      "channel": {
+        "$ref": "#/channels/locating_logical_position"
+      },
+      "bindings": {
+        "amqp": {
+          "expiration": 0,
+          "bindingVersion": "0.3.0"
+        }
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/locating_logical_position/messages/com.example.servicea.adapter.logicalposition.LogicalPositionEvent"
+        }
+      ]
+    },
+    "locating_point.arrived_receive": {
+      "action": "receive",
+      "channel": {
+        "$ref": "#/channels/locating_point.arrived"
+      },
+      "bindings": {
+        "amqp": {
+          "expiration": 0,
+          "bindingVersion": "0.3.0"
+        }
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/locating_point.arrived/messages/com.example.servicea.adapter.arrivaldeparture.ArrivalEvent"
+        }
+      ]
+    },
+    "locating_point.departed_receive": {
+      "action": "receive",
+      "channel": {
+        "$ref": "#/channels/locating_point.departed"
+      },
+      "bindings": {
+        "amqp": {
+          "expiration": 0,
+          "bindingVersion": "0.3.0"
+        }
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/locating_point.departed/messages/com.example.servicea.adapter.arrivaldeparture.DepartureEvent"
+        }
+      ]
+    }
+  }
+}
