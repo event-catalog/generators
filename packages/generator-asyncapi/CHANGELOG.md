@@ -1,5 +1,11 @@
 # @eventcatalog/sdk
 
+## 6.1.0
+
+### Minor Changes
+
+- 7b628fd: Add parseExamples option to parse and add message examples from AsyncAPI files to EventCatalog
+
 ## 6.0.1
 
 ### Patch Changes
