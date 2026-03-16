@@ -512,6 +512,20 @@ describe('AsyncAPI EventCatalog Plugin', () => {
           { id: 'UserSignedOut', version: '1.0.0' },
         ]);
       });
+
+      it('[AsyncApi 3.1] AsyncAPI 3.1.0 files are parsed and messages are added to the service', async () => {
+        const { getService } = utils(catalogDir);
+
+        await plugin(config, {
+          services: [{ path: join(asyncAPIExamplesDir, 'asyncapi-v3.1.json'), id: 'service-a' }],
+        });
+
+        const service = await getService('service-a', '1');
+
+        expect(service).toBeDefined();
+        expect(service.sends).toHaveLength(2);
+        expect(service.receives).toHaveLength(4);
+      });
     });
 
     describe('receives', () => {

@@ -131,8 +131,8 @@ importers:
         specifier: ^2.27.8
         version: 2.29.5
       '@eventcatalog/generator-asyncapi':
-        specifier: '>=5.5.0'
-        version: 5.5.0(@types/node@20.19.1)
+        specifier: '>=6.0.0'
+        version: 6.0.0(@types/node@20.19.1)
       '@eventcatalog/generator-openapi':
         specifier: '>=7.8.0'
         version: 7.8.0(@types/node@20.19.1)
@@ -171,8 +171,8 @@ importers:
         specifier: 3.0.24
         version: 3.0.24
       '@asyncapi/parser':
-        specifier: 3.4.0
-        version: 3.4.0
+        specifier: 3.6.0
+        version: 3.6.0
       '@eventcatalog/sdk':
         specifier: 2.12.1
         version: 2.12.1(@types/node@20.19.1)
@@ -578,8 +578,11 @@ packages:
   '@asyncapi/parser@3.4.0':
     resolution: { integrity: sha512-Sxn74oHiZSU6+cVeZy62iPZMFMvKp4jupMFHelSICCMw1qELmUHPvuZSr+ZHDmNGgHcEpzJM5HN02kR7T4g+PQ== }
 
-  '@asyncapi/specs@6.8.1':
-    resolution: { integrity: sha512-czHoAk3PeXTLR+X8IUaD+IpT+g+zUvkcgMDJVothBsan+oHN3jfcFcFUNdOPAAFoUCQN1hXF1dWuphWy05THlA== }
+  '@asyncapi/parser@3.6.0':
+    resolution: { integrity: sha512-6S0Yr8vI418a1IrpGsOYbfWVo9+aHvSqN2oSkiY0YJltS/C7oDOt9e0mo6hSld8bg+EeKrtgkVmpW4obh1JFvA== }
+
+  '@asyncapi/specs@6.11.1':
+    resolution: { integrity: sha512-A3WBLqAKGoJ2+6FWFtpjBlCQ1oFCcs4GxF7zsIGvNqp/klGUHjlA3aAcZ9XMMpLGE8zPeYDz2x9FmO6DSuKraQ== }
 
   '@aws-crypto/sha256-browser@5.2.0':
     resolution: { integrity: sha512-AXfN/lGotSQwu6HNcEsIASo7kWXZ5HYWvfOmSNKDsEqC4OashTp8alTmaz+F7TC2L083SFv5RdB+qU3Vs1kZqw== }
@@ -1202,8 +1205,8 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@eventcatalog/generator-asyncapi@5.5.0':
-    resolution: { integrity: sha512-pbe6DYiC1AR5tWhfI9wR6kwh92Ed7NxGjHMzprpC8Dd7Bkl5YkO4Sw5wSzwgxY/WkDFzqSWaGJRSUVdjK3iwOQ== }
+  '@eventcatalog/generator-asyncapi@6.0.0':
+    resolution: { integrity: sha512-tGsirtRFrXu4ZhSoqCDUnFIWPdPI/ARuZGRapwU8FREvQVF74B3bnnvnRVfF3Dbludj30HIDKSp2FwMIGCYniw== }
 
   '@eventcatalog/generator-openapi@7.8.0':
     resolution: { integrity: sha512-0WeFoWfpn8FY6Kk8gqZi5QNjWmkewHU3eW+i7T7rkGqQqB7GPjVGIcP3Qot+kI25U/UoidZz+Bk9V1A+k7bw2g== }
@@ -4027,7 +4030,7 @@ snapshots:
 
   '@asyncapi/avro-schema-parser@3.0.24':
     dependencies:
-      '@asyncapi/parser': 3.4.0
+      '@asyncapi/parser': 3.6.0
       '@types/json-schema': 7.0.15
       avsc: 5.7.7
     transitivePeerDependencies:
@@ -4035,7 +4038,7 @@ snapshots:
 
   '@asyncapi/parser@3.4.0':
     dependencies:
-      '@asyncapi/specs': 6.8.1
+      '@asyncapi/specs': 6.11.1
       '@openapi-contrib/openapi-schema-to-json-schema': 3.2.0
       '@stoplight/json': 3.21.0
       '@stoplight/json-ref-readers': 1.2.2
@@ -4057,7 +4060,31 @@ snapshots:
     transitivePeerDependencies:
       - encoding
 
-  '@asyncapi/specs@6.8.1':
+  '@asyncapi/parser@3.6.0':
+    dependencies:
+      '@asyncapi/specs': 6.11.1
+      '@openapi-contrib/openapi-schema-to-json-schema': 3.2.0
+      '@stoplight/json': 3.21.0
+      '@stoplight/json-ref-readers': 1.2.2
+      '@stoplight/json-ref-resolver': 3.1.6
+      '@stoplight/spectral-core': 1.20.0
+      '@stoplight/spectral-functions': 1.10.1
+      '@stoplight/spectral-parsers': 1.0.5
+      '@stoplight/spectral-ref-resolver': 1.0.5
+      '@stoplight/types': 13.20.0
+      '@types/json-schema': 7.0.15
+      '@types/urijs': 1.19.25
+      ajv: 8.17.1
+      ajv-errors: 3.0.0(ajv@8.17.1)
+      ajv-formats: 2.1.1(ajv@8.17.1)
+      avsc: 5.7.7
+      js-yaml: 4.1.1
+      jsonpath-plus: 10.3.0
+      node-fetch: 2.6.7
+    transitivePeerDependencies:
+      - encoding
+
+  '@asyncapi/specs@6.11.1':
     dependencies:
       '@types/json-schema': 7.0.15
 
@@ -5303,7 +5330,7 @@ snapshots:
   '@esbuild/win32-x64@0.25.5':
     optional: true
 
-  '@eventcatalog/generator-asyncapi@5.5.0(@types/node@20.19.1)':
+  '@eventcatalog/generator-asyncapi@6.0.0(@types/node@20.19.1)':
     dependencies:
       '@asyncapi/avro-schema-parser': 3.0.24
       '@asyncapi/parser': 3.4.0
