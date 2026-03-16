@@ -1,0 +1,71 @@
+asyncapi: 3.0.0
+info:
+  title: Account Service
+  version: 1.0.0
+  description: This service is in charge of processing user signups
+channels:
+  userSignedup:
+    address: user/signedup
+    messages:
+      UserSignedUp:
+        $ref: '#/components/messages/UserSignedUp'
+      SignUpUser:
+        $ref: '#/components/messages/SignUpUser'
+operations:
+  sendUserSignedup:
+    action: send
+    channel:
+      $ref: '#/channels/userSignedup'
+    messages:
+      - $ref: '#/channels/userSignedup/messages/UserSignedUp'
+  onUserSignup:
+    action: receive
+    channel:
+      $ref: '#/channels/userSignedup'
+    messages:
+      - $ref: '#/channels/userSignedup/messages/SignUpUser'
+components:
+  messages:
+    UserSignedUp:
+      description: 'User signed up the application'
+      x-eventcatalog-message-type: event
+      payload:
+        type: object
+        properties:
+          displayName:
+            type: string
+            description: Name of the user
+          email:
+            type: string
+            format: email
+            description: Email of the user
+      examples:
+        - name: UserSignedUpExample
+          summary: Example of a user signed up event
+          payload:
+            displayName: 'John Doe'
+            email: 'john.doe@example.com'
+        - name: UserSignedUpExample2
+          summary: Another example
+          payload:
+            displayName: 'Jane Smith'
+            email: 'jane.smith@example.com'
+    SignUpUser:
+      description: 'Sign up a user'
+      x-eventcatalog-message-type: command
+      payload:
+        type: object
+        properties:
+          displayName:
+            type: string
+            description: Name of the user
+          email:
+            type: string
+            format: email
+            description: Email of the user
+      examples:
+        - name: SignUpUserExample
+          summary: Example of signing up a user
+          payload:
+            displayName: 'Bob Wilson'
+            email: 'bob.wilson@example.com'

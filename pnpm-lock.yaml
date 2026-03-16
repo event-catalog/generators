@@ -174,8 +174,8 @@ importers:
         specifier: 3.6.0
         version: 3.6.0
       '@eventcatalog/sdk':
-        specifier: 2.12.1
-        version: 2.12.1(@types/node@20.19.1)
+        specifier: 2.17.4
+        version: 2.17.4
       chalk:
         specifier: 4.1.2
         version: 4.1.2
@@ -1219,6 +1219,9 @@ packages:
     resolution: { integrity: sha512-N/Xz1jniwwUyq9tb97VXmLj0FJrULqnSZVtLBqhOaJUSJkfwnu4WIoeQN5eDK2cVYVi812eBR3xKfCNbErCiJw== }
     hasBin: true
 
+  '@eventcatalog/sdk@2.17.4':
+    resolution: { integrity: sha512-U8VpdzlgKcO8IJ8T2Ap5uUOjV2lh5AWSccBr3xNms1cQeu2JKVjTq7BM4dv0ctHcnB6fj3uYeU3u3fHc5BaSuQ== }
+
   '@eventcatalog/sdk@2.9.6':
     resolution: { integrity: sha512-u1/IlS82Su55IJgJivzi5eZp1nfW6Lpf5PPhw1/q3EVlhVDZbEVDVuYtgQlnIGLDi144m4QKtzYCHI8824icLQ== }
 
@@ -2169,6 +2172,10 @@ packages:
   balanced-match@1.0.2:
     resolution: { integrity: sha512-3oSeUO0TMV67hN1AmbXsK4yaqU7tjiHlbxRDZOpH0KW9+CeX4bRAaX0Anxt0tx2MrpRpWwQaPwIlISEJhYU5Pw== }
 
+  balanced-match@4.0.4:
+    resolution: { integrity: sha512-BLrgEcRTwX2o6gGxGOCNyMvGSp35YofuYzw9h1IMTRmKqttAZZVU67bdb9Pr2vUHA8+j3i2tJfjO6C6+4myGTA== }
+    engines: { node: 18 || 20 || >=22 }
+
   base64-js@1.5.1:
     resolution: { integrity: sha512-AKpaYlHn8t4SVbOHCy+b5+KKgvR4vrsD8vbvrbiQJps7fKDTkjkDry6ji0rUJjC0kzbNePLwzxq8iypo41qeWA== }
 
@@ -2196,6 +2203,10 @@ packages:
 
   brace-expansion@2.0.2:
     resolution: { integrity: sha512-Jt0vHyM+jmUBqojB7E1NIYadt0vI0Qxjxd2TErW94wDz+E2LAm5vKMXXwg6ZZBTHPuUlDgQHKXvjGBdfcF1ZDQ== }
+
+  brace-expansion@5.0.4:
+    resolution: { integrity: sha512-h+DEnpVvxmfVefa4jFbCf5HdH5YMDXRsmKflpf1pILZWRFlTbJpxeU55nJl4Smt5HQaGzg1o6RHFPJaOqnmBDg== }
+    engines: { node: 18 || 20 || >=22 }
 
   braces@3.0.3:
     resolution: { integrity: sha512-yQbXgO/OSZVD2IsiLlro+7Hf6Q18EJrKSEsdoMzKePKXct3gvD8oLcOQdIzGupr5Fj+EDe8gO/lxc1BzfMpxvA== }
@@ -2641,6 +2652,10 @@ packages:
     resolution: { integrity: sha512-vuNwKSaKiqm7g0THUBu2x7ckSs3XJLXE+2ssL7/MfTGPLLcrJQ/4Uq1CjPTtO5cCIiRxqvN6Twy1qOwhL0Xjcw== }
     engines: { node: 20 || >=22 }
     hasBin: true
+
+  glob@13.0.6:
+    resolution: { integrity: sha512-Wjlyrolmm8uDpm/ogGyXZXb1Z+Ca2B8NbJwqBVg0axK9GbBeoS7yGV6vjXnYdGm6X53iehEuxxbyiKp8QmN4Vw== }
+    engines: { node: 18 || 20 || >=22 }
 
   global-agent@3.0.0:
     resolution: { integrity: sha512-PT6XReJ+D07JvGoxQMkT6qji/jVNfX/h364XHZOWeRzy64sSFr+xJ5OX7LI3b4MPQzdL4H8Y8M0xzPpsVMwA8Q== }
@@ -3095,6 +3110,10 @@ packages:
     resolution: { integrity: sha512-enIvLvRAFZYXJzkCYG5RKmPfrFArdLv+R+lbQ53BmIMLIry74bjKzX6iHAm8WYamJkhSSEabrWN5D97XnKObjQ== }
     engines: { node: 20 || >=22 }
 
+  minimatch@10.2.4:
+    resolution: { integrity: sha512-oRjTw/97aTBN0RHbYCdtF1MQfvusSIBQM0IZEgzl6426+8jSC0nF1a/GmnVLpfB9yyr6g6FTqWqiZVbxrtaCIg== }
+    engines: { node: 18 || 20 || >=22 }
+
   minimatch@3.1.2:
     resolution: { integrity: sha512-J7p63hRiAjw1NDEww1W7i37+ByIrOWO5XQQAzZ3VOcL0PNybwpfmV/N05zFAzwQ9USyEcX6t3UO+K5aqBQOIHw== }
 
@@ -3107,6 +3126,10 @@ packages:
 
   minipass@7.1.2:
     resolution: { integrity: sha512-qOOzS1cBTWYF4BH8fVePDBOO9iptMnGUEZwNc/cMWnTV2nVLZ7VoNWEPHkYczZA0pdoA7dl6e7FL659nX9S2aw== }
+    engines: { node: '>=16 || 14 >=14.17' }
+
+  minipass@7.1.3:
+    resolution: { integrity: sha512-tEBHqDnIoM/1rXME1zgka9g6Q2lcoCkxHLuc7ODJ5BxbP5d4c2Z5cGgtXAku59200Cx7diuHTOYfSBD8n6mm8A== }
     engines: { node: '>=16 || 14 >=14.17' }
 
   minizlib@3.0.2:
@@ -3295,6 +3318,10 @@ packages:
   path-scurry@2.0.0:
     resolution: { integrity: sha512-ypGJsmGtdXUOeM5u93TyeIEfEhM6s+ljAhrk5vAvSx8uyY/02OvrZnA0YNGUrPXfpJMgI1ODd3nwz8Npx4O4cg== }
     engines: { node: 20 || >=22 }
+
+  path-scurry@2.0.2:
+    resolution: { integrity: sha512-3O/iVVsJAPsOnpwWIeD+d6z/7PmqApyQePUtCndjatj/9I5LylHvt5qluFaBT3I5h3r1ejfR056c+FCv+NnNXg== }
+    engines: { node: 18 || 20 || >=22 }
 
   path-type@4.0.0:
     resolution: { integrity: sha512-gDKb8aZMDeD/tZWs9P6+q0J9Mwkdl6xMV8TjnGP3qJVJ06bdMgkbBlLU8IdfOsIsFz2BW1rNVT3XuNEl8zPAvw== }
@@ -5385,6 +5412,15 @@ snapshots:
     transitivePeerDependencies:
       - '@types/node'
 
+  '@eventcatalog/sdk@2.17.4':
+    dependencies:
+      fs-extra: 11.3.3
+      glob: 13.0.6
+      gray-matter: 4.0.3
+      proper-lockfile: 4.1.2
+      semver: 7.7.3
+      slugify: 1.6.6
+
   '@eventcatalog/sdk@2.9.6(@types/node@20.19.1)':
     dependencies:
       '@changesets/cli': 2.29.6(@types/node@20.19.1)
@@ -6547,6 +6583,8 @@ snapshots:
 
   balanced-match@1.0.2: {}
 
+  balanced-match@4.0.4: {}
+
   base64-js@1.5.1: {}
 
   better-path-resolve@1.0.0:
@@ -6587,6 +6625,10 @@ snapshots:
   brace-expansion@2.0.2:
     dependencies:
       balanced-match: 1.0.2
+
+  brace-expansion@5.0.4:
+    dependencies:
+      balanced-match: 4.0.4
 
   braces@3.0.3:
     dependencies:
@@ -7141,6 +7183,12 @@ snapshots:
       package-json-from-dist: 1.0.1
       path-scurry: 2.0.0
 
+  glob@13.0.6:
+    dependencies:
+      minimatch: 10.2.4
+      minipass: 7.1.3
+      path-scurry: 2.0.2
+
   global-agent@3.0.0:
     dependencies:
       boolean: 3.2.0
@@ -7528,6 +7576,10 @@ snapshots:
     dependencies:
       '@isaacs/brace-expansion': 5.0.0
 
+  minimatch@10.2.4:
+    dependencies:
+      brace-expansion: 5.0.4
+
   minimatch@3.1.2:
     dependencies:
       brace-expansion: 1.1.12
@@ -7539,6 +7591,8 @@ snapshots:
   minimist@1.2.8: {}
 
   minipass@7.1.2: {}
+
+  minipass@7.1.3: {}
 
   minizlib@3.0.2:
     dependencies:
@@ -7711,6 +7765,11 @@ snapshots:
     dependencies:
       lru-cache: 11.1.0
       minipass: 7.1.2
+
+  path-scurry@2.0.2:
+    dependencies:
+      lru-cache: 11.1.0
+      minipass: 7.1.3
 
   path-type@4.0.0: {}
 

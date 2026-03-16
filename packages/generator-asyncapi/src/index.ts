@@ -117,6 +117,7 @@ const optionsSchema = z.object({
   debug: z.boolean().optional(),
   parseSchemas: z.boolean().optional(),
   parseChannels: z.boolean().optional(),
+  parseExamples: z.boolean().optional(),
   attachHeadersToSchema: z.boolean().optional(),
   saveParsedSpecFile: z.boolean({ invalid_type_error: 'The saveParsedSpecFile is not a boolean in options' }).optional(),
 });
@@ -184,6 +185,9 @@ export default async (config: any, options: Props) => {
     writeChannel,
     getChannel,
     versionChannel,
+    addExampleToEvent,
+    addExampleToCommand,
+    addExampleToQuery,
   } = utils(process.env.PROJECT_DIR);
 
   // Define the message operations mapping with proper types
@@ -193,6 +197,7 @@ export default async (config: any, options: Props) => {
       version: versionEvent,
       get: getEvent,
       addSchema: addSchemaToEvent,
+      addExample: addExampleToEvent,
       collection: 'events',
     },
     command: {
@@ -200,6 +205,7 @@ export default async (config: any, options: Props) => {
       version: versionCommand,
       get: getCommand,
       addSchema: addSchemaToCommand,
+      addExample: addExampleToCommand,
       collection: 'commands',
     },
     query: {
@@ -207,6 +213,7 @@ export default async (config: any, options: Props) => {
       version: versionQuery,
       get: getQuery,
       addSchema: addSchemaToQuery,
+      addExample: addExampleToQuery,
       collection: 'queries',
     },
   };
@@ -219,6 +226,7 @@ export default async (config: any, options: Props) => {
     saveParsedSpecFile = false,
     parseSchemas = true,
     parseChannels = false,
+    parseExamples = true,
     attachHeadersToSchema = false,
   } = options;
   // const asyncAPIFiles = Array.isArray(options.path) ? options.path : [options.path];
@@ -424,6 +432,7 @@ export default async (config: any, options: Props) => {
           version: versionMessage,
           get: getMessage,
           addSchema: addSchemaToMessage,
+          addExample: addExampleToMessage,
           collection: folder,
         } = MESSAGE_OPERATIONS[eventType];
 
@@ -504,6 +513,22 @@ export default async (config: any, options: Props) => {
               { path: cleanedMessagePath }
             );
             console.log(chalk.cyan(` - Schema added to message (v${messageVersion})`));
+          }
+
+          // Add examples to the message if parseExamples is enabled
+          if (parseExamples) {
+            const messageExamples = message.examples().all();
+            for (let i = 0; i < messageExamples.length; i++) {
+              const example = messageExamples[i];
+              const payload = example.payload();
+              if (payload) {
+                const fileName = example.hasName() ? `${example.name()}.json` : `example-${i}.json`;
+                await addExampleToMessage(messageId, { content: JSON.stringify(payload, null, 2), fileName }, messageVersion);
+              }
+            }
+            if (messageExamples.length > 0) {
+              console.log(chalk.cyan(` - ${messageExamples.length} example(s) added to message (v${messageVersion})`));
+            }
           }
         } else {
           // Message is not owned by this service, therefore we don't need to document it

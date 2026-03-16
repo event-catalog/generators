@@ -4,6 +4,7 @@ export interface MessageOperations {
   version: (id: string) => Promise<any>;
   get: (id: string, version: string) => Promise<any>;
   addSchema: (id: string, schema: any, version: any, options: { path: string }) => Promise<void>;
+  addExample: (id: string, example: { content: string; fileName: string }, version?: string) => Promise<void>;
   collection: string;
 }
 

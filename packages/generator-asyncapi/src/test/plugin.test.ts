@@ -2471,5 +2471,87 @@ describe('AsyncAPI EventCatalog Plugin', () => {
         );
       });
     });
+
+    describe('examples', () => {
+      it('when parseExamples is true (default), message examples from the AsyncAPI file are added to the message in EventCatalog', async () => {
+        const { getExamplesFromEvent } = utils(catalogDir);
+
+        await plugin(config, {
+          services: [{ path: join(asyncAPIExamplesDir, 'simple-with-examples.asyncapi.yml'), id: 'account-service' }],
+        });
+
+        const examples = await getExamplesFromEvent('UserSignedUp', '1.0.0');
+
+        expect(examples).toHaveLength(2);
+        expect(examples).toEqual(
+          expect.arrayContaining([
+            {
+              fileName: 'UserSignedUpExample.json',
+              content: JSON.stringify({ displayName: 'John Doe', email: 'john.doe@example.com' }, null, 2),
+            },
+            {
+              fileName: 'UserSignedUpExample2.json',
+              content: JSON.stringify({ displayName: 'Jane Smith', email: 'jane.smith@example.com' }, null, 2),
+            },
+          ])
+        );
+      });
+
+      it('examples are added to commands when the message type is command', async () => {
+        const { getExamplesFromCommand } = utils(catalogDir);
+
+        await plugin(config, {
+          services: [{ path: join(asyncAPIExamplesDir, 'simple-with-examples.asyncapi.yml'), id: 'account-service' }],
+        });
+
+        const examples = await getExamplesFromCommand('SignUpUser', '1.0.0');
+
+        expect(examples).toHaveLength(1);
+        expect(examples).toEqual([
+          {
+            fileName: 'SignUpUserExample.json',
+            content: JSON.stringify({ displayName: 'Bob Wilson', email: 'bob.wilson@example.com' }, null, 2),
+          },
+        ]);
+      });
+
+      it('when parseExamples is false, no examples are added to messages', async () => {
+        const { getExamplesFromEvent } = utils(catalogDir);
+
+        await plugin(config, {
+          services: [{ path: join(asyncAPIExamplesDir, 'simple-with-examples.asyncapi.yml'), id: 'account-service' }],
+          parseExamples: false,
+        });
+
+        const examples = await getExamplesFromEvent('UserSignedUp', '1.0.0');
+
+        expect(examples).toHaveLength(0);
+      });
+
+      it('when a message has no examples, no examples are added', async () => {
+        const { getExamplesFromEvent } = utils(catalogDir);
+
+        await plugin(config, {
+          services: [{ path: join(asyncAPIExamplesDir, 'simple.asyncapi.yml'), id: 'account-service' }],
+        });
+
+        const examples = await getExamplesFromEvent('UserSignedUp', '1.0.0');
+
+        expect(examples).toHaveLength(0);
+      });
+
+      it('when a message example has no name, the example index is used as the filename', async () => {
+        const { getExamplesFromEvent } = utils(catalogDir);
+
+        await plugin(config, {
+          services: [{ path: join(asyncAPIExamplesDir, 'simple-with-unnamed-examples.asyncapi.yml'), id: 'account-service' }],
+        });
+
+        const examples = await getExamplesFromEvent('UserSignedUp', '1.0.0');
+
+        expect(examples).toHaveLength(1);
+        expect(examples[0].fileName).toEqual('example-0.json');
+      });
+    });
   });
 });
