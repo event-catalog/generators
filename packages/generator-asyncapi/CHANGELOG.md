@@ -1,5 +1,11 @@
 # @eventcatalog/sdk
 
+## 6.0.0
+
+### Major Changes
+
+- ba34f29: Move channel associations from messages to services using `to`/`from` pointers on sends/receives
+
 ## 5.5.1
 
 ### Patch Changes
