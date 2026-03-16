@@ -2,7 +2,7 @@
 # When EventCatalog output is set to `server`, the output will be a node server.
 # This server is required for certain features like the EventCatalog Chat (with your own keys).
 
-FROM node:24.11.1-trixie-slim AS runtime
+FROM node:24.13.1-trixie-slim AS runtime
 WORKDIR /app
 
 # Install dependencies
