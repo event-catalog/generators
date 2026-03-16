@@ -491,8 +491,8 @@ describe('AsyncAPI EventCatalog Plugin', () => {
 
         expect(service.sends).toHaveLength(2);
         expect(service.sends).toEqual([
-          { id: 'UserSignedUp', version: '1.0.0', to: [{ id: 'userSignedup', version: '1.0.0' }] },
-          { id: 'UserSignedOut', version: '1.0.0', to: [{ id: 'userSignedup', version: '1.0.0' }] },
+          { id: 'UserSignedUp', version: '1.0.0', to: [{ id: 'userSignedup' }] },
+          { id: 'UserSignedOut', version: '1.0.0', to: [{ id: 'userSignedup' }] },
         ]);
       });
 
@@ -587,10 +587,10 @@ describe('AsyncAPI EventCatalog Plugin', () => {
 
         expect(service.receives).toHaveLength(4);
         expect(service.receives).toEqual([
-          { id: 'SignUpUser', version: '2.0.0', from: [{ id: 'userSignedup', version: '1.0.0' }] },
-          { id: 'GetUserByEmail', version: '1.0.0', from: [{ id: 'userSignedup', version: '1.0.0' }] },
-          { id: 'CheckEmailAvailability', version: '1.0.0', from: [{ id: 'userSignedup', version: '1.0.0' }] },
-          { id: 'UserSubscribed', version: '1.0.0', from: [{ id: 'userSubscription', version: '1.0.0' }] },
+          { id: 'SignUpUser', version: '2.0.0', from: [{ id: 'userSignedup' }] },
+          { id: 'GetUserByEmail', version: '1.0.0', from: [{ id: 'userSignedup' }] },
+          { id: 'CheckEmailAvailability', version: '1.0.0', from: [{ id: 'userSignedup' }] },
+          { id: 'UserSubscribed', version: '1.0.0', from: [{ id: 'userSubscription' }] },
         ]);
       });
 
@@ -1689,14 +1689,14 @@ describe('AsyncAPI EventCatalog Plugin', () => {
           expect(service.receives).toContainEqual({
             id: 'lightMeasured',
             version: '1.0.0',
-            from: [{ id: 'lightingMeasured', version: '1.0.0' }],
+            from: [{ id: 'lightingMeasured' }],
           });
 
           // turnOn is a 'send' operation on channel lightTurnOn
           expect(service.sends).toContainEqual({
             id: 'turnOn',
             version: '1.0.0',
-            to: [{ id: 'lightTurnOn', version: '1.0.0' }],
+            to: [{ id: 'lightTurnOn' }],
           });
 
           // dimLight is a 'send' operation on channel lightsDim (with x-eventcatalog-channel-version: 2.0.0)
@@ -1707,68 +1707,9 @@ describe('AsyncAPI EventCatalog Plugin', () => {
           });
         });
 
-        it('when the channel has a `x-eventcatalog-channel-version` value, that version is used in the service sends/receives channel pointers', async () => {
-          const { getChannel, getService } = utils(catalogDir);
-
-          await plugin(config, {
-            services: [{ path: join(asyncAPIExamplesDir, 'streetlights-kafka-asyncapi.yml'), id: 'streetlights-service' }],
-            parseChannels: true,
-          });
-
-          const channel = await getChannel('lightsDim');
-          expect(channel.version).toEqual('2.0.0');
-
-          const service = await getService('streetlights-service', '1.0.0');
-          // dimLight is sent via lightsDim channel which has x-eventcatalog-channel-version: 2.0.0
-          expect(service.sends).toContainEqual({
-            id: 'dimLight',
-            version: '1.0.0',
-            to: [{ id: 'lightsDim', version: '2.0.0' }],
-          });
-        });
-
-        it('when no `x-eventcatalog-channel-version` is set, the channel version in sends/receives defaults to the service version', async () => {
+        it('channel pointers without x-eventcatalog-channel-version have no version (defaults to latest)', async () => {
           const { getService } = utils(catalogDir);
 
-          await plugin(config, {
-            services: [
-              {
-                path: join(asyncAPIExamplesDir, 'streetlights-kafka-asyncapi.yml'),
-                id: 'streetlights-service',
-                version: '3.0.0',
-              },
-            ],
-            parseChannels: true,
-          });
-
-          const service = await getService('streetlights-service', '3.0.0');
-
-          // lightTurnOn has no x-eventcatalog-channel-version, so it should use the service version (3.0.0)
-          expect(service.sends).toContainEqual({
-            id: 'turnOn',
-            version: '3.0.0',
-            to: [{ id: 'lightTurnOn', version: '3.0.0' }],
-          });
-
-          // lightingMeasured has no x-eventcatalog-channel-version, so it should use the service version (3.0.0)
-          expect(service.receives).toContainEqual({
-            id: 'lightMeasured',
-            version: '3.0.0',
-            from: [{ id: 'lightingMeasured', version: '3.0.0' }],
-          });
-
-          // lightsDim HAS x-eventcatalog-channel-version: 2.0.0, so it should keep that version
-          expect(service.sends).toContainEqual({
-            id: 'dimLight',
-            version: '3.0.0',
-            to: [{ id: 'lightsDim', version: '2.0.0' }],
-          });
-        });
-
-        it('when no `x-eventcatalog-channel-version` is set and no service version is configured, the channel version defaults to the AsyncAPI document version', async () => {
-          const { getService } = utils(catalogDir);
-
-          // No service.version set, so it falls back to the AsyncAPI doc version (1.0.0)
           await plugin(config, {
             services: [{ path: join(asyncAPIExamplesDir, 'streetlights-kafka-asyncapi.yml'), id: 'streetlights-service' }],
             parseChannels: true,
@@ -1776,18 +1717,36 @@ describe('AsyncAPI EventCatalog Plugin', () => {
 
           const service = await getService('streetlights-service', '1.0.0');
 
-          // lightTurnOn has no x-eventcatalog-channel-version, so it should use the AsyncAPI doc version (1.0.0)
+          // lightTurnOn has no x-eventcatalog-channel-version, so no version in the pointer
           expect(service.sends).toContainEqual({
             id: 'turnOn',
             version: '1.0.0',
-            to: [{ id: 'lightTurnOn', version: '1.0.0' }],
+            to: [{ id: 'lightTurnOn' }],
           });
 
-          // lightingMeasured has no x-eventcatalog-channel-version, so it should use the AsyncAPI doc version (1.0.0)
+          // lightingMeasured has no x-eventcatalog-channel-version, so no version in the pointer
           expect(service.receives).toContainEqual({
             id: 'lightMeasured',
             version: '1.0.0',
-            from: [{ id: 'lightingMeasured', version: '1.0.0' }],
+            from: [{ id: 'lightingMeasured' }],
+          });
+        });
+
+        it('channel pointers with x-eventcatalog-channel-version include the version', async () => {
+          const { getService } = utils(catalogDir);
+
+          await plugin(config, {
+            services: [{ path: join(asyncAPIExamplesDir, 'streetlights-kafka-asyncapi.yml'), id: 'streetlights-service' }],
+            parseChannels: true,
+          });
+
+          const service = await getService('streetlights-service', '1.0.0');
+
+          // lightsDim has x-eventcatalog-channel-version: 2.0.0, so version is included
+          expect(service.sends).toContainEqual({
+            id: 'dimLight',
+            version: '1.0.0',
+            to: [{ id: 'lightsDim', version: '2.0.0' }],
           });
         });
 

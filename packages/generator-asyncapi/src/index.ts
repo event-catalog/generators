@@ -512,9 +512,10 @@ export default async (config: any, options: Props) => {
         // Add the message to the correct array, with channel info if parseChannels is enabled
         if (parseChannels) {
           const operationChannels = operation.channels().all();
+          // Only include version if x-eventcatalog-channel-version is explicitly set, otherwise defaults to "latest"
           const channelPointers = operationChannels.map((channel) => {
-            const channelVersion = channel.extensions().get('x-eventcatalog-channel-version')?.value() || version;
-            return { id: channel.id(), version: channelVersion };
+            const explicitVersion = channel.extensions().get('x-eventcatalog-channel-version')?.value();
+            return { id: channel.id(), ...(explicitVersion && { version: explicitVersion }) };
           });
 
           if (isSent)
