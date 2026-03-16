@@ -63,6 +63,71 @@ export async function getSchemasByOperationId(
   }
 }
 
+export async function getExamplesByOperationId(
+  filePath: string,
+  operationId: string,
+  parsedDocument?: OpenAPIDocument
+): Promise<{ fileName: string; content: string }[]> {
+  const api = parsedDocument || ((await SwaggerParser.dereference(filePath)) as OpenAPIDocument);
+  const examples: { fileName: string; content: string }[] = [];
+
+  for (const [, pathItem] of Object.entries(api.paths)) {
+    for (const [, operation] of Object.entries(pathItem)) {
+      const typedOperation = operation as OpenAPIOperation;
+      if (typedOperation.operationId !== operationId) continue;
+
+      // Extract request body examples
+      if (typedOperation.requestBody?.content) {
+        const contentType = Object.keys(typedOperation.requestBody.content)[0];
+        const mediaType = typedOperation.requestBody.content[contentType];
+
+        // Single example
+        if (mediaType.example) {
+          examples.push({ fileName: 'example.json', content: JSON.stringify(mediaType.example, null, 2) });
+        }
+
+        // Named examples
+        if (mediaType.examples) {
+          for (const [name, exampleObj] of Object.entries(mediaType.examples as Record<string, any>)) {
+            if (exampleObj.value) {
+              examples.push({ fileName: `${name}.json`, content: JSON.stringify(exampleObj.value, null, 2) });
+            }
+          }
+        }
+      }
+
+      // Extract response examples
+      if (typedOperation.responses) {
+        for (const [statusCode, response] of Object.entries(typedOperation.responses)) {
+          if (response.content) {
+            const contentType = Object.keys(response.content)[0];
+            const mediaType = response.content[contentType];
+
+            if (mediaType.example) {
+              examples.push({ fileName: `response-${statusCode}.json`, content: JSON.stringify(mediaType.example, null, 2) });
+            }
+
+            if (mediaType.examples) {
+              for (const [name, exampleObj] of Object.entries(mediaType.examples as Record<string, any>)) {
+                if (exampleObj.value) {
+                  examples.push({
+                    fileName: `response-${statusCode}-${name}.json`,
+                    content: JSON.stringify(exampleObj.value, null, 2),
+                  });
+                }
+              }
+            }
+          }
+        }
+      }
+
+      return examples;
+    }
+  }
+
+  return examples;
+}
+
 function getDeprecatedValues(openAPIOperation: any) {
   const deprecatedDate = openAPIOperation['x-eventcatalog-deprecated-date'] || null;
   const deprecatedMessage = openAPIOperation['x-eventcatalog-deprecated-message'] || null;

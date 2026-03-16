@@ -2189,5 +2189,100 @@ describe('OpenAPI EventCatalog Plugin', () => {
         }
       });
     });
+
+    describe('examples', () => {
+      it('when parseExamples is true (default), request body examples (single example) are added to the message', async () => {
+        const { getExamplesFromEvent } = utils(catalogDir);
+
+        await plugin(config, {
+          services: [{ path: join(openAPIExamples, 'petstore-with-examples.yml'), id: 'swagger-petstore' }],
+        });
+
+        const examples = await getExamplesFromEvent('petAdopted', '1.0.0');
+
+        expect(examples).toHaveLength(1);
+        expect(examples).toEqual([
+          {
+            fileName: 'example.json',
+            content: JSON.stringify({ petId: 1, adopterName: 'John Doe' }, null, 2),
+          },
+        ]);
+      });
+
+      it('when parseExamples is true (default), request body named examples are added to the message', async () => {
+        const { getExamplesFromCommand } = utils(catalogDir);
+
+        await plugin(config, {
+          services: [{ path: join(openAPIExamples, 'petstore-with-examples.yml'), id: 'swagger-petstore' }],
+        });
+
+        const examples = await getExamplesFromCommand('createPets', '1.0.0');
+
+        expect(examples).toHaveLength(2);
+        expect(examples).toEqual(
+          expect.arrayContaining([
+            {
+              fileName: 'dog.json',
+              content: JSON.stringify({ id: 1, name: 'Fido', tag: 'dog' }, null, 2),
+            },
+            {
+              fileName: 'cat.json',
+              content: JSON.stringify({ id: 2, name: 'Whiskers', tag: 'cat' }, null, 2),
+            },
+          ])
+        );
+      });
+
+      it('when parseExamples is true (default), response examples are added to the message', async () => {
+        const { getExamplesFromQuery } = utils(catalogDir);
+
+        await plugin(config, {
+          services: [{ path: join(openAPIExamples, 'petstore-with-examples.yml'), id: 'swagger-petstore' }],
+        });
+
+        const examples = await getExamplesFromQuery('listPets', '1.0.0');
+
+        expect(examples).toHaveLength(1);
+        expect(examples).toEqual([
+          {
+            fileName: 'response-200.json',
+            content: JSON.stringify(
+              [
+                { id: 1, name: 'Fido', tag: 'dog' },
+                { id: 2, name: 'Whiskers', tag: 'cat' },
+              ],
+              null,
+              2
+            ),
+          },
+        ]);
+      });
+
+      it('when parseExamples is false, no examples are added to messages', async () => {
+        const { getExamplesFromCommand } = utils(catalogDir);
+
+        await plugin(config, {
+          services: [{ path: join(openAPIExamples, 'petstore-with-examples.yml'), id: 'swagger-petstore' }],
+          parseExamples: false,
+        });
+
+        const examples = await getExamplesFromCommand('createPets', '1.0.0');
+
+        expect(examples).toHaveLength(0);
+      });
+
+      it('when messages have no examples, no examples are added', async () => {
+        const { getExamplesFromQuery } = utils(catalogDir);
+
+        await plugin(config, {
+          services: [{ path: join(openAPIExamples, 'petstore.yml'), id: 'swagger-petstore' }],
+        });
+
+        // showPetById has no examples defined in petstore.yml
+        const examples = await getExamplesFromQuery('showPetById', '1.0.0');
+
+        expect(examples).toHaveLength(0);
+      });
+    });
   });
 });
