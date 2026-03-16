@@ -21,6 +21,9 @@ export const getMessageTypeUtils = (projectDirectory: string, messageType: strin
     rmQueryById,
     writeQuery,
     addFileToQuery,
+    addExampleToEvent,
+    addExampleToCommand,
+    addExampleToQuery,
   } = utils(projectDirectory);
 
   const messageTypeMap: { [key: string]: any } = {
@@ -30,6 +33,7 @@ export const getMessageTypeUtils = (projectDirectory: string, messageType: strin
       rmMessageById: rmEventById,
       writeMessage: writeEvent,
       addFileToMessage: addFileToEvent,
+      addExampleToMessage: addExampleToEvent,
       collection: 'events',
     },
     command: {
@@ -38,6 +42,7 @@ export const getMessageTypeUtils = (projectDirectory: string, messageType: strin
       rmMessageById: rmCommandById,
       writeMessage: writeCommand,
       addFileToMessage: addFileToCommand,
+      addExampleToMessage: addExampleToCommand,
       collection: 'commands',
     },
     query: {
@@ -46,6 +51,7 @@ export const getMessageTypeUtils = (projectDirectory: string, messageType: strin
       rmMessageById: rmQueryById,
       writeMessage: writeQuery,
       addFileToMessage: addFileToQuery,
+      addExampleToMessage: addExampleToQuery,
       collection: 'queries',
     },
   };

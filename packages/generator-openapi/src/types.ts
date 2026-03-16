@@ -69,23 +69,25 @@ export interface OpenAPIParameter {
   description?: string;
 }
 
+export interface OpenAPIMediaType {
+  schema?: any;
+  example?: any;
+  examples?: { [name: string]: { summary?: string; value: any } };
+}
+
 export interface OpenAPIOperation {
   operationId?: string;
   parameters?: OpenAPIParameter[];
   requestBody?: {
     content?: {
-      [contentType: string]: {
-        schema: any;
-      };
+      [contentType: string]: OpenAPIMediaType;
     };
   };
   responses?: {
     [statusCode: string]: {
       isSchema?: boolean;
       content?: {
-        [contentType: string]: {
-          schema: any;
-        };
+        [contentType: string]: OpenAPIMediaType;
       };
     };
   };

@@ -7,7 +7,7 @@ import SwaggerParser from '@apidevtools/swagger-parser';
 import { defaultMarkdown as generateMarkdownForDomain } from './utils/domains';
 import { buildService, getSummary } from './utils/services';
 import { buildMessage } from './utils/messages';
-import { getOperationsByType } from './utils/openapi';
+import { getOperationsByType, getExamplesByOperationId } from './utils/openapi';
 import { Domain, Service, Message, Pointer } from './types';
 import { getMessageTypeUtils } from './utils/catalog-shorthand';
 import { OpenAPI } from 'openapi-types';
@@ -34,6 +34,7 @@ type Props = {
   sidebarBadgeType?: 'HTTP_METHOD' | 'MESSAGE_TYPE';
   httpMethodsToMessages?: HTTP_METHOD_TO_MESSAGE_TYPE;
   preserveExistingMessages?: boolean;
+  parseExamples?: boolean;
 };
 
 const toUniqueArray = (array: Pointer[]) => {
@@ -383,6 +384,7 @@ const processMessagesForOpenAPISpec = async (
   const sidebarBadgeType = options.sidebarBadgeType || 'HTTP_METHOD';
   const version = options.serviceVersion || document.info.version;
   const preserveExistingMessages = options.preserveExistingMessages ?? true;
+  const parseExamples = options.parseExamples ?? true;
   const isDraft = options.isDraft ?? null;
 
   let receives = [],
@@ -409,6 +411,7 @@ const processMessagesForOpenAPISpec = async (
 
     const {
       addFileToMessage,
+      addExampleToMessage,
       writeMessage,
       getMessage,
       versionMessage,
@@ -513,6 +516,17 @@ const processMessagesForOpenAPISpec = async (
           },
           message.version
         );
+      }
+    }
+
+    // Add examples to the message if parseExamples is enabled
+    if (parseExamples && operation.operationId) {
+      const operationExamples = await getExamplesByOperationId(pathToSpec, operation.operationId, document as any);
+      for (const example of operationExamples) {
+        await addExampleToMessage(message.id, { content: example.content, fileName: example.fileName }, message.version);
+      }
+      if (operationExamples.length > 0) {
+        console.log(chalk.cyan(` - ${operationExamples.length} example(s) added to message (v${message.version})`));
       }
     }
 
