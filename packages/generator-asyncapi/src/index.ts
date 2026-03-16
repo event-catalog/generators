@@ -14,7 +14,6 @@ import { AvroSchemaParser } from '@asyncapi/avro-schema-parser';
 
 import {
   defaultMarkdown as generateMarkdownForMessage,
-  getChannelsForMessage,
   getMessageName,
   getSummary as getMessageSummary,
   getSchemaFileName,
@@ -461,8 +460,6 @@ export default async (config: any, options: Props) => {
             }
           }
 
-          const channelsForMessage = parseChannels ? getChannelsForMessage(message, channels, document) : [];
-
           await writeMessage(
             {
               id: messageId,
@@ -475,7 +472,6 @@ export default async (config: any, options: Props) => {
               ...(messageHasSchema(message) && { schemaPath: getSchemaFileName(message) }),
               ...(owners && { owners }),
               ...(messageAttachments && { attachments: messageAttachments }),
-              ...(channelsForMessage.length > 0 && { channels: channelsForMessage }),
               ...(deprecatedDate && {
                 deprecated: { date: deprecatedDate, ...(deprecatedMessage && { message: deprecatedMessage }) },
               }),
@@ -513,9 +509,27 @@ export default async (config: any, options: Props) => {
           // Message is not owned by this service, therefore we don't need to document it
           console.log(chalk.yellow(` - Skipping external message: ${getMessageName(message)}(v${messageVersion})`));
         }
-        // Add the message to the correct array
-        if (isSent) sends.push({ id: messageId, version: messageVersion });
-        if (isReceived) receives.push({ id: messageId, version: messageVersion });
+        // Add the message to the correct array, with channel info if parseChannels is enabled
+        if (parseChannels) {
+          const operationChannels = operation.channels().all();
+          // Only include version if x-eventcatalog-channel-version is explicitly set, otherwise defaults to "latest"
+          const channelPointers = operationChannels.map((channel) => {
+            const explicitVersion = channel.extensions().get('x-eventcatalog-channel-version')?.value();
+            return { id: channel.id(), ...(explicitVersion && { version: explicitVersion }) };
+          });
+
+          if (isSent)
+            sends.push({ id: messageId, version: messageVersion, ...(channelPointers.length > 0 && { to: channelPointers }) });
+          if (isReceived)
+            receives.push({
+              id: messageId,
+              version: messageVersion,
+              ...(channelPointers.length > 0 && { from: channelPointers }),
+            });
+        } else {
+          if (isSent) sends.push({ id: messageId, version: messageVersion });
+          if (isReceived) receives.push({ id: messageId, version: messageVersion });
+        }
       }
     }
 

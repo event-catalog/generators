@@ -134,8 +134,8 @@ importers:
         specifier: '>=5.5.0'
         version: 5.5.0(@types/node@20.19.1)
       '@eventcatalog/generator-openapi':
-        specifier: '>=7.7.0'
-        version: 7.7.0(@types/node@20.19.1)
+        specifier: '>=7.8.0'
+        version: 7.8.0(@types/node@20.19.1)
       '@eventcatalog/sdk':
         specifier: ^2.9.6
         version: 2.9.6(@types/node@20.19.1)
@@ -1205,8 +1205,8 @@ packages:
   '@eventcatalog/generator-asyncapi@5.5.0':
     resolution: { integrity: sha512-pbe6DYiC1AR5tWhfI9wR6kwh92Ed7NxGjHMzprpC8Dd7Bkl5YkO4Sw5wSzwgxY/WkDFzqSWaGJRSUVdjK3iwOQ== }
 
-  '@eventcatalog/generator-openapi@7.7.0':
-    resolution: { integrity: sha512-rOWEpMScjJ98y2lAme7Db0h8bcVnW3554u7xz+njJPF0Lc3+3PvWTFRatDYBtBGLo4jX/xm8iOuep3iL95I+zQ== }
+  '@eventcatalog/generator-openapi@7.8.0':
+    resolution: { integrity: sha512-0WeFoWfpn8FY6Kk8gqZi5QNjWmkewHU3eW+i7T7rkGqQqB7GPjVGIcP3Qot+kI25U/UoidZz+Bk9V1A+k7bw2g== }
 
   '@eventcatalog/license@0.0.7':
     resolution: { integrity: sha512-izSIn3Dfc6LTcPiA89EqZ4/l5WCitLxt0XVu2yilyaibMOioxW7ABRFZY8/Azocd6ULKseVA2lCcoeT35/GRcg== }
@@ -5322,15 +5322,15 @@ snapshots:
       - '@types/node'
       - encoding
 
-  '@eventcatalog/generator-openapi@7.7.0(@types/node@20.19.1)':
+  '@eventcatalog/generator-openapi@7.8.0(@types/node@20.19.1)':
     dependencies:
       '@apidevtools/swagger-parser': 10.1.1(openapi-types@12.1.3)
-      '@changesets/cli': 2.29.6(@types/node@20.19.1)
-      '@eventcatalog/sdk': 2.9.6(@types/node@20.19.1)
+      '@changesets/cli': 2.29.8(@types/node@20.19.1)
+      '@eventcatalog/sdk': 2.12.1(@types/node@20.19.1)
       chalk: 4.1.2
-      js-yaml: 4.1.0
+      js-yaml: 4.1.1
       openapi-types: 12.1.3
-      semver: 7.7.2
+      semver: 7.7.3
       slugify: 1.6.6
       update-notifier: 7.3.1
     transitivePeerDependencies:
