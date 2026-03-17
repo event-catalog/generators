@@ -2284,5 +2284,33 @@ describe('OpenAPI EventCatalog Plugin', () => {
         expect(examples).toHaveLength(0);
       });
     });
+
+    describe('responses with empty content objects', () => {
+      it('handles responses and requestBody with content: {} without crashing and generates all messages', async () => {
+        const { getQuery, getCommand } = utils(catalogDir);
+
+        await plugin(config, {
+          services: [{ path: join(openAPIExamples, 'empty-content-responses.yml'), id: 'empty-content-api' }],
+        });
+
+        // All messages should be generated despite content: {} in some responses
+        const listItems = await getQuery('listItems', '1.0.0');
+        const createItem = await getCommand('createItem', '1.0.0');
+        const getItem = await getQuery('getItem', '1.0.0');
+
+        expect(listItems).toBeDefined();
+        expect(listItems?.id).toEqual('listItems');
+        expect(createItem).toBeDefined();
+        expect(createItem?.id).toEqual('createItem');
+        expect(getItem).toBeDefined();
+        expect(getItem?.id).toEqual('getItem');
+
+        // The 200 and 400 responses have valid schemas so statusCodes should include them.
+        // The 416 response with content: {} should be skipped (no schema extracted).
+        expect(listItems?.operation?.statusCodes).toContain('200');
+        expect(listItems?.operation?.statusCodes).toContain('400');
+        expect(listItems?.operation?.statusCodes).not.toContain('416');
+      });
+    });
   });
 });
