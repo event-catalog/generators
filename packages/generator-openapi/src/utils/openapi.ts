@@ -36,7 +36,9 @@ export async function getSchemasByOperationId(
           // Extract request body schema
           if (typedOperation.requestBody && typedOperation.requestBody.content) {
             const contentType = Object.keys(typedOperation.requestBody.content)[0];
-            schemas.requestBody = typedOperation.requestBody.content[contentType].schema;
+            if (contentType) {
+              schemas.requestBody = typedOperation.requestBody.content[contentType].schema;
+            }
           }
 
           // Extract response schemas (clone to avoid mutating the original document)
@@ -44,9 +46,11 @@ export async function getSchemasByOperationId(
             for (const [statusCode, response] of Object.entries(typedOperation.responses)) {
               if (response.content) {
                 const contentType = Object.keys(response.content)[0];
-                const schemaOrContent = response.content[contentType].schema || response.content[contentType];
-                schemas.responses[statusCode] = { ...schemaOrContent };
-                schemas.responses[statusCode].isSchema = !!response.content[contentType].schema;
+                if (contentType) {
+                  const schemaOrContent = response.content[contentType].schema || response.content[contentType];
+                  schemas.responses[statusCode] = { ...schemaOrContent };
+                  schemas.responses[statusCode].isSchema = !!response.content[contentType].schema;
+                }
               }
             }
           }
@@ -79,18 +83,20 @@ export async function getExamplesByOperationId(
       // Extract request body examples
       if (typedOperation.requestBody?.content) {
         const contentType = Object.keys(typedOperation.requestBody.content)[0];
-        const mediaType = typedOperation.requestBody.content[contentType];
+        if (contentType) {
+          const mediaType = typedOperation.requestBody.content[contentType];
 
-        // Single example
-        if (mediaType.example) {
-          examples.push({ fileName: 'example.json', content: JSON.stringify(mediaType.example, null, 2) });
-        }
+          // Single example
+          if (mediaType.example) {
+            examples.push({ fileName: 'example.json', content: JSON.stringify(mediaType.example, null, 2) });
+          }
 
-        // Named examples
-        if (mediaType.examples) {
-          for (const [name, exampleObj] of Object.entries(mediaType.examples as Record<string, any>)) {
-            if (exampleObj.value) {
-              examples.push({ fileName: `${name}.json`, content: JSON.stringify(exampleObj.value, null, 2) });
+          // Named examples
+          if (mediaType.examples) {
+            for (const [name, exampleObj] of Object.entries(mediaType.examples as Record<string, any>)) {
+              if (exampleObj.value) {
+                examples.push({ fileName: `${name}.json`, content: JSON.stringify(exampleObj.value, null, 2) });
+              }
             }
           }
         }
@@ -101,19 +107,21 @@ export async function getExamplesByOperationId(
         for (const [statusCode, response] of Object.entries(typedOperation.responses)) {
           if (response.content) {
             const contentType = Object.keys(response.content)[0];
-            const mediaType = response.content[contentType];
+            if (contentType) {
+              const mediaType = response.content[contentType];
 
-            if (mediaType.example) {
-              examples.push({ fileName: `response-${statusCode}.json`, content: JSON.stringify(mediaType.example, null, 2) });
-            }
+              if (mediaType.example) {
+                examples.push({ fileName: `response-${statusCode}.json`, content: JSON.stringify(mediaType.example, null, 2) });
+              }
 
-            if (mediaType.examples) {
-              for (const [name, exampleObj] of Object.entries(mediaType.examples as Record<string, any>)) {
-                if (exampleObj.value) {
-                  examples.push({
-                    fileName: `response-${statusCode}-${name}.json`,
-                    content: JSON.stringify(exampleObj.value, null, 2),
-                  });
+              if (mediaType.examples) {
+                for (const [name, exampleObj] of Object.entries(mediaType.examples as Record<string, any>)) {
+                  if (exampleObj.value) {
+                    examples.push({
+                      fileName: `response-${statusCode}-${name}.json`,
+                      content: JSON.stringify(exampleObj.value, null, 2),
+                    });
+                  }
                 }
               }
             }

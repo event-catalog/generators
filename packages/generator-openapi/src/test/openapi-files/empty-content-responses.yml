@@ -1,0 +1,74 @@
+openapi: '3.0.0'
+info:
+  title: API with empty content responses
+  version: 1.0.0
+paths:
+  /items:
+    get:
+      operationId: listItems
+      summary: List items
+      responses:
+        '200':
+          description: List of items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    name:
+                      type: string
+        '400':
+          description: Invalid parameter
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '416':
+          description: Paginated out of range response
+          content: {}
+    post:
+      operationId: createItem
+      summary: Create an item
+      requestBody:
+        description: Item to create
+        content: {}
+      responses:
+        '201':
+          description: Item created
+        '500':
+          description: Internal Server Error
+          content: {}
+  /items/{id}:
+    get:
+      operationId: getItem
+      summary: Get an item by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The item
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  name:
+                    type: string
+        '404':
+          description: Not found
+        '416':
+          description: Paginated out of range response
+          content: {}
