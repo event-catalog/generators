@@ -1,5 +1,11 @@
 # @eventcatalog/sdk
 
+## 6.1.1
+
+### Patch Changes
+
+- 59f0d56: fix(asyncapi): handle circular references in oneOf/allOf schemas with discriminator pattern
+
 ## 6.1.0
 
 ### Minor Changes
