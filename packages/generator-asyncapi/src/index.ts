@@ -29,6 +29,32 @@ import { join } from 'node:path';
 
 const parser = new Parser();
 
+/**
+ * Safely stringify objects that may contain circular references.
+ * When a circular ref is detected, it uses the `x-parser-schema-id` property
+ * to reconstruct a valid JSON Schema `$ref` (e.g. `#/components/schemas/MySchema`).
+ */
+const safeStringify = (obj: unknown, indent?: number): string => {
+  const seen = new WeakSet();
+  return JSON.stringify(
+    obj,
+    (_key, value) => {
+      if (typeof value === 'object' && value !== null) {
+        if (seen.has(value)) {
+          const schemaId = (value as Record<string, unknown>)['x-parser-schema-id'];
+          if (schemaId && typeof schemaId === 'string') {
+            return { $ref: `#/components/schemas/${schemaId}` };
+          }
+          return { $ref: '#' };
+        }
+        seen.add(value);
+      }
+      return value;
+    },
+    indent
+  );
+};
+
 // register avro schema support
 parser.registerSchemaParser(AvroSchemaParser());
 const cliArgs = argv(process.argv.slice(2));
@@ -507,7 +533,7 @@ export default async (config: any, options: Props) => {
               messageId,
               {
                 fileName: getSchemaFileName(message),
-                schema: JSON.stringify(schema, null, 4),
+                schema: safeStringify(schema, 4),
               },
               messageVersion,
               { path: cleanedMessagePath }
@@ -657,7 +683,7 @@ export default async (config: any, options: Props) => {
 const getParsedSpecFile = (service: Service, document: AsyncAPIDocumentInterface) => {
   const isSpecFileJSON = service.path.endsWith('.json');
   return isSpecFileJSON
-    ? JSON.stringify(document.meta().asyncapi.parsed, null, 4)
+    ? safeStringify(document.meta().asyncapi.parsed, 4)
     : yaml.dump(document.meta().asyncapi.parsed, { noRefs: true });
 };
 
