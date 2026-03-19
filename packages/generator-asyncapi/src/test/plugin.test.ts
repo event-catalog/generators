@@ -1508,6 +1508,103 @@ describe('AsyncAPI EventCatalog Plugin', () => {
         const schemaParsed = JSON.parse(schema.toString());
         expect(schemaParsed).toHaveProperty('type');
       });
+      it('when a message payload uses oneOf/allOf with circular $ref (discriminator pattern), the schema is documented without circular reference errors', async () => {
+        await plugin(config, {
+          services: [
+            { path: join(asyncAPIExamplesDir, 'oneOf-allOf-circular-ref.asyncapi.json'), id: 'discriminator-fail-bug-report' },
+          ],
+        });
+
+        const schema = await fs.readFile(
+          join(catalogDir, 'services', 'discriminator-fail-bug-report', 'events', 'ec.typea-and-typeb-batch', 'schema.json')
+        );
+
+        expect(schema).toBeDefined();
+
+        const schemaParsed = JSON.parse(schema.toString());
+        expect(schemaParsed).toEqual({
+          title: 'TypeAAndTypeBBatchDto',
+          type: 'object',
+          properties: {
+            events: {
+              type: 'array',
+              description: 'List of events in this batch (mixed types).',
+              items: {
+                discriminator: 'type',
+                title: 'ElementDto',
+                type: 'object',
+                properties: {
+                  type: {
+                    type: 'string',
+                    'x-parser-schema-id': '<anonymous-schema-2>',
+                  },
+                },
+                description: 'An event that has 2 possible deserializations.',
+                examples: [{ timestamp: '2015-07-20T15:49:04-07:00', type: 'typeA', typeAid: 'string' }],
+                required: ['type'],
+                oneOf: [
+                  {
+                    type: 'object',
+                    description: 'Type A event',
+                    examples: [{ timestamp: '2015-07-20T15:49:04-07:00', type: 'typeA', typeAid: 'string' }],
+                    required: ['timestamp', 'type', 'typeAid'],
+                    allOf: [
+                      { $ref: '#/components/schemas/ec-test.batch-element' },
+                      {
+                        type: 'object',
+                        properties: {
+                          timestamp: { type: 'string', format: 'date-time', 'x-parser-schema-id': '<anonymous-schema-4>' },
+                          type: {
+                            type: 'string',
+                            description: 'Type discriminator of the event.',
+                            minLength: 1,
+                            examples: ['typeA'],
+                            'x-parser-schema-id': '<anonymous-schema-5>',
+                          },
+                          typeAid: { type: 'string', minLength: 1, 'x-parser-schema-id': '<anonymous-schema-6>' },
+                        },
+                        'x-parser-schema-id': '<anonymous-schema-3>',
+                      },
+                    ],
+                    'x-parser-schema-id': 'ec.typea',
+                  },
+                  {
+                    type: 'object',
+                    description: 'Type B event',
+                    examples: [{ displayName: 'string', type: 'typeB', typeBid: 'string' }],
+                    required: ['displayName', 'type', 'typeBid'],
+                    allOf: [
+                      { $ref: '#/components/schemas/ec-test.batch-element' },
+                      {
+                        type: 'object',
+                        properties: {
+                          displayName: { type: 'string', 'x-parser-schema-id': '<anonymous-schema-8>' },
+                          type: {
+                            type: 'string',
+                            description: 'Type discriminator of the event.',
+                            minLength: 1,
+                            examples: ['typeB'],
+                            'x-parser-schema-id': '<anonymous-schema-9>',
+                          },
+                          typeBid: { type: 'string', minLength: 1, 'x-parser-schema-id': '<anonymous-schema-10>' },
+                        },
+                        'x-parser-schema-id': '<anonymous-schema-7>',
+                      },
+                    ],
+                    'x-parser-schema-id': 'ec.typeb',
+                  },
+                ],
+                'x-parser-schema-id': 'ec-test.batch-element',
+              },
+              minItems: 1,
+              'x-parser-schema-id': '<anonymous-schema-1>',
+            },
+          },
+          examples: [{ events: [{ timestamp: '2015-07-20T15:49:04-07:00', type: 'typeA', typeAid: 'string' }] }],
+          required: ['events'],
+          'x-parser-schema-id': 'ec.typea-and-typeb-batch',
+        });
+      });
     });
 
     describe('bindings', () => {

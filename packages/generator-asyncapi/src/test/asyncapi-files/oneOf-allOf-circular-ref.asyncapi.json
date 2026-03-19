@@ -1,0 +1,308 @@
+{
+  "asyncapi": "3.1.0",
+  "info": {
+    "title": "discriminator-fail-bug-report",
+    "version": "1.0.0",
+    "description": "Illustrating a recursive error in event catalog",
+    "x-generator": "springwolf"
+  },
+  "defaultContentType": "application/json",
+  "servers": {
+    "RabbitMQ": {
+      "host": "localhost:5672",
+      "protocol": "amqp"
+    }
+  },
+  "channels": {
+    "ec-test-dead-letter": {
+      "address": "ec-test-dead-letter",
+      "bindings": {
+        "amqp": {
+          "is": "queue",
+          "queue": {
+            "name": "ec-test-dead-letter",
+            "durable": true,
+            "exclusive": false,
+            "autoDelete": false,
+            "vhost": "/"
+          },
+          "bindingVersion": "0.3.0"
+        }
+      }
+    },
+    "ec-test-dead-letter-exchange_ec-test.dead": {
+      "address": "ec-test.dead",
+      "bindings": {
+        "amqp": {
+          "is": "routingKey",
+          "exchange": {
+            "name": "ec-test-dead-letter-exchange",
+            "vhost": "/"
+          },
+          "bindingVersion": "0.3.0"
+        }
+      }
+    },
+    "ec-test-dead-letter-queue": {
+      "address": "ec-test-dead-letter-queue",
+      "bindings": {
+        "amqp": {
+          "is": "queue",
+          "queue": {
+            "name": "ec-test-dead-letter-queue",
+            "durable": true,
+            "exclusive": false,
+            "autoDelete": false,
+            "vhost": "/"
+          },
+          "bindingVersion": "0.3.0"
+        }
+      }
+    },
+    "ec-test-exchange_ec-test-routingkey": {
+      "address": "ec-test-exchange_ec-test-routingkey",
+      "messages": {
+        "ec.typea-and-typeb-batch": {
+          "$ref": "#/components/messages/ec.typea-and-typeb-batch"
+        }
+      },
+      "bindings": {
+        "amqp": {
+          "is": "routingKey",
+          "exchange": {
+            "name": "ec-test-exchange",
+            "vhost": "/"
+          },
+          "bindingVersion": "0.3.0"
+        }
+      }
+    },
+    "ec-test-queue": {
+      "address": "ec-test-queue",
+      "messages": {
+        "ec.typea-and-typeb-batch": {
+          "$ref": "#/components/messages/ec.typea-and-typeb-batch"
+        }
+      },
+      "bindings": {
+        "amqp": {
+          "is": "routingKey",
+          "exchange": {
+            "name": "ec-test-exchange",
+            "type": "topic",
+            "durable": true,
+            "autoDelete": false,
+            "vhost": "/"
+          },
+          "bindingVersion": "0.3.0"
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "HeadersNotDocumented": {
+        "title": "HeadersNotDocumented",
+        "type": "object",
+        "properties": {},
+        "description": "There can be headers, but they are not explicitly documented.",
+        "examples": [{}]
+      },
+      "SpringRabbitListenerDefaultHeaders": {
+        "title": "SpringRabbitListenerDefaultHeaders",
+        "type": "object",
+        "properties": {},
+        "examples": [{}]
+      },
+      "ec-test.batch-element": {
+        "discriminator": "type",
+        "title": "ElementDto",
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string"
+          }
+        },
+        "description": "An event that has 2 possible deserializations.",
+        "examples": [
+          {
+            "timestamp": "2015-07-20T15:49:04-07:00",
+            "type": "typeA",
+            "typeAid": "string"
+          }
+        ],
+        "required": ["type"],
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/ec.typea"
+          },
+          {
+            "$ref": "#/components/schemas/ec.typeb"
+          }
+        ]
+      },
+      "ec.typea": {
+        "type": "object",
+        "description": "Type A event",
+        "examples": [
+          {
+            "timestamp": "2015-07-20T15:49:04-07:00",
+            "type": "typeA",
+            "typeAid": "string"
+          }
+        ],
+        "required": ["timestamp", "type", "typeAid"],
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ec-test.batch-element"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "timestamp": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "type": {
+                "type": "string",
+                "description": "Type discriminator of the event.",
+                "minLength": 1,
+                "examples": ["typeA"]
+              },
+              "typeAid": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        ]
+      },
+      "ec.typea-and-typeb-batch": {
+        "title": "TypeAAndTypeBBatchDto",
+        "type": "object",
+        "properties": {
+          "events": {
+            "type": "array",
+            "description": "List of events in this batch (mixed types).",
+            "items": {
+              "$ref": "#/components/schemas/ec-test.batch-element"
+            },
+            "minItems": 1
+          }
+        },
+        "examples": [
+          {
+            "events": [
+              {
+                "timestamp": "2015-07-20T15:49:04-07:00",
+                "type": "typeA",
+                "typeAid": "string"
+              }
+            ]
+          }
+        ],
+        "required": ["events"]
+      },
+      "ec.typeb": {
+        "type": "object",
+        "description": "Type B event",
+        "examples": [
+          {
+            "displayName": "string",
+            "type": "typeB",
+            "typeBid": "string"
+          }
+        ],
+        "required": ["displayName", "type", "typeBid"],
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ec-test.batch-element"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "displayName": {
+                "type": "string"
+              },
+              "type": {
+                "type": "string",
+                "description": "Type discriminator of the event.",
+                "minLength": 1,
+                "examples": ["typeB"]
+              },
+              "typeBid": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        ]
+      }
+    },
+    "messages": {
+      "ec.typea-and-typeb-batch": {
+        "headers": {
+          "$ref": "#/components/schemas/HeadersNotDocumented"
+        },
+        "payload": {
+          "schemaFormat": "application/vnd.aai.asyncapi+json;version=3.1.0",
+          "schema": {
+            "$ref": "#/components/schemas/ec.typea-and-typeb-batch"
+          }
+        },
+        "name": "ec.typea-and-typeb-batch",
+        "title": "ec.typea-and-typeb-batch",
+        "bindings": {
+          "amqp": {
+            "bindingVersion": "0.3.0"
+          }
+        }
+      }
+    }
+  },
+  "operations": {
+    "ec-test-exchange_ec-test-routingkey_receive_receiveMessage": {
+      "action": "receive",
+      "channel": {
+        "$ref": "#/channels/ec-test-exchange_ec-test-routingkey"
+      },
+      "title": "ec-test-exchange_ec-test-routingkey_receive",
+      "description": "Listener to polymorphic event with 2 types",
+      "bindings": {
+        "amqp": {
+          "expiration": 0,
+          "cc": [],
+          "priority": 0,
+          "deliveryMode": 1,
+          "mandatory": false,
+          "bcc": [],
+          "timestamp": false,
+          "ack": false,
+          "bindingVersion": "0.3.0"
+        }
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/ec-test-exchange_ec-test-routingkey/messages/ec.typea-and-typeb-batch"
+        }
+      ]
+    },
+    "ec-test-queue_receive_receiveMessage": {
+      "action": "receive",
+      "channel": {
+        "$ref": "#/channels/ec-test-queue"
+      },
+      "bindings": {
+        "amqp": {
+          "expiration": 0,
+          "bindingVersion": "0.3.0"
+        }
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/ec-test-queue/messages/ec.typea-and-typeb-batch"
+        }
+      ]
+    }
+  }
+}
