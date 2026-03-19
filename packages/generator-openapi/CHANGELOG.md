@@ -1,5 +1,11 @@
 # @eventcatalog/generator-openapi
 
+## 7.9.1
+
+### Patch Changes
+
+- 6d25c10: Fix crash when OpenAPI spec responses or request bodies have empty content objects (content: {})
+
 ## 7.9.0
 
 ### Minor Changes
