@@ -3,6 +3,7 @@ import utils from '@eventcatalog/sdk';
 import plugin from '../index';
 import path, { join } from 'node:path';
 import fs from 'fs/promises';
+import { existsSync } from 'node:fs';
 import { vi } from 'vitest';
 
 // Add mock for the local checkLicense module
@@ -250,6 +251,43 @@ describe('GraphQL EventCatalog Plugin', () => {
 
         const path = await getResourcePath(catalogDir, 'petstore-service', '1.1.0');
         expect(toPosix(path?.relativePath || '')).toEqual('/domains/users/services/petstore-service/index.mdx');
+      });
+
+      it('services can be generated into a subdomain folder structure', async () => {
+        const { writeDomain, getService, addSubDomainToDomain } = utils(catalogDir);
+
+        // Create the subdomain directory structure on disk
+        const subdomainDir = join(catalogDir, 'domains', 'Buyer', 'subdomains', 'Agency');
+        await fs.mkdir(subdomainDir, { recursive: true });
+        await fs.writeFile(join(subdomainDir, 'index.mdx'), '---\nid: Agency\nname: Agency Domain\nversion: 1.0.0\n---\n');
+
+        await writeDomain({
+          id: 'Buyer',
+          name: 'Buyer Domain',
+          version: '1.0.0',
+          markdown: '',
+        });
+
+        await addSubDomainToDomain('Buyer', { id: 'Agency', version: '1.0.0' });
+
+        await plugin(config, {
+          services: [
+            {
+              path: join(graphQLExamples, 'simple.graphql'),
+              id: 'user-service',
+              version: '1.0.0',
+              summary: 'User service',
+              name: 'User Service',
+            },
+          ],
+          domain: { id: 'Agency', name: 'Agency Domain', version: '1.0.0' },
+        });
+
+        const service = await getService('user-service', '1.0.0');
+        expect(service).toBeDefined();
+
+        const subdomainServicePath = join(catalogDir, 'domains', 'Buyer', 'subdomains', 'Agency', 'services', 'user-service');
+        expect(existsSync(subdomainServicePath)).toBe(true);
       });
     });
 

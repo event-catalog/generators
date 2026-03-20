@@ -32,7 +32,7 @@
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
   "dependencies": {
-    "@eventcatalog/sdk": "^2.9.6",
+    "@eventcatalog/sdk": "^2.18.2",
     "chalk": "4.1.2",
     "graphql": "^16.11.0",
     "zod": "^3.23.8"

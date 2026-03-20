@@ -137,8 +137,8 @@ importers:
         specifier: '>=7.9.0'
         version: 7.9.0(@types/node@20.19.1)
       '@eventcatalog/sdk':
-        specifier: ^2.9.6
-        version: 2.9.6(@types/node@20.19.1)
+        specifier: ^2.18.2
+        version: 2.18.2
       axios:
         specifier: ^1.13.5
         version: 1.13.6
@@ -174,8 +174,8 @@ importers:
         specifier: 3.6.0
         version: 3.6.0
       '@eventcatalog/sdk':
-        specifier: 2.17.4
-        version: 2.17.4
+        specifier: 2.18.2
+        version: 2.18.2
       chalk:
         specifier: 4.1.2
         version: 4.1.2
@@ -247,8 +247,8 @@ importers:
         specifier: ^2.27.8
         version: 2.29.5
       '@eventcatalog/sdk':
-        specifier: ^2.9.6
-        version: 2.9.6(@types/node@20.19.1)
+        specifier: ^2.18.2
+        version: 2.18.2
       chalk:
         specifier: 4.1.2
         version: 4.1.2
@@ -281,8 +281,8 @@ importers:
         specifier: ^2.27.8
         version: 2.29.5
       '@eventcatalog/sdk':
-        specifier: ^2.9.6
-        version: 2.9.6(@types/node@20.19.1)
+        specifier: ^2.18.2
+        version: 2.18.2
       axios:
         specifier: ^1.13.5
         version: 1.13.6
@@ -315,8 +315,8 @@ importers:
         specifier: ^2.29.6
         version: 2.29.6(@types/node@20.19.1)
       '@eventcatalog/sdk':
-        specifier: ^2.9.6
-        version: 2.9.6(@types/node@20.19.1)
+        specifier: ^2.18.2
+        version: 2.18.2
       axios:
         specifier: ^1.13.5
         version: 1.13.6
@@ -358,8 +358,8 @@ importers:
         specifier: ^2.27.8
         version: 2.29.5
       '@eventcatalog/sdk':
-        specifier: ^2.9.6
-        version: 2.9.6(@types/node@20.19.1)
+        specifier: ^2.18.2
+        version: 2.18.2
       chalk:
         specifier: 4.1.2
         version: 4.1.2
@@ -429,8 +429,8 @@ importers:
   packages/generator-github:
     dependencies:
       '@eventcatalog/sdk':
-        specifier: ^2.9.6
-        version: 2.9.6(@types/node@20.19.1)
+        specifier: ^2.18.2
+        version: 2.18.2
       chalk:
         specifier: 4.1.2
         version: 4.1.2
@@ -466,8 +466,8 @@ importers:
   packages/generator-graphql:
     dependencies:
       '@eventcatalog/sdk':
-        specifier: ^2.9.6
-        version: 2.9.6(@types/node@20.19.1)
+        specifier: ^2.18.2
+        version: 2.18.2
       chalk:
         specifier: 4.1.2
         version: 4.1.2
@@ -506,8 +506,8 @@ importers:
         specifier: ^2.27.7
         version: 2.29.5
       '@eventcatalog/sdk':
-        specifier: 2.17.4
-        version: 2.17.4
+        specifier: ^2.18.2
+        version: 2.18.2
       chalk:
         specifier: 4.1.2
         version: 4.1.2
@@ -1302,6 +1302,9 @@ packages:
 
   '@eventcatalog/sdk@2.17.4':
     resolution: { integrity: sha512-U8VpdzlgKcO8IJ8T2Ap5uUOjV2lh5AWSccBr3xNms1cQeu2JKVjTq7BM4dv0ctHcnB6fj3uYeU3u3fHc5BaSuQ== }
+
+  '@eventcatalog/sdk@2.18.2':
+    resolution: { integrity: sha512-668pBoy5xgTS3WCMp9PIjXEimONtkf9suvw/cB7x5k/JnGA2sd1OZViIdKycABnXmrHgJ0t961cS0MTkaah6Ww== }
 
   '@eventcatalog/sdk@2.9.6':
     resolution: { integrity: sha512-u1/IlS82Su55IJgJivzi5eZp1nfW6Lpf5PPhw1/q3EVlhVDZbEVDVuYtgQlnIGLDi144m4QKtzYCHI8824icLQ== }
@@ -5865,6 +5868,15 @@ snapshots:
       semver: 7.7.3
       slugify: 1.6.6
 
+  '@eventcatalog/sdk@2.18.2':
+    dependencies:
+      fs-extra: 11.3.3
+      glob: 13.0.6
+      gray-matter: 4.0.3
+      proper-lockfile: 4.1.2
+      semver: 7.7.3
+      slugify: 1.6.6
+
   '@eventcatalog/sdk@2.9.6(@types/node@20.19.1)':
     dependencies:
       '@changesets/cli': 2.29.6(@types/node@20.19.1)
@@ -7901,7 +7913,7 @@ snapshots:
       es6-error: 4.1.1
       matcher: 3.0.0
       roarr: 2.15.4
-      semver: 7.7.2
+      semver: 7.7.3
       serialize-error: 7.0.1
 
   global-directory@4.0.1:
@@ -8444,7 +8456,7 @@ snapshots:
       ky: 1.8.1
       registry-auth-token: 5.1.0
       registry-url: 6.0.1
-      semver: 7.7.2
+      semver: 7.7.3
 
   package-manager-detector@0.2.11:
     dependencies:

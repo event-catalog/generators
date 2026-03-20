@@ -243,6 +243,37 @@ describe('EventBridge EventCatalog Plugin', () => {
 
       expect(await getDomain('orders', '1.0.0')).toBeUndefined();
     });
+
+    it('services can be generated into a subdomain folder structure', async () => {
+      const { writeDomain, getDomain, getService, addSubDomainToDomain } = utils(catalogDir);
+
+      // Create the subdomain directory structure on disk
+      const subdomainDir = join(catalogDir, 'domains', 'Buyer', 'subdomains', 'Agency');
+      await fs.mkdir(subdomainDir, { recursive: true });
+      await fs.writeFile(join(subdomainDir, 'index.mdx'), '---\nid: Agency\nname: Agency Domain\nversion: 1.0.0\n---\n');
+
+      await writeDomain({
+        id: 'Buyer',
+        name: 'Buyer Domain',
+        version: '1.0.0',
+        markdown: '',
+      });
+
+      await addSubDomainToDomain('Buyer', { id: 'Agency', version: '1.0.0' });
+
+      await plugin(config, {
+        region: 'us-east-1',
+        registryName: 'discovered-schemas',
+        services: [{ id: 'Orders Service', version: '1.0.0' }],
+        domain: { id: 'Agency', name: 'Agency Domain', version: '1.0.0' },
+      });
+
+      const service = await getService('Orders Service', '1.0.0');
+      expect(service).toBeDefined();
+
+      const subdomainServicePath = join(catalogDir, 'domains', 'Buyer', 'subdomains', 'Agency', 'services', 'Orders Service');
+      expect(existsSync(subdomainServicePath)).toBe(true);
+    });
   });
 
   describe('service', () => {

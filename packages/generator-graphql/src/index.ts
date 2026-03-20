@@ -186,6 +186,7 @@ export default async (_: any, options: Options) => {
     getEvent,
     versionEvent,
     writeEvent,
+    getResourcePath,
   } = utils(process.env.PROJECT_DIR);
 
   const validatedOptions = optionsSchema.parse(options);
@@ -198,9 +199,20 @@ export default async (_: any, options: Options) => {
       console.log(chalk.blue(`Processing service: ${service.name || service.id} (v${service.version})`));
 
       // Have to ../ as the SDK will put the files into hard coded folders
-      let servicePath = options.domain
-        ? join('../', 'domains', options.domain.id, 'services', service.id)
-        : join('../', 'services', service.id);
+      // Use getResourcePath to resolve the actual domain location (supports subdomains)
+      let servicePath = join('../', 'services', service.id);
+      if (options.domain) {
+        const domainResource = await getResourcePath(
+          process.env.PROJECT_DIR as string,
+          options.domain.id,
+          options.domain.version
+        );
+        if (domainResource) {
+          servicePath = join('../', domainResource.directory, 'services', service.id);
+        } else {
+          servicePath = join('../', 'domains', options.domain.id, 'services', service.id);
+        }
+      }
 
       if (options.writeFilesToRoot) {
         servicePath = service.id;

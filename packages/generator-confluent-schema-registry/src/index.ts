@@ -41,6 +41,7 @@ export default async (config: EventCatalogConfig, options: GeneratorProps) => {
     addServiceToDomain,
     writeChannel,
     getChannel,
+    getResourcePath,
   } = utils(eventCatalogDirectory);
 
   // Check for license and package update
@@ -191,7 +192,16 @@ export default async (config: EventCatalogConfig, options: GeneratorProps) => {
           : {}),
       };
 
-      let servicePath = options.domain ? path.join('../', 'domains', options.domain.id, 'services', service.id) : pathToService;
+      // Use getResourcePath to resolve the actual domain location (supports subdomains)
+      let servicePath = pathToService;
+      if (options.domain) {
+        const domainResource = await getResourcePath(eventCatalogDirectory, options.domain.id, options.domain.version);
+        if (domainResource) {
+          servicePath = path.join('../', domainResource.directory, 'services', service.id);
+        } else {
+          servicePath = path.join('../', 'domains', options.domain.id, 'services', service.id);
+        }
+      }
 
       await writeService(serviceToWrite, { path: servicePath, override: serviceInCatalog?.version === service.version });
 

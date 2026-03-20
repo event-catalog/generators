@@ -26,7 +26,7 @@ export default async (_: EventCatalogConfig, options: GeneratorProps) => {
     throw new Error('Please provide catalog url (env variable PROJECT_DIR)');
   }
 
-  const { getService, versionService, writeService, getDomain, versionDomain, writeDomain, addServiceToDomain } =
+  const { getService, versionService, writeService, getDomain, versionDomain, writeDomain, addServiceToDomain, getResourcePath } =
     utils(eventCatalogDirectory);
 
   if (!options.source) {
@@ -140,7 +140,16 @@ export default async (_: EventCatalogConfig, options: GeneratorProps) => {
           : {}),
       };
 
-      let servicePath = options.domain ? path.join('../', 'domains', options.domain.id, 'services', service.id) : pathToService;
+      // Use getResourcePath to resolve the actual domain location (supports subdomains)
+      let servicePath = pathToService;
+      if (options.domain) {
+        const domainResource = await getResourcePath(eventCatalogDirectory, options.domain.id, options.domain.version);
+        if (domainResource) {
+          servicePath = path.join('../', domainResource.directory, 'services', service.id);
+        } else {
+          servicePath = path.join('../', 'domains', options.domain.id, 'services', service.id);
+        }
+      }
       // @ts-ignore
       await writeService(serviceToWrite, { path: servicePath, override: serviceInCatalog?.version === service.version });
 

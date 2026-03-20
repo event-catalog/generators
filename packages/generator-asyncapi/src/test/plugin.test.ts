@@ -130,6 +130,50 @@ describe('AsyncAPI EventCatalog Plugin', () => {
         },
         { timeout: 20000 }
       );
+
+      describe('subdomains', () => {
+        it('services can be generated into a subdomain folder structure (e.g. domains/Buyer/subdomains/Agency/services/AgencyService)', async () => {
+          const { writeDomain, getDomain, getService, addSubDomainToDomain } = utils(catalogDir);
+
+          // Create the subdomain directory structure on disk to simulate
+          // an existing catalog with subdomains
+          const subdomainDir = join(catalogDir, 'domains', 'Buyer', 'subdomains', 'Agency');
+          await fs.mkdir(subdomainDir, { recursive: true });
+          await fs.writeFile(join(subdomainDir, 'index.mdx'), '---\nid: Agency\nname: Agency Domain\nversion: 1.0.0\n---\n');
+
+          // Create the parent domain "Buyer"
+          await writeDomain({
+            id: 'Buyer',
+            name: 'Buyer Domain',
+            version: '1.0.0',
+            markdown: '',
+          });
+
+          await addSubDomainToDomain('Buyer', { id: 'Agency', version: '1.0.0' });
+
+          // Generate service into the "Agency" subdomain under "Buyer"
+          await plugin(config, {
+            services: [{ path: join(asyncAPIExamplesDir, 'simple.asyncapi.yml'), id: 'account-service' }],
+            domain: { id: 'Agency', name: 'Agency Domain', version: '1.0.0' },
+          });
+
+          // Verify the service was created
+          const service = await getService('account-service', '1.0.0');
+          expect(service).toBeDefined();
+
+          // The service files should be under the subdomain path
+          const subdomainServicePath = join(
+            catalogDir,
+            'domains',
+            'Buyer',
+            'subdomains',
+            'Agency',
+            'services',
+            'account-service'
+          );
+          expect(existsSync(subdomainServicePath)).toBe(true);
+        });
+      });
     });
 
     describe('domain options', () => {

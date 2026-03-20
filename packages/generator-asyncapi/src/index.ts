@@ -207,6 +207,7 @@ export default async (config: any, options: Props) => {
     addSchemaToQuery,
     addFileToService,
     versionDomain,
+    getResourcePath,
     getSpecificationFilesForService,
     writeChannel,
     getChannel,
@@ -316,14 +317,6 @@ export default async (config: any, options: Props) => {
         })
       : generatedMarkdownForService;
     let styles = null;
-    // Have to ../ as the SDK will put the files into hard coded folders
-    let servicePath = options.domain
-      ? path.join('../', 'domains', options.domain.id, 'services', service.id)
-      : path.join('../', 'services', service.id);
-    if (options.writeFilesToRoot) {
-      servicePath = service.id;
-    }
-
     // Manage domain
     if (options.domain) {
       // Try and get the domain
@@ -363,6 +356,21 @@ export default async (config: any, options: Props) => {
 
       // Add the service to the domain
       await addServiceToDomain(domainId, { id: serviceId, version: version }, domainVersion);
+    }
+
+    // Have to ../ as the SDK will put the files into hard coded folders
+    // Use getResourcePath to resolve the actual domain location (supports subdomains)
+    let servicePath = path.join('../', 'services', service.id);
+    if (options.domain) {
+      const domainResource = await getResourcePath(process.env.PROJECT_DIR as string, options.domain.id, options.domain.version);
+      if (domainResource) {
+        servicePath = path.join('../', domainResource.directory, 'services', service.id);
+      } else {
+        servicePath = path.join('../', 'domains', options.domain.id, 'services', service.id);
+      }
+    }
+    if (options.writeFilesToRoot) {
+      servicePath = service.id;
     }
 
     // Parse channels

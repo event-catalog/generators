@@ -357,6 +357,44 @@ describe('Apicurio Registry EventCatalog Plugin', () => {
       const ordersService = await existsSync(join(catalogDir, 'domains', 'orders', 'services', 'orders-service'));
       expect(ordersService).toBeTruthy();
     });
+
+    it('services can be generated into a subdomain folder structure', async () => {
+      const { writeDomain, getService, addSubDomainToDomain } = utils(catalogDir);
+
+      // Create the subdomain directory structure on disk
+      const subdomainDir = join(catalogDir, 'domains', 'Buyer', 'subdomains', 'Agency');
+      await fs.mkdir(subdomainDir, { recursive: true });
+      await fs.writeFile(join(subdomainDir, 'index.mdx'), '---\nid: Agency\nname: Agency Domain\nversion: 1.0.0\n---\n');
+
+      await writeDomain({
+        id: 'Buyer',
+        name: 'Buyer Domain',
+        version: '1.0.0',
+        markdown: '',
+      });
+
+      await addSubDomainToDomain('Buyer', { id: 'Agency', version: '1.0.0' });
+
+      await plugin(config, {
+        registryUrl: 'http://localhost:8080',
+        services: [
+          {
+            id: 'orders-service',
+            name: 'Orders Service',
+            version: '1.0.0',
+            sends: [{ events: ['order-placed'] }],
+            receives: [{ commands: ['place-order'] }],
+          },
+        ],
+        domain: { id: 'Agency', name: 'Agency Domain', version: '1.0.0' },
+      });
+
+      const service = await getService('orders-service', '1.0.0');
+      expect(service).toBeDefined();
+
+      const subdomainServicePath = join(catalogDir, 'domains', 'Buyer', 'subdomains', 'Agency', 'services', 'orders-service');
+      expect(existsSync(subdomainServicePath)).toBe(true);
+    });
   });
 
   describe('filtering (prefix, suffix, exact)', () => {

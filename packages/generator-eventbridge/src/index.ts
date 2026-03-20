@@ -161,6 +161,7 @@ export default async (config: EventCatalogConfig, options: GeneratorProps) => {
     versionService,
     getSpecificationFilesForService,
     rmServiceById,
+    getResourcePath,
   } = utils(eventCatalogDirectory);
 
   const events = await fetchSchemasForRegistry(schemasClient)(options.registryName, mapEventsBy);
@@ -192,15 +193,6 @@ export default async (config: EventCatalogConfig, options: GeneratorProps) => {
     }
 
     const eventsToWrite = [...sendsEvents, ...receivesEvents];
-
-    // Path to write the service to
-    // Have to ../ as the SDK will put the files into hard coded folders
-    let servicePath = options.domain
-      ? path.join('../', 'domains', options.domain.id, 'services', service.id)
-      : path.join('../', 'services', service.id);
-    if (options.writeFilesToRoot || service.writeToRoot) {
-      servicePath = service.id;
-    }
 
     // Manage domain
     if (options.domain) {
@@ -238,6 +230,21 @@ export default async (config: EventCatalogConfig, options: GeneratorProps) => {
 
       // Add the service to the domain
       await addServiceToDomain(domainId, { id: service.id, version: service.version }, domainVersion);
+    }
+
+    // Have to ../ as the SDK will put the files into hard coded folders
+    // Use getResourcePath to resolve the actual domain location (supports subdomains)
+    let servicePath = path.join('../', 'services', service.id);
+    if (options.domain) {
+      const domainResource = await getResourcePath(eventCatalogDirectory, options.domain.id, options.domain.version);
+      if (domainResource) {
+        servicePath = path.join('../', domainResource.directory, 'services', service.id);
+      } else {
+        servicePath = path.join('../', 'domains', options.domain.id, 'services', service.id);
+      }
+    }
+    if (options.writeFilesToRoot || service.writeToRoot) {
+      servicePath = service.id;
     }
 
     // Check if service is already defined... if the versions do not match then create service.
