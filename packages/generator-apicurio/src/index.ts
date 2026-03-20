@@ -122,6 +122,7 @@ export default async (config: EventCatalogConfig, options: GeneratorProps) => {
     addServiceToDomain,
     addFileToService,
     getSpecificationFilesForService,
+    getResourcePath,
   } = utils(eventCatalogDirectory);
 
   // Check for license and package update
@@ -261,7 +262,16 @@ export default async (config: EventCatalogConfig, options: GeneratorProps) => {
           : {}),
       };
 
-      let servicePath = options.domain ? path.join('../', 'domains', options.domain.id, 'services', service.id) : pathToService;
+      // Use getResourcePath to resolve the actual domain location (supports subdomains)
+      let servicePath = pathToService;
+      if (options.domain) {
+        const domainResource = await getResourcePath(eventCatalogDirectory, options.domain.id, options.domain.version);
+        if (domainResource) {
+          servicePath = path.join('../', domainResource.directory, 'services', service.id);
+        } else {
+          servicePath = path.join('../', 'domains', options.domain.id, 'services', service.id);
+        }
+      }
 
       // Get existing specifications from the service in catalog (it's an object like { openapiPath: 'file.yaml' })
       let existingSpecifications: Record<string, string> = {};
@@ -333,9 +343,15 @@ export default async (config: EventCatalogConfig, options: GeneratorProps) => {
       for (const { specConfig, fileName, content } of specsWithGenerators) {
         // Build the absolute path to the spec file
         // Use domain path if domain is configured, otherwise use root services path
-        const specFilePath = options.domain
-          ? path.join(eventCatalogDirectory, 'domains', options.domain.id, 'services', service.id, fileName)
-          : path.join(eventCatalogDirectory, 'services', service.id, fileName);
+        let specFilePath = path.join(eventCatalogDirectory, 'services', service.id, fileName);
+        if (options.domain) {
+          const domainResource = await getResourcePath(eventCatalogDirectory, options.domain.id, options.domain.version);
+          if (domainResource) {
+            specFilePath = path.join(eventCatalogDirectory, domainResource.directory, 'services', service.id, fileName);
+          } else {
+            specFilePath = path.join(eventCatalogDirectory, 'domains', options.domain.id, 'services', service.id, fileName);
+          }
+        }
 
         // Ensure the directory exists and write the spec file directly
         // This ensures the file is available for the generator at the expected path

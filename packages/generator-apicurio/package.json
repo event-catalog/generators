@@ -32,7 +32,7 @@
   "types": "./dist/index.d.ts",
   "dependencies": {
     "@changesets/cli": "^2.27.8",
-    "@eventcatalog/sdk": "^2.9.6",
+    "@eventcatalog/sdk": "^2.18.2",
     "axios": "^1.13.5",
     "chalk": "4.1.2",
     "update-notifier": "^7.3.1"

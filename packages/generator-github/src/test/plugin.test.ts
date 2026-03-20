@@ -851,6 +851,42 @@ describe('generator-github', () => {
       const versionedFolder = await existsSync(join(catalogDir, 'domains', 'orders', 'versioned'));
       expect(versionedFolder).toBeTruthy();
     }, 20000);
+
+    it('services can be generated into a subdomain folder structure', async () => {
+      const { writeDomain, getService, addSubDomainToDomain } = utils(catalogDir);
+
+      // Create the subdomain directory structure on disk
+      const subdomainDir = join(catalogDir, 'domains', 'Buyer', 'subdomains', 'Agency');
+      await fs.mkdir(subdomainDir, { recursive: true });
+      await fs.writeFile(join(subdomainDir, 'index.mdx'), '---\nid: Agency\nname: Agency Domain\nversion: 1.0.0\n---\n');
+
+      await writeDomain({
+        id: 'Buyer',
+        name: 'Buyer Domain',
+        version: '1.0.0',
+        markdown: '',
+      });
+
+      await addSubDomainToDomain('Buyer', { id: 'Agency', version: '1.0.0' });
+
+      await plugin(eventCatalogConfig, {
+        source: 'https://github.com/event-catalog/eventcatalog.git',
+        path: 'examples/default',
+        domain: { id: 'Agency', name: 'Agency Domain', version: '1.0.0' },
+        services: [
+          {
+            id: 'Orders Service',
+            version: '1.0.0',
+          },
+        ],
+      });
+
+      const service = await getService('Orders Service', '1.0.0');
+      expect(service).toBeDefined();
+
+      const subdomainServicePath = join(catalogDir, 'domains', 'Buyer', 'subdomains', 'Agency', 'services', 'Orders Service');
+      expect(existsSync(subdomainServicePath)).toBe(true);
+    }, 20000);
   });
 
   it(

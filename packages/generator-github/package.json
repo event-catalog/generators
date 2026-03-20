@@ -37,7 +37,7 @@
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
   "dependencies": {
-    "@eventcatalog/sdk": "^2.9.6",
+    "@eventcatalog/sdk": "^2.18.2",
     "chalk": "4.1.2",
     "fs-extra": "^11.2.0",
     "update-notifier": "^7.3.1"

@@ -88,6 +88,7 @@ export default async (_: any, options: Props) => {
     versionService,
     writeService,
     addFileToService,
+    getResourcePath,
   } = utils(process.env.PROJECT_DIR);
 
   const { services = [], saveParsedSpecFile = false } = options;
@@ -157,14 +158,6 @@ export default async (_: any, options: Props) => {
         // @ts-ignore
         isDomainMarkedAsDraft || document.info?.['x-eventcatalog-draft'] || serviceSpec.draft || null;
 
-      // Have to ../ as the SDK will put the files into hard coded folders
-      let servicePath = options.domain
-        ? join('../', 'domains', options.domain.id, 'services', service.id)
-        : join('../', 'services', service.id);
-      if (options.writeFilesToRoot) {
-        servicePath = service.id;
-      }
-
       // Manage domain
       if (options.domain) {
         // Try and get the domain
@@ -202,6 +195,25 @@ export default async (_: any, options: Props) => {
 
         // Add the service to the domain
         await addServiceToDomain(domainId, { id: service.id, version: service.version }, domainVersion);
+      }
+
+      // Have to ../ as the SDK will put the files into hard coded folders
+      // Use getResourcePath to resolve the actual domain location (supports subdomains)
+      let servicePath = join('../', 'services', service.id);
+      if (options.domain) {
+        const domainResource = await getResourcePath(
+          process.env.PROJECT_DIR as string,
+          options.domain.id,
+          options.domain.version
+        );
+        if (domainResource) {
+          servicePath = join('../', domainResource.directory, 'services', service.id);
+        } else {
+          servicePath = join('../', 'domains', options.domain.id, 'services', service.id);
+        }
+      }
+      if (options.writeFilesToRoot) {
+        servicePath = service.id;
       }
 
       // Check if service is already defined... if the versions do not match then create service.

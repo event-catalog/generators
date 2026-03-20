@@ -209,6 +209,56 @@ describe('OpenAPI EventCatalog Plugin', () => {
           });
         });
       });
+
+      describe('subdomains', () => {
+        it('services can be generated into a subdomain folder structure (e.g. domains/Buyer/subdomains/Agency/services/AgencyLeadsService)', async () => {
+          const { writeDomain, getDomain, getService, addSubDomainToDomain } = utils(catalogDir);
+
+          // Create the subdomain directory structure on disk to simulate
+          // an existing catalog with subdomains (e.g. created via EventCatalog UI)
+          const subdomainDir = join(catalogDir, 'domains', 'Buyer', 'subdomains', 'Agency');
+          await fs.mkdir(subdomainDir, { recursive: true });
+          await fs.writeFile(join(subdomainDir, 'index.mdx'), '---\nid: Agency\nname: Agency Domain\nversion: 1.0.0\n---\n');
+
+          // Create the parent domain "Buyer"
+          await writeDomain({
+            id: 'Buyer',
+            name: 'Buyer Domain',
+            version: '1.0.0',
+            markdown: '',
+          });
+
+          await addSubDomainToDomain('Buyer', { id: 'Agency', version: '1.0.0' });
+
+          // Generate service into the "Agency" subdomain under "Buyer"
+          // The generator should resolve that Agency lives at domains/Buyer/subdomains/Agency
+          await plugin(config, {
+            services: [{ path: join(openAPIExamples, 'petstore.yml'), id: 'swagger-petstore' }],
+            domain: { id: 'Agency', name: 'Agency Domain', version: '1.0.0' },
+          });
+
+          // Verify the service was created
+          const service = await getService('swagger-petstore', '1.0.0');
+          expect(service).toBeDefined();
+
+          // Verify the parent domain still exists
+          const parentDomain = await getDomain('Buyer', '1.0.0');
+          expect(parentDomain).toBeDefined();
+
+          // The service files should be under the subdomain path:
+          // domains/Buyer/subdomains/Agency/services/swagger-petstore
+          const subdomainServicePath = join(
+            catalogDir,
+            'domains',
+            'Buyer',
+            'subdomains',
+            'Agency',
+            'services',
+            'swagger-petstore'
+          );
+          expect(existsSync(subdomainServicePath)).toBe(true);
+        });
+      });
     });
 
     describe('services', () => {
