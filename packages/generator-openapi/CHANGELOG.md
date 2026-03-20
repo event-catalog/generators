@@ -1,5 +1,11 @@
 # @eventcatalog/generator-openapi
 
+## 7.10.0
+
+### Minor Changes
+
+- e87d4a3: Support generating services into subdomain folder structures. Generators now use getResourcePath to resolve the actual domain location on disk instead of hardcoding the path, enabling nested subdomain paths like domains/Buyer/subdomains/Agency/services/MyService.
+
 ## 7.9.1
 
 ### Patch Changes
