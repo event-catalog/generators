@@ -1,6 +1,6 @@
 {
   "name": "@eventcatalog/generator-graphql",
-  "version": "0.0.9",
+  "version": "0.1.0",
   "description": "GraphQL generator for EventCatalog.",
   "scripts": {
     "build": "tsup",
