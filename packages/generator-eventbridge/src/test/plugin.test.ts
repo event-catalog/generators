@@ -328,6 +328,41 @@ describe('EventBridge EventCatalog Plugin', () => {
       );
     });
 
+    it('when the service is already defined and the versions match, child directories (e.g. containers) inside the service are preserved', async () => {
+      const { writeService, getService } = utils(catalogDir);
+
+      // Pre-create the service
+      await writeService({
+        id: 'Orders Service',
+        version: '1.0.0',
+        name: 'Orders Service',
+        markdown: 'existing markdown',
+      });
+
+      // Create a containers subdirectory with a file inside the service directory
+      const containersDir = path.join(catalogDir, 'services', 'Orders Service', 'containers', 'my-db');
+      await fs.mkdir(containersDir, { recursive: true });
+      await fs.writeFile(
+        path.join(containersDir, 'index.mdx'),
+        '---\nid: my-db\nname: My DB\nversion: 1.0.0\n---\nDB schema docs'
+      );
+
+      // Run the generator with the same version
+      await plugin(config, {
+        region: 'us-east-1',
+        registryName: 'discovered-schemas',
+        services: [{ id: 'Orders Service', version: '1.0.0' }],
+      });
+
+      // Service should still exist
+      const service = await getService('Orders Service');
+      expect(service).toBeDefined();
+
+      // The containers directory and its contents should be preserved
+      expect(existsSync(containersDir)).toBe(true);
+      expect(existsSync(path.join(containersDir, 'index.mdx'))).toBe(true);
+    });
+
     it('when the service is already defined in EventCatalog and the versions do not match, a new service is created and the old one is versioned', async () => {
       const { writeService, getService } = utils(catalogDir);
 
