@@ -1,5 +1,11 @@
 # @eventcatalog/generator-eventbridge
 
+## 3.4.1
+
+### Patch Changes
+
+- 84a8c06: fix(eventbridge): preserve child directories (e.g. containers) when re-generating services with matching versions
+
 ## 3.4.0
 
 ### Minor Changes
