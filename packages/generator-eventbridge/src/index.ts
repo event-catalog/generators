@@ -293,7 +293,8 @@ export default async (config: EventCatalogConfig, options: GeneratorProps) => {
           latestServiceInCatalog.id,
           latestServiceInCatalog.version
         );
-        await rmServiceById(service.id);
+        // Removed rmServiceById - writeService with override:true handles overwriting
+        // and rmServiceById deletes the entire directory including child resources (e.g. containers)
       }
     }
 
