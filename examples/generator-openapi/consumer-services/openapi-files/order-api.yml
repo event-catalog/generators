@@ -1,0 +1,252 @@
+openapi: 3.0.0
+info:
+  title: Order API
+  description: API for managing orders, payments, and shipping in the e-commerce platform.
+  version: 1.0.0
+servers:
+  - url: https://api.example.com/orders
+    description: Order API Server
+paths:
+  /orders:
+    get:
+      summary: List all orders
+      description: Retrieve a list of all orders.
+      x-eventcatalog-message-type: query
+      operationId: listOrders
+      responses:
+        '200':
+          description: A list of orders
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Order'
+    post:
+      summary: Create an order
+      description: Place a new order.
+      x-eventcatalog-message-type: command
+      operationId: createOrder
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderRequest'
+      responses:
+        '201':
+          description: Order created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+  /orders/{orderId}:
+    get:
+      summary: Get order details
+      description: Retrieve details for a specific order.
+      x-eventcatalog-message-type: query
+      operationId: getOrder
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Order details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+  /orders/{orderId}/payments:
+    post:
+      summary: Process payment for an order
+      description: Submit payment for a specific order.
+      x-eventcatalog-message-type: command
+      operationId: processPayment
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentRequest'
+      responses:
+        '200':
+          description: Payment processed
+    get:
+      summary: Get payment status
+      description: Get the payment status for an order.
+      x-eventcatalog-message-type: query
+      operationId: getPaymentStatus
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Payment status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentStatus'
+  /orders/{orderId}/shipments:
+    post:
+      summary: Create shipment for an order
+      description: Initiate shipping for a specific order.
+      x-eventcatalog-message-type: command
+      operationId: createShipment
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ShipmentRequest'
+      responses:
+        '201':
+          description: Shipment created
+    get:
+      summary: Get shipment tracking
+      description: Get shipping details for an order.
+      x-eventcatalog-message-type: query
+      operationId: getShipmentTracking
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Shipment tracking details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShipmentTracking'
+  /orders/{orderId}/notifications:
+    post:
+      summary: Send order notification
+      description: Send a notification about an order update.
+      x-eventcatalog-message-type: event
+      operationId: sendOrderNotification
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NotificationRequest'
+      responses:
+        '200':
+          description: Notification sent
+components:
+  schemas:
+    Order:
+      type: object
+      properties:
+        id:
+          type: string
+        status:
+          type: string
+          enum: [pending, paid, shipped, delivered]
+        total:
+          type: number
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderItem'
+    OrderItem:
+      type: object
+      properties:
+        productId:
+          type: string
+        quantity:
+          type: integer
+        price:
+          type: number
+    OrderRequest:
+      type: object
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderItem'
+    PaymentRequest:
+      type: object
+      required:
+        - amount
+        - method
+      properties:
+        amount:
+          type: number
+        method:
+          type: string
+          enum: [credit_card, bank_transfer, wallet]
+    PaymentStatus:
+      type: object
+      properties:
+        orderId:
+          type: string
+        status:
+          type: string
+          enum: [pending, completed, failed]
+        amount:
+          type: number
+    ShipmentRequest:
+      type: object
+      required:
+        - address
+      properties:
+        address:
+          type: string
+        carrier:
+          type: string
+    ShipmentTracking:
+      type: object
+      properties:
+        orderId:
+          type: string
+        trackingNumber:
+          type: string
+        status:
+          type: string
+          enum: [preparing, in_transit, delivered]
+    NotificationRequest:
+      type: object
+      required:
+        - type
+        - message
+      properties:
+        type:
+          type: string
+          enum: [email, sms, push]
+        message:
+          type: string
+    ErrorResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+        message:
+          type: string
