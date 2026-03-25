@@ -2363,4 +2363,884 @@ describe('OpenAPI EventCatalog Plugin', () => {
       });
     });
   });
+
+  describe('consumer services', () => {
+    describe('basic consumer configuration', () => {
+      it('creates a consumer service that receives ALL messages from the OpenAPI spec when no route filters are provided', async () => {
+        const { getService } = utils(catalogDir);
+
+        await plugin(config, {
+          services: [
+            {
+              path: join(openAPIExamples, 'petstore.yml'),
+              id: 'swagger-petstore',
+              consumers: [{ id: 'orders-service', version: '1.0.0' }],
+            },
+          ],
+        });
+
+        const consumer = await getService('orders-service', '1.0.0');
+
+        expect(consumer).toBeDefined();
+        expect(consumer.id).toEqual('orders-service');
+        expect(consumer.version).toEqual('1.0.0');
+
+        // petstore.yml has 7 operations, consumer should receive all of them
+        expect(consumer.receives).toHaveLength(7);
+        expect(consumer.receives).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({ id: 'list-pets' }),
+            expect.objectContaining({ id: 'createPets' }),
+            expect.objectContaining({ id: 'showPetById' }),
+            expect.objectContaining({ id: 'updatePet' }),
+            expect.objectContaining({ id: 'deletePet' }),
+            expect.objectContaining({ id: 'petAdopted' }),
+            expect.objectContaining({ id: 'petVaccinated' }),
+          ])
+        );
+      });
+
+      it('creates multiple consumer services for the same OpenAPI spec', async () => {
+        const { getService } = utils(catalogDir);
+
+        await plugin(config, {
+          services: [
+            {
+              path: join(openAPIExamples, 'petstore.yml'),
+              id: 'swagger-petstore',
+              consumers: [
+                { id: 'orders-service', version: '1.0.0' },
+                { id: 'notifications-service', version: '2.0.0' },
+              ],
+            },
+          ],
+        });
+
+        const ordersConsumer = await getService('orders-service', '1.0.0');
+        const notificationsConsumer = await getService('notifications-service', '2.0.0');
+
+        expect(ordersConsumer).toBeDefined();
+        expect(notificationsConsumer).toBeDefined();
+
+        // Both should receive all messages when no filters
+        expect(ordersConsumer.receives).toHaveLength(7);
+        expect(notificationsConsumer.receives).toHaveLength(7);
+      });
+
+      it('consumer service defaults to version 1.0.0 when no version is specified', async () => {
+        const { getService } = utils(catalogDir);
+
+        await plugin(config, {
+          services: [
+            {
+              path: join(openAPIExamples, 'petstore.yml'),
+              id: 'swagger-petstore',
+              consumers: [{ id: 'orders-service' }],
+            },
+          ],
+        });
+
+        const consumer = await getService('orders-service', '1.0.0');
+
+        expect(consumer).toBeDefined();
+        expect(consumer.version).toEqual('1.0.0');
+      });
+
+      it('does not overwrite an existing consumer service, only updates its receives', async () => {
+        const { writeService, getService } = utils(catalogDir);
+
+        // Pre-create the consumer service with custom markdown and existing receives
+        await writeService({
+          id: 'orders-service',
+          version: '1.0.0',
+          name: 'Orders Service',
+          markdown: '# My custom markdown',
+          sends: [{ id: 'OrderPlaced', version: '1.0.0' }],
+        });
+
+        await plugin(config, {
+          services: [
+            {
+              path: join(openAPIExamples, 'petstore.yml'),
+              id: 'swagger-petstore',
+              consumers: [{ id: 'orders-service', version: '1.0.0' }],
+            },
+          ],
+        });
+
+        const consumer = await getService('orders-service', '1.0.0');
+
+        expect(consumer).toBeDefined();
+        expect(consumer.name).toEqual('Orders Service');
+        expect(consumer.markdown).toEqual('# My custom markdown');
+        // Existing sends should be preserved
+        expect(consumer.sends).toEqual(expect.arrayContaining([expect.objectContaining({ id: 'OrderPlaced' })]));
+        // New receives should be added
+        expect(consumer.receives).toHaveLength(7);
+      });
+
+      it('merges receives with existing receives on the consumer service without duplicates', async () => {
+        const { writeService, getService } = utils(catalogDir);
+
+        // Pre-create consumer with some existing receives
+        await writeService({
+          id: 'orders-service',
+          version: '1.0.0',
+          name: 'Orders Service',
+          markdown: '',
+          receives: [
+            { id: 'list-pets', version: '5.0.0' },
+            { id: 'SomeOtherMessage', version: '1.0.0' },
+          ],
+        });
+
+        await plugin(config, {
+          services: [
+            {
+              path: join(openAPIExamples, 'petstore.yml'),
+              id: 'swagger-petstore',
+              consumers: [{ id: 'orders-service', version: '1.0.0' }],
+            },
+          ],
+        });
+
+        const consumer = await getService('orders-service', '1.0.0');
+
+        // Should have the existing SomeOtherMessage + all 7 petstore messages (list-pets deduplicated)
+        expect(consumer.receives).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({ id: 'SomeOtherMessage', version: '1.0.0' }),
+            expect.objectContaining({ id: 'list-pets' }),
+            expect.objectContaining({ id: 'createPets' }),
+            expect.objectContaining({ id: 'showPetById' }),
+            expect.objectContaining({ id: 'updatePet' }),
+            expect.objectContaining({ id: 'deletePet' }),
+            expect.objectContaining({ id: 'petAdopted' }),
+            expect.objectContaining({ id: 'petVaccinated' }),
+          ])
+        );
+
+        // list-pets should not be duplicated
+        const listPetsEntries = consumer.receives.filter((r: any) => r.id === 'list-pets');
+        expect(listPetsEntries).toHaveLength(1);
+      });
+
+      it('when a consumer already has a receive with an older version, the version is updated to the latest generated version', async () => {
+        const { writeService, getService } = utils(catalogDir);
+
+        // Pre-create consumer with an outdated version of list-pets
+        await writeService({
+          id: 'orders-service',
+          version: '1.0.0',
+          name: 'Orders Service',
+          markdown: '',
+          receives: [
+            { id: 'list-pets', version: '0.0.1' },
+            { id: 'createPets', version: '0.5.0' },
+          ],
+        });
+
+        await plugin(config, {
+          services: [
+            {
+              path: join(openAPIExamples, 'petstore.yml'),
+              id: 'swagger-petstore',
+              consumers: [{ id: 'orders-service', version: '1.0.0' }],
+            },
+          ],
+        });
+
+        const consumer = await getService('orders-service', '1.0.0');
+
+        // list-pets should be updated to the version from the OpenAPI spec (5.0.0 via x-eventcatalog-message-version)
+        const listPets = consumer.receives.find((r: any) => r.id === 'list-pets');
+        expect(listPets).toBeDefined();
+        expect(listPets.version).toEqual('5.0.0');
+
+        // createPets should be updated to the version from the OpenAPI spec (1.0.0)
+        const createPets = consumer.receives.find((r: any) => r.id === 'createPets');
+        expect(createPets).toBeDefined();
+        expect(createPets.version).toEqual('1.0.0');
+
+        // No duplicates
+        const listPetsEntries = consumer.receives.filter((r: any) => r.id === 'list-pets');
+        expect(listPetsEntries).toHaveLength(1);
+        const createPetsEntries = consumer.receives.filter((r: any) => r.id === 'createPets');
+        expect(createPetsEntries).toHaveLength(1);
+      });
+
+      it('when a consumer has a receive without a version, it is left as-is (already latest)', async () => {
+        const { writeService, getService } = utils(catalogDir);
+
+        // Pre-create consumer with a receive that has no version (meaning "latest")
+        await writeService({
+          id: 'orders-service',
+          version: '1.0.0',
+          name: 'Orders Service',
+          markdown: '',
+          receives: [{ id: 'SomeExternalMessage' }],
+        });
+
+        await plugin(config, {
+          services: [
+            {
+              path: join(openAPIExamples, 'petstore.yml'),
+              id: 'swagger-petstore',
+              consumers: [{ id: 'orders-service', version: '1.0.0' }],
+            },
+          ],
+        });
+
+        const consumer = await getService('orders-service', '1.0.0');
+
+        // SomeExternalMessage should still be there without a version (untouched)
+        const externalMsg = consumer.receives.find((r: any) => r.id === 'SomeExternalMessage');
+        expect(externalMsg).toBeDefined();
+        expect(externalMsg.version).toBeUndefined();
+      });
+
+      it('the producer service sends array is not affected by consumer configuration', async () => {
+        const { getService } = utils(catalogDir);
+
+        await plugin(config, {
+          services: [
+            {
+              path: join(openAPIExamples, 'petstore.yml'),
+              id: 'swagger-petstore',
+              consumers: [{ id: 'orders-service', version: '1.0.0' }],
+            },
+          ],
+        });
+
+        const producer = await getService('swagger-petstore', '1.0.0');
+
+        // Producer service should still have its normal sends/receives unchanged
+        expect(producer).toBeDefined();
+        expect(producer.sends).toBeDefined();
+      });
+    });
+
+    describe('route filtering - exact path match', () => {
+      it('consumer receives only messages matching the exact path', async () => {
+        const { getService } = utils(catalogDir);
+
+        await plugin(config, {
+          services: [
+            {
+              path: join(openAPIExamples, 'petstore.yml'),
+              id: 'swagger-petstore',
+              consumers: [
+                {
+                  id: 'orders-service',
+                  version: '1.0.0',
+                  routes: [{ path: '/pets' }],
+                },
+              ],
+            },
+          ],
+        });
+
+        const consumer = await getService('orders-service', '1.0.0');
+
+        // /pets has GET (listPets) and POST (createPets)
+        expect(consumer.receives).toHaveLength(2);
+        expect(consumer.receives).toEqual(
+          expect.arrayContaining([expect.objectContaining({ id: 'list-pets' }), expect.objectContaining({ id: 'createPets' })])
+        );
+      });
+
+      it('consumer receives messages matching multiple exact paths', async () => {
+        const { getService } = utils(catalogDir);
+
+        await plugin(config, {
+          services: [
+            {
+              path: join(openAPIExamples, 'petstore.yml'),
+              id: 'swagger-petstore',
+              consumers: [
+                {
+                  id: 'orders-service',
+                  version: '1.0.0',
+                  routes: [{ path: ['/pets', '/pets/{petId}/adopted'] }],
+                },
+              ],
+            },
+          ],
+        });
+
+        const consumer = await getService('orders-service', '1.0.0');
+
+        // /pets has listPets + createPets, /pets/{petId}/adopted has petAdopted
+        expect(consumer.receives).toHaveLength(3);
+        expect(consumer.receives).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({ id: 'list-pets' }),
+            expect.objectContaining({ id: 'createPets' }),
+            expect.objectContaining({ id: 'petAdopted' }),
+          ])
+        );
+      });
+
+      it('consumer receives no messages when exact path does not match any route', async () => {
+        const { getService } = utils(catalogDir);
+
+        await plugin(config, {
+          services: [
+            {
+              path: join(openAPIExamples, 'petstore.yml'),
+              id: 'swagger-petstore',
+              consumers: [
+                {
+                  id: 'orders-service',
+                  version: '1.0.0',
+                  routes: [{ path: '/nonexistent' }],
+                },
+              ],
+            },
+          ],
+        });
+
+        const consumer = await getService('orders-service', '1.0.0');
+
+        expect(consumer).toBeDefined();
+        expect(consumer.receives).toBeUndefined();
+      });
+    });
+
+    describe('route filtering - prefix match', () => {
+      it('consumer receives messages from paths starting with the given prefix', async () => {
+        const { getService } = utils(catalogDir);
+
+        await plugin(config, {
+          services: [
+            {
+              path: join(openAPIExamples, 'petstore.yml'),
+              id: 'swagger-petstore',
+              consumers: [
+                {
+                  id: 'orders-service',
+                  version: '1.0.0',
+                  routes: [{ prefix: '/pets/{petId}' }],
+                },
+              ],
+            },
+          ],
+        });
+
+        const consumer = await getService('orders-service', '1.0.0');
+
+        // Paths starting with /pets/{petId}: /pets/{petId}, /pets/{petId}/adopted, /pets/{petId}/vaccinated
+        expect(consumer.receives).toHaveLength(5);
+        expect(consumer.receives).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({ id: 'showPetById' }),
+            expect.objectContaining({ id: 'updatePet' }),
+            expect.objectContaining({ id: 'deletePet' }),
+            expect.objectContaining({ id: 'petAdopted' }),
+            expect.objectContaining({ id: 'petVaccinated' }),
+          ])
+        );
+      });
+
+      it('consumer receives messages from paths matching multiple prefixes', async () => {
+        const { getService } = utils(catalogDir);
+
+        await plugin(config, {
+          services: [
+            {
+              path: join(openAPIExamples, 'petstore.yml'),
+              id: 'swagger-petstore',
+              consumers: [
+                {
+                  id: 'orders-service',
+                  version: '1.0.0',
+                  routes: [{ prefix: ['/pets/{petId}/adopted', '/pets/{petId}/vaccinated'] }],
+                },
+              ],
+            },
+          ],
+        });
+
+        const consumer = await getService('orders-service', '1.0.0');
+
+        expect(consumer.receives).toHaveLength(2);
+        expect(consumer.receives).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({ id: 'petAdopted' }),
+            expect.objectContaining({ id: 'petVaccinated' }),
+          ])
+        );
+      });
+    });
+
+    describe('route filtering - suffix match', () => {
+      it('consumer receives messages from paths ending with the given suffix', async () => {
+        const { getService } = utils(catalogDir);
+
+        await plugin(config, {
+          services: [
+            {
+              path: join(openAPIExamples, 'petstore.yml'),
+              id: 'swagger-petstore',
+              consumers: [
+                {
+                  id: 'orders-service',
+                  version: '1.0.0',
+                  routes: [{ suffix: '/adopted' }],
+                },
+              ],
+            },
+          ],
+        });
+
+        const consumer = await getService('orders-service', '1.0.0');
+
+        expect(consumer.receives).toHaveLength(1);
+        expect(consumer.receives).toEqual(expect.arrayContaining([expect.objectContaining({ id: 'petAdopted' })]));
+      });
+
+      it('consumer receives messages from paths matching multiple suffixes', async () => {
+        const { getService } = utils(catalogDir);
+
+        await plugin(config, {
+          services: [
+            {
+              path: join(openAPIExamples, 'petstore.yml'),
+              id: 'swagger-petstore',
+              consumers: [
+                {
+                  id: 'orders-service',
+                  version: '1.0.0',
+                  routes: [{ suffix: ['/adopted', '/vaccinated'] }],
+                },
+              ],
+            },
+          ],
+        });
+
+        const consumer = await getService('orders-service', '1.0.0');
+
+        expect(consumer.receives).toHaveLength(2);
+        expect(consumer.receives).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({ id: 'petAdopted' }),
+            expect.objectContaining({ id: 'petVaccinated' }),
+          ])
+        );
+      });
+
+      it('suffix matching works with path segments (e.g. matching /{petId})', async () => {
+        const { getService } = utils(catalogDir);
+
+        await plugin(config, {
+          services: [
+            {
+              path: join(openAPIExamples, 'petstore.yml'),
+              id: 'swagger-petstore',
+              consumers: [
+                {
+                  id: 'orders-service',
+                  version: '1.0.0',
+                  routes: [{ suffix: '/{petId}' }],
+                },
+              ],
+            },
+          ],
+        });
+
+        const consumer = await getService('orders-service', '1.0.0');
+
+        // Only /pets/{petId} ends with /{petId}
+        expect(consumer.receives).toHaveLength(3);
+        expect(consumer.receives).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({ id: 'showPetById' }),
+            expect.objectContaining({ id: 'updatePet' }),
+            expect.objectContaining({ id: 'deletePet' }),
+          ])
+        );
+      });
+    });
+
+    describe('route filtering - wildcard match', () => {
+      it('wildcard * matches any path segments', async () => {
+        const { getService } = utils(catalogDir);
+
+        await plugin(config, {
+          services: [
+            {
+              path: join(openAPIExamples, 'petstore.yml'),
+              id: 'swagger-petstore',
+              consumers: [
+                {
+                  id: 'orders-service',
+                  version: '1.0.0',
+                  routes: [{ match: '/pets/*/adopted' }],
+                },
+              ],
+            },
+          ],
+        });
+
+        const consumer = await getService('orders-service', '1.0.0');
+
+        // /pets/{petId}/adopted matches /pets/*/adopted
+        expect(consumer.receives).toHaveLength(1);
+        expect(consumer.receives).toEqual(expect.arrayContaining([expect.objectContaining({ id: 'petAdopted' })]));
+      });
+
+      it('wildcard * at the end matches all sub-paths', async () => {
+        const { getService } = utils(catalogDir);
+
+        await plugin(config, {
+          services: [
+            {
+              path: join(openAPIExamples, 'petstore.yml'),
+              id: 'swagger-petstore',
+              consumers: [
+                {
+                  id: 'orders-service',
+                  version: '1.0.0',
+                  routes: [{ match: '/pets/*' }],
+                },
+              ],
+            },
+          ],
+        });
+
+        const consumer = await getService('orders-service', '1.0.0');
+
+        // /pets/* should match /pets/{petId}, /pets/{petId}/adopted, /pets/{petId}/vaccinated
+        expect(consumer.receives).toHaveLength(5);
+        expect(consumer.receives).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({ id: 'showPetById' }),
+            expect.objectContaining({ id: 'updatePet' }),
+            expect.objectContaining({ id: 'deletePet' }),
+            expect.objectContaining({ id: 'petAdopted' }),
+            expect.objectContaining({ id: 'petVaccinated' }),
+          ])
+        );
+      });
+
+      it('multiple wildcard patterns can be provided', async () => {
+        const { getService } = utils(catalogDir);
+
+        await plugin(config, {
+          services: [
+            {
+              path: join(openAPIExamples, 'petstore.yml'),
+              id: 'swagger-petstore',
+              consumers: [
+                {
+                  id: 'orders-service',
+                  version: '1.0.0',
+                  routes: [{ match: ['/pets/*/adopted', '/pets/*/vaccinated'] }],
+                },
+              ],
+            },
+          ],
+        });
+
+        const consumer = await getService('orders-service', '1.0.0');
+
+        expect(consumer.receives).toHaveLength(2);
+        expect(consumer.receives).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({ id: 'petAdopted' }),
+            expect.objectContaining({ id: 'petVaccinated' }),
+          ])
+        );
+      });
+    });
+
+    describe('route filtering - combining filters', () => {
+      it('multiple route filter objects are combined (union of matches)', async () => {
+        const { getService } = utils(catalogDir);
+
+        await plugin(config, {
+          services: [
+            {
+              path: join(openAPIExamples, 'petstore.yml'),
+              id: 'swagger-petstore',
+              consumers: [
+                {
+                  id: 'orders-service',
+                  version: '1.0.0',
+                  routes: [{ path: '/pets' }, { suffix: '/adopted' }],
+                },
+              ],
+            },
+          ],
+        });
+
+        const consumer = await getService('orders-service', '1.0.0');
+
+        // /pets (listPets, createPets) + /pets/{petId}/adopted (petAdopted)
+        expect(consumer.receives).toHaveLength(3);
+        expect(consumer.receives).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({ id: 'list-pets' }),
+            expect.objectContaining({ id: 'createPets' }),
+            expect.objectContaining({ id: 'petAdopted' }),
+          ])
+        );
+      });
+
+      it('duplicate messages across filters are deduplicated', async () => {
+        const { getService } = utils(catalogDir);
+
+        await plugin(config, {
+          services: [
+            {
+              path: join(openAPIExamples, 'petstore.yml'),
+              id: 'swagger-petstore',
+              consumers: [
+                {
+                  id: 'orders-service',
+                  version: '1.0.0',
+                  routes: [{ path: '/pets/{petId}/adopted' }, { suffix: '/adopted' }, { match: '/pets/*/adopted' }],
+                },
+              ],
+            },
+          ],
+        });
+
+        const consumer = await getService('orders-service', '1.0.0');
+
+        // All three filters match petAdopted, but it should appear only once
+        expect(consumer.receives).toHaveLength(1);
+        expect(consumer.receives).toEqual(expect.arrayContaining([expect.objectContaining({ id: 'petAdopted' })]));
+      });
+
+      it('different filter types within the same route object are intersected', async () => {
+        const { getService } = utils(catalogDir);
+
+        // prefix /pets/{petId} AND suffix /adopted — should only match /pets/{petId}/adopted
+        await plugin(config, {
+          services: [
+            {
+              path: join(openAPIExamples, 'petstore.yml'),
+              id: 'swagger-petstore',
+              consumers: [
+                {
+                  id: 'orders-service',
+                  version: '1.0.0',
+                  routes: [{ prefix: '/pets/{petId}', suffix: '/adopted' }],
+                },
+              ],
+            },
+          ],
+        });
+
+        const consumer = await getService('orders-service', '1.0.0');
+
+        expect(consumer.receives).toHaveLength(1);
+        expect(consumer.receives).toEqual(expect.arrayContaining([expect.objectContaining({ id: 'petAdopted' })]));
+      });
+    });
+
+    describe('consumer with domain configuration', () => {
+      it('when a domain is configured and the consumer service does not exist, the consumer is created inside that domain', async () => {
+        const { getService, getDomain } = utils(catalogDir);
+
+        await plugin(config, {
+          services: [
+            {
+              path: join(openAPIExamples, 'petstore.yml'),
+              id: 'swagger-petstore',
+              consumers: [{ id: 'orders-service', version: '1.0.0' }],
+            },
+          ],
+          domain: { id: 'pets', name: 'Pets Domain', version: '1.0.0' },
+        });
+
+        const consumer = await getService('orders-service', '1.0.0');
+        const domain = await getDomain('pets', '1.0.0');
+
+        expect(consumer).toBeDefined();
+        expect(consumer.receives).toHaveLength(7);
+
+        // The consumer service should be listed in the domain alongside the producer
+        expect(domain.services).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({ id: 'swagger-petstore' }),
+            expect.objectContaining({ id: 'orders-service', version: '1.0.0' }),
+          ])
+        );
+      });
+
+      it('when a domain is configured but the consumer service already exists outside it, the consumer is not moved into the domain', async () => {
+        const { writeService, getService, getDomain } = utils(catalogDir);
+
+        // Pre-create consumer outside any domain
+        await writeService({
+          id: 'orders-service',
+          version: '1.0.0',
+          name: 'Orders Service',
+          markdown: '',
+        });
+
+        await plugin(config, {
+          services: [
+            {
+              path: join(openAPIExamples, 'petstore.yml'),
+              id: 'swagger-petstore',
+              consumers: [{ id: 'orders-service', version: '1.0.0' }],
+            },
+          ],
+          domain: { id: 'pets', name: 'Pets Domain', version: '1.0.0' },
+        });
+
+        const consumer = await getService('orders-service', '1.0.0');
+        const domain = await getDomain('pets', '1.0.0');
+
+        // Consumer should still get its receives updated
+        expect(consumer).toBeDefined();
+        expect(consumer.receives).toHaveLength(7);
+
+        // Verify the domain file on disk does not contain the consumer service
+        // (SDK getDomain may return cached results from prior tests, so check the file directly)
+        const domainFilePath = join(catalogDir, 'domains', 'pets', 'index.mdx');
+        const domainFileContent = await fs.readFile(domainFilePath, 'utf-8');
+        expect(domainFileContent).not.toContain('orders-service');
+      });
+
+      it('when a consumer service already exists inside another domain, it stays in that domain and its receives are updated', async () => {
+        const { writeDomain, addServiceToDomain, writeService, getService } = utils(catalogDir);
+
+        // Create another domain and place the consumer inside it
+        await writeDomain({
+          id: 'orders',
+          name: 'Orders Domain',
+          version: '1.0.0',
+          markdown: '',
+        });
+
+        await writeService(
+          {
+            id: 'orders-service',
+            version: '1.0.0',
+            name: 'Orders Service',
+            markdown: '# Orders',
+            sends: [{ id: 'OrderPlaced', version: '1.0.0' }],
+          },
+          { path: join('../', 'domains', 'orders', 'services', 'orders-service') }
+        );
+
+        await addServiceToDomain('orders', { id: 'orders-service', version: '1.0.0' }, '1.0.0');
+
+        await plugin(config, {
+          services: [
+            {
+              path: join(openAPIExamples, 'petstore.yml'),
+              id: 'swagger-petstore',
+              consumers: [{ id: 'orders-service', version: '1.0.0' }],
+            },
+          ],
+          domain: { id: 'pets', name: 'Pets Domain', version: '1.0.0' },
+        });
+
+        const consumer = await getService('orders-service', '1.0.0');
+
+        // Receives should be updated
+        expect(consumer).toBeDefined();
+        expect(consumer.receives).toHaveLength(7);
+
+        // Existing data should be preserved
+        expect(consumer.name).toEqual('Orders Service');
+        expect(consumer.markdown).toEqual('# Orders');
+        expect(consumer.sends).toEqual(expect.arrayContaining([expect.objectContaining({ id: 'OrderPlaced' })]));
+
+        // Consumer should still live inside the orders domain on disk, not moved to pets
+        const ordersServiceInOrdersDomain = existsSync(
+          join(catalogDir, 'domains', 'orders', 'services', 'orders-service', 'index.mdx')
+        );
+        expect(ordersServiceInOrdersDomain).toBe(true);
+
+        // Pets domain should NOT contain the consumer
+        const petsDomainFilePath = join(catalogDir, 'domains', 'pets', 'index.mdx');
+        const petsDomainFileContent = await fs.readFile(petsDomainFilePath, 'utf-8');
+        expect(petsDomainFileContent).not.toContain('orders-service');
+      });
+    });
+
+    describe('consumers with multiple OpenAPI services', () => {
+      it('each service can have its own independent consumer configuration', async () => {
+        const { getService } = utils(catalogDir);
+
+        await plugin(config, {
+          services: [
+            {
+              path: join(openAPIExamples, 'petstore.yml'),
+              id: 'swagger-petstore',
+              consumers: [
+                {
+                  id: 'orders-service',
+                  version: '1.0.0',
+                  routes: [{ suffix: '/adopted' }],
+                },
+              ],
+            },
+            {
+              path: join(openAPIExamples, 'simple.yml'),
+              id: 'simple-api',
+              consumers: [
+                {
+                  id: 'notifications-service',
+                  version: '1.0.0',
+                },
+              ],
+            },
+          ],
+        });
+
+        const ordersConsumer = await getService('orders-service', '1.0.0');
+        const notificationsConsumer = await getService('notifications-service', '1.0.0');
+
+        expect(ordersConsumer).toBeDefined();
+        expect(ordersConsumer.receives).toHaveLength(1);
+        expect(ordersConsumer.receives).toEqual(expect.arrayContaining([expect.objectContaining({ id: 'petAdopted' })]));
+
+        expect(notificationsConsumer).toBeDefined();
+        expect(notificationsConsumer.receives).toBeDefined();
+      });
+
+      it('the same consumer service can consume from multiple OpenAPI services', async () => {
+        const { getService } = utils(catalogDir);
+
+        await plugin(config, {
+          services: [
+            {
+              path: join(openAPIExamples, 'petstore.yml'),
+              id: 'swagger-petstore',
+              consumers: [
+                {
+                  id: 'shared-consumer',
+                  version: '1.0.0',
+                  routes: [{ suffix: '/adopted' }],
+                },
+              ],
+            },
+            {
+              path: join(openAPIExamples, 'simple.yml'),
+              id: 'simple-api',
+              consumers: [
+                {
+                  id: 'shared-consumer',
+                  version: '1.0.0',
+                },
+              ],
+            },
+          ],
+        });
+
+        const consumer = await getService('shared-consumer', '1.0.0');
+
+        expect(consumer).toBeDefined();
+        // Should have receives from petstore (/adopted) AND all from simple.yml, merged
+        expect(consumer.receives).toEqual(expect.arrayContaining([expect.objectContaining({ id: 'petAdopted' })]));
+      });
+    });
+  });
 });
