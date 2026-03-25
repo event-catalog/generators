@@ -14,6 +14,19 @@ export type Pointer = {
   version?: string;
 };
 
+export type RouteFilter = {
+  path?: string | string[];
+  prefix?: string | string[];
+  suffix?: string | string[];
+  match?: string | string[];
+};
+
+export type ConsumerService = {
+  id: string;
+  version?: string;
+  routes?: RouteFilter[];
+};
+
 export type Service = {
   id: string;
   version?: string;
@@ -27,6 +40,7 @@ export type Service = {
   readsFrom?: Pointer[];
   generateMarkdown?: ({}: { service: Service; document: OpenAPI.Document; markdown: string }) => string;
   headers?: Record<string, string>;
+  consumers?: ConsumerService[];
 };
 
 export type MessageIdConfig = {

@@ -18,6 +18,7 @@ import pkgJSON from '../package.json';
 import { checkForPackageUpdate } from '../../../shared/check-for-package-update';
 import { isVersionGreaterThan, isVersionLessThan } from './utils/versions';
 import { mergeSpecifications, type Specification, type Specifications } from './utils/specifications';
+import { filterMessagesByRoutes, mergeReceives } from './utils/consumers';
 
 type MESSAGE_TYPE = 'command' | 'query' | 'event';
 export type HTTP_METHOD = 'POST' | 'GET' | 'PUT' | 'DELETE' | 'PATCH' | 'HEAD' | 'OPTIONS';
@@ -233,7 +234,7 @@ export default async (_: any, options: Props) => {
       }
 
       // Process all messages for the OpenAPI spec
-      let { sends, receives } = await processMessagesForOpenAPISpec(specPath, document, servicePath, {
+      let { sends, receives, allGeneratedMessages } = await processMessagesForOpenAPISpec(specPath, document, servicePath, {
         ...options,
         owners: service.setMessageOwnersToServiceOwners ? service.owners : [],
         serviceHasMultipleSpecFiles: Array.isArray(serviceSpec.path),
@@ -336,6 +337,67 @@ export default async (_: any, options: Props) => {
       }
 
       console.log(chalk.cyan(` - Service (v${version}) created`));
+
+      // Process consumer services
+      const consumers = serviceSpec.consumers || [];
+      for (const consumer of consumers) {
+        const consumerVersion = consumer.version || '1.0.0';
+        const filteredReceives = filterMessagesByRoutes(allGeneratedMessages, consumer.routes);
+
+        // Check if consumer already exists
+        const existingConsumer = await getService(consumer.id, consumerVersion);
+
+        if (existingConsumer) {
+          // Merge receives, preserving existing service data
+          const mergedReceives = mergeReceives(existingConsumer.receives || [], filteredReceives);
+
+          // Resolve the consumer's existing location so we write back in-place
+          // Use ../ to escape the SDK's services/ prefix when path is absolute (e.g. inside a domain)
+          const consumerResource = await getResourcePath(process.env.PROJECT_DIR as string, consumer.id, consumerVersion);
+          const consumerWritePath = consumerResource ? join('../', consumerResource.directory) : consumer.id;
+
+          await writeService(
+            {
+              ...existingConsumer,
+              ...(mergedReceives.length > 0 ? { receives: mergedReceives } : {}),
+            },
+            { path: consumerWritePath, override: true }
+          );
+        } else {
+          // Create new consumer service — place in domain if configured
+          let consumerPath = consumer.id;
+          if (options.domain) {
+            const domainResource = await getResourcePath(
+              process.env.PROJECT_DIR as string,
+              options.domain.id,
+              options.domain.version
+            );
+            if (domainResource) {
+              consumerPath = join(domainResource.directory, 'services', consumer.id);
+            } else {
+              consumerPath = join('domains', options.domain.id, 'services', consumer.id);
+            }
+          }
+
+          await writeService(
+            {
+              id: consumer.id,
+              version: consumerVersion,
+              name: consumer.id,
+              markdown: '<NodeGraph />',
+              ...(filteredReceives.length > 0 ? { receives: filteredReceives } : {}),
+            },
+            { path: consumerPath, override: true }
+          );
+
+          // If domain is configured, add consumer to domain
+          if (options.domain) {
+            await addServiceToDomain(options.domain.id, { id: consumer.id, version: consumerVersion }, options.domain.version);
+          }
+        }
+
+        console.log(chalk.cyan(` - Consumer service: ${consumer.id} (v${consumerVersion}) processed`));
+      }
     }
   }
 };
@@ -401,6 +463,7 @@ const processMessagesForOpenAPISpec = async (
 
   let receives = [],
     sends = [];
+  let allGeneratedMessages: Array<{ id: string; version: string; path: string }> = [];
 
   // Go through all messages
   for (const operation of operations) {
@@ -486,6 +549,12 @@ const processMessagesForOpenAPISpec = async (
       });
     }
 
+    allGeneratedMessages.push({
+      id: message.id,
+      version: message.version,
+      path: operation.path,
+    });
+
     // Does the message have a request body or responses?
     if (requestBodiesAndResponses?.requestBody) {
       await addFileToMessage(
@@ -548,7 +617,7 @@ const processMessagesForOpenAPISpec = async (
       console.log(chalk.yellow(`  - Use operationIds to give better unique names for EventCatalog`));
     }
   }
-  return { receives, sends };
+  return { receives, sends, allGeneratedMessages };
 };
 
 const getParsedSpecFile = (service: Service, document: OpenAPI.Document) => {
