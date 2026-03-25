@@ -19,7 +19,6 @@ import { checkForPackageUpdate } from '../../../shared/check-for-package-update'
 import { isVersionGreaterThan, isVersionLessThan } from './utils/versions';
 import { mergeSpecifications, type Specification, type Specifications } from './utils/specifications';
 import { filterMessagesByRoutes, mergeReceives } from './utils/consumers';
-import { filterMessagesByRoutes, mergeReceives } from './utils/consumers';
 
 type MESSAGE_TYPE = 'command' | 'query' | 'event';
 export type HTTP_METHOD = 'POST' | 'GET' | 'PUT' | 'DELETE' | 'PATCH' | 'HEAD' | 'OPTIONS';
