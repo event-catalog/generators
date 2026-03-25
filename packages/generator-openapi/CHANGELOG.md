@@ -1,5 +1,11 @@
 # @eventcatalog/generator-openapi
 
+## 7.11.0
+
+### Minor Changes
+
+- 34d53f1: Add consumer services support to OpenAPI generator with route-based filtering (exact, prefix, suffix, wildcard)
+
 ## 7.10.0
 
 ### Minor Changes
