@@ -1,5 +1,11 @@
 # @eventcatalog/generator-openapi
 
+## 7.11.1
+
+### Patch Changes
+
+- b49e56e: fix(openapi): consumer services use sends instead of receives and fix domain path
+
 ## 7.11.0
 
 ### Minor Changes
