@@ -1,6 +1,6 @@
 {
   "name": "@eventcatalog/generator-openapi",
-  "version": "7.11.0",
+  "version": "7.11.1",
   "description": "OpenAPI generator for EventCatalog",
   "scripts": {
     "build": "tsup",
