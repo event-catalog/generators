@@ -2366,7 +2366,7 @@ describe('OpenAPI EventCatalog Plugin', () => {
 
   describe('consumer services', () => {
     describe('basic consumer configuration', () => {
-      it('creates a consumer service that receives ALL messages from the OpenAPI spec when no route filters are provided', async () => {
+      it('creates a consumer service that sends to ALL messages from the OpenAPI spec when no route filters are provided', async () => {
         const { getService } = utils(catalogDir);
 
         await plugin(config, {
@@ -2385,9 +2385,9 @@ describe('OpenAPI EventCatalog Plugin', () => {
         expect(consumer.id).toEqual('orders-service');
         expect(consumer.version).toEqual('1.0.0');
 
-        // petstore.yml has 7 operations, consumer should receive all of them
-        expect(consumer.receives).toHaveLength(7);
-        expect(consumer.receives).toEqual(
+        // petstore.yml has 7 operations, consumer should send to all of them
+        expect(consumer.sends).toHaveLength(7);
+        expect(consumer.sends).toEqual(
           expect.arrayContaining([
             expect.objectContaining({ id: 'list-pets' }),
             expect.objectContaining({ id: 'createPets' }),
@@ -2423,8 +2423,8 @@ describe('OpenAPI EventCatalog Plugin', () => {
         expect(notificationsConsumer).toBeDefined();
 
         // Both should receive all messages when no filters
-        expect(ordersConsumer.receives).toHaveLength(7);
-        expect(notificationsConsumer.receives).toHaveLength(7);
+        expect(ordersConsumer.sends).toHaveLength(7);
+        expect(notificationsConsumer.sends).toHaveLength(7);
       });
 
       it('consumer service defaults to version 1.0.0 when no version is specified', async () => {
@@ -2446,10 +2446,10 @@ describe('OpenAPI EventCatalog Plugin', () => {
         expect(consumer.version).toEqual('1.0.0');
       });
 
-      it('does not overwrite an existing consumer service, only updates its receives', async () => {
+      it('does not overwrite an existing consumer service, only updates its sends', async () => {
         const { writeService, getService } = utils(catalogDir);
 
-        // Pre-create the consumer service with custom markdown and existing receives
+        // Pre-create the consumer service with custom markdown and existing sends
         await writeService({
           id: 'orders-service',
           version: '1.0.0',
@@ -2475,20 +2475,20 @@ describe('OpenAPI EventCatalog Plugin', () => {
         expect(consumer.markdown).toEqual('# My custom markdown');
         // Existing sends should be preserved
         expect(consumer.sends).toEqual(expect.arrayContaining([expect.objectContaining({ id: 'OrderPlaced' })]));
-        // New receives should be added
-        expect(consumer.receives).toHaveLength(7);
+        // New sends should be merged (1 existing + 7 from petstore)
+        expect(consumer.sends).toHaveLength(8);
       });
 
-      it('merges receives with existing receives on the consumer service without duplicates', async () => {
+      it('merges sends with existing sends on the consumer service without duplicates', async () => {
         const { writeService, getService } = utils(catalogDir);
 
-        // Pre-create consumer with some existing receives
+        // Pre-create consumer with some existing sends
         await writeService({
           id: 'orders-service',
           version: '1.0.0',
           name: 'Orders Service',
           markdown: '',
-          receives: [
+          sends: [
             { id: 'list-pets', version: '5.0.0' },
             { id: 'SomeOtherMessage', version: '1.0.0' },
           ],
@@ -2507,7 +2507,7 @@ describe('OpenAPI EventCatalog Plugin', () => {
         const consumer = await getService('orders-service', '1.0.0');
 
         // Should have the existing SomeOtherMessage + all 7 petstore messages (list-pets deduplicated)
-        expect(consumer.receives).toEqual(
+        expect(consumer.sends).toEqual(
           expect.arrayContaining([
             expect.objectContaining({ id: 'SomeOtherMessage', version: '1.0.0' }),
             expect.objectContaining({ id: 'list-pets' }),
@@ -2521,11 +2521,11 @@ describe('OpenAPI EventCatalog Plugin', () => {
         );
 
         // list-pets should not be duplicated
-        const listPetsEntries = consumer.receives.filter((r: any) => r.id === 'list-pets');
+        const listPetsEntries = consumer.sends.filter((r: any) => r.id === 'list-pets');
         expect(listPetsEntries).toHaveLength(1);
       });
 
-      it('when a consumer already has a receive with an older version, the version is updated to the latest generated version', async () => {
+      it('when a consumer already has a send with an older version, the version is updated to the latest generated version', async () => {
         const { writeService, getService } = utils(catalogDir);
 
         // Pre-create consumer with an outdated version of list-pets
@@ -2534,7 +2534,7 @@ describe('OpenAPI EventCatalog Plugin', () => {
           version: '1.0.0',
           name: 'Orders Service',
           markdown: '',
-          receives: [
+          sends: [
             { id: 'list-pets', version: '0.0.1' },
             { id: 'createPets', version: '0.5.0' },
           ],
@@ -2553,32 +2553,32 @@ describe('OpenAPI EventCatalog Plugin', () => {
         const consumer = await getService('orders-service', '1.0.0');
 
         // list-pets should be updated to the version from the OpenAPI spec (5.0.0 via x-eventcatalog-message-version)
-        const listPets = consumer.receives.find((r: any) => r.id === 'list-pets');
+        const listPets = consumer.sends.find((r: any) => r.id === 'list-pets');
         expect(listPets).toBeDefined();
         expect(listPets.version).toEqual('5.0.0');
 
         // createPets should be updated to the version from the OpenAPI spec (1.0.0)
-        const createPets = consumer.receives.find((r: any) => r.id === 'createPets');
+        const createPets = consumer.sends.find((r: any) => r.id === 'createPets');
         expect(createPets).toBeDefined();
         expect(createPets.version).toEqual('1.0.0');
 
         // No duplicates
-        const listPetsEntries = consumer.receives.filter((r: any) => r.id === 'list-pets');
+        const listPetsEntries = consumer.sends.filter((r: any) => r.id === 'list-pets');
         expect(listPetsEntries).toHaveLength(1);
-        const createPetsEntries = consumer.receives.filter((r: any) => r.id === 'createPets');
+        const createPetsEntries = consumer.sends.filter((r: any) => r.id === 'createPets');
         expect(createPetsEntries).toHaveLength(1);
       });
 
-      it('when a consumer has a receive without a version, it is left as-is (already latest)', async () => {
+      it('when a consumer has a send without a version, it is left as-is (already latest)', async () => {
         const { writeService, getService } = utils(catalogDir);
 
-        // Pre-create consumer with a receive that has no version (meaning "latest")
+        // Pre-create consumer with a send that has no version (meaning "latest")
         await writeService({
           id: 'orders-service',
           version: '1.0.0',
           name: 'Orders Service',
           markdown: '',
-          receives: [{ id: 'SomeExternalMessage' }],
+          sends: [{ id: 'SomeExternalMessage' }],
         });
 
         await plugin(config, {
@@ -2594,7 +2594,7 @@ describe('OpenAPI EventCatalog Plugin', () => {
         const consumer = await getService('orders-service', '1.0.0');
 
         // SomeExternalMessage should still be there without a version (untouched)
-        const externalMsg = consumer.receives.find((r: any) => r.id === 'SomeExternalMessage');
+        const externalMsg = consumer.sends.find((r: any) => r.id === 'SomeExternalMessage');
         expect(externalMsg).toBeDefined();
         expect(externalMsg.version).toBeUndefined();
       });
@@ -2621,7 +2621,7 @@ describe('OpenAPI EventCatalog Plugin', () => {
     });
 
     describe('route filtering - exact path match', () => {
-      it('consumer receives only messages matching the exact path', async () => {
+      it('consumer sends only messages matching the exact path', async () => {
         const { getService } = utils(catalogDir);
 
         await plugin(config, {
@@ -2643,13 +2643,13 @@ describe('OpenAPI EventCatalog Plugin', () => {
         const consumer = await getService('orders-service', '1.0.0');
 
         // /pets has GET (listPets) and POST (createPets)
-        expect(consumer.receives).toHaveLength(2);
-        expect(consumer.receives).toEqual(
+        expect(consumer.sends).toHaveLength(2);
+        expect(consumer.sends).toEqual(
           expect.arrayContaining([expect.objectContaining({ id: 'list-pets' }), expect.objectContaining({ id: 'createPets' })])
         );
       });
 
-      it('consumer receives messages matching multiple exact paths', async () => {
+      it('consumer sends messages matching multiple exact paths', async () => {
         const { getService } = utils(catalogDir);
 
         await plugin(config, {
@@ -2671,8 +2671,8 @@ describe('OpenAPI EventCatalog Plugin', () => {
         const consumer = await getService('orders-service', '1.0.0');
 
         // /pets has listPets + createPets, /pets/{petId}/adopted has petAdopted
-        expect(consumer.receives).toHaveLength(3);
-        expect(consumer.receives).toEqual(
+        expect(consumer.sends).toHaveLength(3);
+        expect(consumer.sends).toEqual(
           expect.arrayContaining([
             expect.objectContaining({ id: 'list-pets' }),
             expect.objectContaining({ id: 'createPets' }),
@@ -2681,7 +2681,7 @@ describe('OpenAPI EventCatalog Plugin', () => {
         );
       });
 
-      it('consumer receives no messages when exact path does not match any route', async () => {
+      it('consumer sends no messages when exact path does not match any route', async () => {
         const { getService } = utils(catalogDir);
 
         await plugin(config, {
@@ -2703,12 +2703,12 @@ describe('OpenAPI EventCatalog Plugin', () => {
         const consumer = await getService('orders-service', '1.0.0');
 
         expect(consumer).toBeDefined();
-        expect(consumer.receives).toBeUndefined();
+        expect(consumer.sends).toBeUndefined();
       });
     });
 
     describe('route filtering - prefix match', () => {
-      it('consumer receives messages from paths starting with the given prefix', async () => {
+      it('consumer sends messages from paths starting with the given prefix', async () => {
         const { getService } = utils(catalogDir);
 
         await plugin(config, {
@@ -2730,8 +2730,8 @@ describe('OpenAPI EventCatalog Plugin', () => {
         const consumer = await getService('orders-service', '1.0.0');
 
         // Paths starting with /pets/{petId}: /pets/{petId}, /pets/{petId}/adopted, /pets/{petId}/vaccinated
-        expect(consumer.receives).toHaveLength(5);
-        expect(consumer.receives).toEqual(
+        expect(consumer.sends).toHaveLength(5);
+        expect(consumer.sends).toEqual(
           expect.arrayContaining([
             expect.objectContaining({ id: 'showPetById' }),
             expect.objectContaining({ id: 'updatePet' }),
@@ -2742,7 +2742,7 @@ describe('OpenAPI EventCatalog Plugin', () => {
         );
       });
 
-      it('consumer receives messages from paths matching multiple prefixes', async () => {
+      it('consumer sends messages from paths matching multiple prefixes', async () => {
         const { getService } = utils(catalogDir);
 
         await plugin(config, {
@@ -2763,8 +2763,8 @@ describe('OpenAPI EventCatalog Plugin', () => {
 
         const consumer = await getService('orders-service', '1.0.0');
 
-        expect(consumer.receives).toHaveLength(2);
-        expect(consumer.receives).toEqual(
+        expect(consumer.sends).toHaveLength(2);
+        expect(consumer.sends).toEqual(
           expect.arrayContaining([
             expect.objectContaining({ id: 'petAdopted' }),
             expect.objectContaining({ id: 'petVaccinated' }),
@@ -2774,7 +2774,7 @@ describe('OpenAPI EventCatalog Plugin', () => {
     });
 
     describe('route filtering - suffix match', () => {
-      it('consumer receives messages from paths ending with the given suffix', async () => {
+      it('consumer sends messages from paths ending with the given suffix', async () => {
         const { getService } = utils(catalogDir);
 
         await plugin(config, {
@@ -2795,11 +2795,11 @@ describe('OpenAPI EventCatalog Plugin', () => {
 
         const consumer = await getService('orders-service', '1.0.0');
 
-        expect(consumer.receives).toHaveLength(1);
-        expect(consumer.receives).toEqual(expect.arrayContaining([expect.objectContaining({ id: 'petAdopted' })]));
+        expect(consumer.sends).toHaveLength(1);
+        expect(consumer.sends).toEqual(expect.arrayContaining([expect.objectContaining({ id: 'petAdopted' })]));
       });
 
-      it('consumer receives messages from paths matching multiple suffixes', async () => {
+      it('consumer sends messages from paths matching multiple suffixes', async () => {
         const { getService } = utils(catalogDir);
 
         await plugin(config, {
@@ -2820,8 +2820,8 @@ describe('OpenAPI EventCatalog Plugin', () => {
 
         const consumer = await getService('orders-service', '1.0.0');
 
-        expect(consumer.receives).toHaveLength(2);
-        expect(consumer.receives).toEqual(
+        expect(consumer.sends).toHaveLength(2);
+        expect(consumer.sends).toEqual(
           expect.arrayContaining([
             expect.objectContaining({ id: 'petAdopted' }),
             expect.objectContaining({ id: 'petVaccinated' }),
@@ -2851,8 +2851,8 @@ describe('OpenAPI EventCatalog Plugin', () => {
         const consumer = await getService('orders-service', '1.0.0');
 
         // Only /pets/{petId} ends with /{petId}
-        expect(consumer.receives).toHaveLength(3);
-        expect(consumer.receives).toEqual(
+        expect(consumer.sends).toHaveLength(3);
+        expect(consumer.sends).toEqual(
           expect.arrayContaining([
             expect.objectContaining({ id: 'showPetById' }),
             expect.objectContaining({ id: 'updatePet' }),
@@ -2885,8 +2885,8 @@ describe('OpenAPI EventCatalog Plugin', () => {
         const consumer = await getService('orders-service', '1.0.0');
 
         // /pets/{petId}/adopted matches /pets/*/adopted
-        expect(consumer.receives).toHaveLength(1);
-        expect(consumer.receives).toEqual(expect.arrayContaining([expect.objectContaining({ id: 'petAdopted' })]));
+        expect(consumer.sends).toHaveLength(1);
+        expect(consumer.sends).toEqual(expect.arrayContaining([expect.objectContaining({ id: 'petAdopted' })]));
       });
 
       it('wildcard * at the end matches all sub-paths', async () => {
@@ -2911,8 +2911,8 @@ describe('OpenAPI EventCatalog Plugin', () => {
         const consumer = await getService('orders-service', '1.0.0');
 
         // /pets/* should match /pets/{petId}, /pets/{petId}/adopted, /pets/{petId}/vaccinated
-        expect(consumer.receives).toHaveLength(5);
-        expect(consumer.receives).toEqual(
+        expect(consumer.sends).toHaveLength(5);
+        expect(consumer.sends).toEqual(
           expect.arrayContaining([
             expect.objectContaining({ id: 'showPetById' }),
             expect.objectContaining({ id: 'updatePet' }),
@@ -2944,8 +2944,8 @@ describe('OpenAPI EventCatalog Plugin', () => {
 
         const consumer = await getService('orders-service', '1.0.0');
 
-        expect(consumer.receives).toHaveLength(2);
-        expect(consumer.receives).toEqual(
+        expect(consumer.sends).toHaveLength(2);
+        expect(consumer.sends).toEqual(
           expect.arrayContaining([
             expect.objectContaining({ id: 'petAdopted' }),
             expect.objectContaining({ id: 'petVaccinated' }),
@@ -2977,8 +2977,8 @@ describe('OpenAPI EventCatalog Plugin', () => {
         const consumer = await getService('orders-service', '1.0.0');
 
         // /pets (listPets, createPets) + /pets/{petId}/adopted (petAdopted)
-        expect(consumer.receives).toHaveLength(3);
-        expect(consumer.receives).toEqual(
+        expect(consumer.sends).toHaveLength(3);
+        expect(consumer.sends).toEqual(
           expect.arrayContaining([
             expect.objectContaining({ id: 'list-pets' }),
             expect.objectContaining({ id: 'createPets' }),
@@ -3009,8 +3009,8 @@ describe('OpenAPI EventCatalog Plugin', () => {
         const consumer = await getService('orders-service', '1.0.0');
 
         // All three filters match petAdopted, but it should appear only once
-        expect(consumer.receives).toHaveLength(1);
-        expect(consumer.receives).toEqual(expect.arrayContaining([expect.objectContaining({ id: 'petAdopted' })]));
+        expect(consumer.sends).toHaveLength(1);
+        expect(consumer.sends).toEqual(expect.arrayContaining([expect.objectContaining({ id: 'petAdopted' })]));
       });
 
       it('different filter types within the same route object are intersected', async () => {
@@ -3035,8 +3035,8 @@ describe('OpenAPI EventCatalog Plugin', () => {
 
         const consumer = await getService('orders-service', '1.0.0');
 
-        expect(consumer.receives).toHaveLength(1);
-        expect(consumer.receives).toEqual(expect.arrayContaining([expect.objectContaining({ id: 'petAdopted' })]));
+        expect(consumer.sends).toHaveLength(1);
+        expect(consumer.sends).toEqual(expect.arrayContaining([expect.objectContaining({ id: 'petAdopted' })]));
       });
     });
 
@@ -3059,7 +3059,7 @@ describe('OpenAPI EventCatalog Plugin', () => {
         const domain = await getDomain('pets', '1.0.0');
 
         expect(consumer).toBeDefined();
-        expect(consumer.receives).toHaveLength(7);
+        expect(consumer.sends).toHaveLength(7);
 
         // The consumer service should be listed in the domain alongside the producer
         expect(domain.services).toEqual(
@@ -3095,9 +3095,9 @@ describe('OpenAPI EventCatalog Plugin', () => {
         const consumer = await getService('orders-service', '1.0.0');
         const domain = await getDomain('pets', '1.0.0');
 
-        // Consumer should still get its receives updated
+        // Consumer should still get its sends updated
         expect(consumer).toBeDefined();
-        expect(consumer.receives).toHaveLength(7);
+        expect(consumer.sends).toHaveLength(7);
 
         // Verify the domain file on disk does not contain the consumer service
         // (SDK getDomain may return cached results from prior tests, so check the file directly)
@@ -3106,7 +3106,7 @@ describe('OpenAPI EventCatalog Plugin', () => {
         expect(domainFileContent).not.toContain('orders-service');
       });
 
-      it('when a consumer service already exists inside another domain, it stays in that domain and its receives are updated', async () => {
+      it('when a consumer service already exists inside another domain, it stays in that domain and its sends are updated', async () => {
         const { writeDomain, addServiceToDomain, writeService, getService } = utils(catalogDir);
 
         // Create another domain and place the consumer inside it
@@ -3143,9 +3143,9 @@ describe('OpenAPI EventCatalog Plugin', () => {
 
         const consumer = await getService('orders-service', '1.0.0');
 
-        // Receives should be updated
+        // Sends should be updated (1 existing + 7 from petstore)
         expect(consumer).toBeDefined();
-        expect(consumer.receives).toHaveLength(7);
+        expect(consumer.sends).toHaveLength(8);
 
         // Existing data should be preserved
         expect(consumer.name).toEqual('Orders Service');
@@ -3199,11 +3199,11 @@ describe('OpenAPI EventCatalog Plugin', () => {
         const notificationsConsumer = await getService('notifications-service', '1.0.0');
 
         expect(ordersConsumer).toBeDefined();
-        expect(ordersConsumer.receives).toHaveLength(1);
-        expect(ordersConsumer.receives).toEqual(expect.arrayContaining([expect.objectContaining({ id: 'petAdopted' })]));
+        expect(ordersConsumer.sends).toHaveLength(1);
+        expect(ordersConsumer.sends).toEqual(expect.arrayContaining([expect.objectContaining({ id: 'petAdopted' })]));
 
         expect(notificationsConsumer).toBeDefined();
-        expect(notificationsConsumer.receives).toBeDefined();
+        expect(notificationsConsumer.sends).toBeDefined();
       });
 
       it('the same consumer service can consume from multiple OpenAPI services', async () => {
@@ -3238,8 +3238,8 @@ describe('OpenAPI EventCatalog Plugin', () => {
         const consumer = await getService('shared-consumer', '1.0.0');
 
         expect(consumer).toBeDefined();
-        // Should have receives from petstore (/adopted) AND all from simple.yml, merged
-        expect(consumer.receives).toEqual(expect.arrayContaining([expect.objectContaining({ id: 'petAdopted' })]));
+        // Should have sends from petstore (/adopted) AND all from simple.yml, merged
+        expect(consumer.sends).toEqual(expect.arrayContaining([expect.objectContaining({ id: 'petAdopted' })]));
       });
     });
   });

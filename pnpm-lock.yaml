@@ -134,8 +134,8 @@ importers:
         specifier: '>=6.2.0'
         version: 6.2.0
       '@eventcatalog/generator-openapi':
-        specifier: '>=7.10.0'
-        version: 7.10.0(@types/node@20.19.1)
+        specifier: '>=7.11.0'
+        version: 7.11.0(@types/node@20.19.1)
       '@eventcatalog/sdk':
         specifier: ^2.18.2
         version: 2.18.2
@@ -1249,8 +1249,8 @@ packages:
   '@eventcatalog/generator-asyncapi@6.2.0':
     resolution: { integrity: sha512-29L6f6/tmE3qMRTxnvbhat+rUydcr3g9GR/syPA/HePG9ej1urhmI0ZfTBrMGpqRPZvIzbIiadKWsBE2VWFk1w== }
 
-  '@eventcatalog/generator-openapi@7.10.0':
-    resolution: { integrity: sha512-QOrWwCe2BbDHXwGiVCGj0agoQRLuFEja0fuZvI/22YbKXkXO2D0oTffMZDxIIxvW0ROOOhD6UF0am+S1qV/n2w== }
+  '@eventcatalog/generator-openapi@7.11.0':
+    resolution: { integrity: sha512-pNNWFEubZ5a0qZEMWX7XoePfnmcV5s61RlPxTSyvPDh1D1yZ31rCpCLWQ2TFIvX7a4po3pSeA8bR9opbOUWeUg== }
 
   '@eventcatalog/license@0.0.7':
     resolution: { integrity: sha512-izSIn3Dfc6LTcPiA89EqZ4/l5WCitLxt0XVu2yilyaibMOioxW7ABRFZY8/Azocd6ULKseVA2lCcoeT35/GRcg== }
@@ -5587,7 +5587,7 @@ snapshots:
     transitivePeerDependencies:
       - encoding
 
-  '@eventcatalog/generator-openapi@7.10.0(@types/node@20.19.1)':
+  '@eventcatalog/generator-openapi@7.11.0(@types/node@20.19.1)':
     dependencies:
       '@apidevtools/swagger-parser': 10.1.1(openapi-types@12.1.3)
       '@changesets/cli': 2.29.8(@types/node@20.19.1)
