@@ -18,7 +18,7 @@ import pkgJSON from '../package.json';
 import { checkForPackageUpdate } from '../../../shared/check-for-package-update';
 import { isVersionGreaterThan, isVersionLessThan } from './utils/versions';
 import { mergeSpecifications, type Specification, type Specifications } from './utils/specifications';
-import { filterMessagesByRoutes, mergeReceives } from './utils/consumers';
+import { filterMessagesByRoutes, mergeSends } from './utils/consumers';
 
 type MESSAGE_TYPE = 'command' | 'query' | 'event';
 export type HTTP_METHOD = 'POST' | 'GET' | 'PUT' | 'DELETE' | 'PATCH' | 'HEAD' | 'OPTIONS';
@@ -342,14 +342,14 @@ export default async (_: any, options: Props) => {
       const consumers = serviceSpec.consumers || [];
       for (const consumer of consumers) {
         const consumerVersion = consumer.version || '1.0.0';
-        const filteredReceives = filterMessagesByRoutes(allGeneratedMessages, consumer.routes);
+        const filteredSends = filterMessagesByRoutes(allGeneratedMessages, consumer.routes);
 
         // Check if consumer already exists
         const existingConsumer = await getService(consumer.id, consumerVersion);
 
         if (existingConsumer) {
-          // Merge receives, preserving existing service data
-          const mergedReceives = mergeReceives(existingConsumer.receives || [], filteredReceives);
+          // Merge sends, preserving existing service data
+          const mergedSends = mergeSends(existingConsumer.sends || [], filteredSends);
 
           // Resolve the consumer's existing location so we write back in-place
           // Use ../ to escape the SDK's services/ prefix when path is absolute (e.g. inside a domain)
@@ -359,7 +359,7 @@ export default async (_: any, options: Props) => {
           await writeService(
             {
               ...existingConsumer,
-              ...(mergedReceives.length > 0 ? { receives: mergedReceives } : {}),
+              ...(mergedSends.length > 0 ? { sends: mergedSends } : {}),
             },
             { path: consumerWritePath, override: true }
           );
@@ -373,9 +373,9 @@ export default async (_: any, options: Props) => {
               options.domain.version
             );
             if (domainResource) {
-              consumerPath = join(domainResource.directory, 'services', consumer.id);
+              consumerPath = join('../', domainResource.directory, 'services', consumer.id);
             } else {
-              consumerPath = join('domains', options.domain.id, 'services', consumer.id);
+              consumerPath = join('../', 'domains', options.domain.id, 'services', consumer.id);
             }
           }
 
@@ -385,7 +385,7 @@ export default async (_: any, options: Props) => {
               version: consumerVersion,
               name: consumer.id,
               markdown: '<NodeGraph />',
-              ...(filteredReceives.length > 0 ? { receives: filteredReceives } : {}),
+              ...(filteredSends.length > 0 ? { sends: filteredSends } : {}),
             },
             { path: consumerPath, override: true }
           );

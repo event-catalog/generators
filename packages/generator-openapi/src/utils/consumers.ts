@@ -67,7 +67,7 @@ export const filterMessagesByRoutes = (allMessages: MessageWithPath[], routes?: 
   return Array.from(matched.values());
 };
 
-export const mergeReceives = (existing: Pointer[], incoming: Pointer[]): Pointer[] => {
+export const mergeSends = (existing: Pointer[], incoming: Pointer[]): Pointer[] => {
   const merged = new Map<string, Pointer>();
 
   // Start with existing
