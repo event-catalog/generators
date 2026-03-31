@@ -2611,6 +2611,46 @@ describe('AsyncAPI EventCatalog Plugin', () => {
           })
         );
       });
+
+      it('when the AsyncAPI service is already defined in EventCatalog and the versions match, the flows and entities are persisted and not overwritten', async () => {
+        const { writeService, getService } = utils(catalogDir);
+
+        await writeService({
+          id: 'account-service-flows-entities',
+          version: '1.0.0',
+          name: 'Random Name',
+          markdown: 'Here is my original markdown, please do not override this!',
+          flows: [
+            { id: 'AgencySelfServeBusinessProcessFlow', version: '1.0.0' },
+            { id: 'BiddingFlow', version: '1.0.0' },
+          ],
+          entities: [
+            { id: 'LeadType', version: '1.0.0' },
+            { id: 'ProductCatalog', version: '1.0.0' },
+          ],
+        });
+
+        await plugin(config, {
+          services: [{ path: join(asyncAPIExamplesDir, 'simple.asyncapi.yml'), id: 'account-service-flows-entities' }],
+        });
+
+        const service = await getService('account-service-flows-entities', '1.0.0');
+        expect(service).toEqual(
+          expect.objectContaining({
+            id: 'account-service-flows-entities',
+            name: 'Account Service',
+            version: '1.0.0',
+            flows: [
+              { id: 'AgencySelfServeBusinessProcessFlow', version: '1.0.0' },
+              { id: 'BiddingFlow', version: '1.0.0' },
+            ],
+            entities: [
+              { id: 'LeadType', version: '1.0.0' },
+              { id: 'ProductCatalog', version: '1.0.0' },
+            ],
+          })
+        );
+      });
     });
 
     describe('examples', () => {
