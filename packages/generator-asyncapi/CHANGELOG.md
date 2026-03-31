@@ -1,5 +1,11 @@
 # @eventcatalog/sdk
 
+## 6.2.1
+
+### Patch Changes
+
+- 7b9a5e0: fix: preserve flows and entities on service index during generation
+
 ## 6.2.0
 
 ### Minor Changes

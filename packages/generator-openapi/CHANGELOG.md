@@ -1,5 +1,11 @@
 # @eventcatalog/generator-openapi
 
+## 7.11.2
+
+### Patch Changes
+
+- 7b9a5e0: fix: preserve flows and entities on service index during generation
+
 ## 7.11.1
 
 ### Patch Changes
