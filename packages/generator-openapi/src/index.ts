@@ -247,6 +247,8 @@ export default async (_: any, options: Props) => {
       let repository = null;
       let styles = null;
       let serviceDiagrams = null;
+      let serviceFlows = null;
+      let serviceEntities = null;
       let serviceWritesTo = configuredWritesTo;
       let serviceReadsFrom = configuredReadsFrom;
 
@@ -264,6 +266,8 @@ export default async (_: any, options: Props) => {
         serviceBadges = latestServiceInCatalog.badges || null;
         serviceAttachments = latestServiceInCatalog.attachments || null;
         serviceDiagrams = latestServiceInCatalog.diagrams || null;
+        serviceFlows = latestServiceInCatalog.flows || null;
+        serviceEntities = latestServiceInCatalog.entities || null;
         serviceWritesTo = latestServiceInCatalog.writesTo || ([] as any);
         serviceReadsFrom = latestServiceInCatalog.readsFrom || ([] as any);
         // persist any specifications that are already in the catalog,
@@ -305,6 +309,8 @@ export default async (_: any, options: Props) => {
           ...(repository ? { repository } : {}),
           ...(styles ? { styles } : {}),
           ...(serviceDiagrams ? { diagrams: serviceDiagrams } : {}),
+          ...(serviceFlows ? { flows: serviceFlows } : {}),
+          ...(serviceEntities ? { entities: serviceEntities } : {}),
           ...(isServiceMarkedAsDraft ? { draft: true } : {}),
           ...(serviceAttachments ? { attachments: serviceAttachments } : {}),
           ...(serviceWritesTo.length > 0 ? { writesTo: serviceWritesTo } : {}),

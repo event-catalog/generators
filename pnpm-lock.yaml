@@ -174,8 +174,8 @@ importers:
         specifier: 3.6.0
         version: 3.6.0
       '@eventcatalog/sdk':
-        specifier: 2.18.2
-        version: 2.18.2
+        specifier: 2.18.4
+        version: 2.18.4
       chalk:
         specifier: 4.1.2
         version: 4.1.2
@@ -506,8 +506,8 @@ importers:
         specifier: ^2.27.7
         version: 2.29.5
       '@eventcatalog/sdk':
-        specifier: ^2.18.2
-        version: 2.18.2
+        specifier: ^2.18.4
+        version: 2.18.4
       chalk:
         specifier: 4.1.2
         version: 4.1.2
@@ -1258,6 +1258,9 @@ packages:
 
   '@eventcatalog/sdk@2.18.2':
     resolution: { integrity: sha512-668pBoy5xgTS3WCMp9PIjXEimONtkf9suvw/cB7x5k/JnGA2sd1OZViIdKycABnXmrHgJ0t961cS0MTkaah6Ww== }
+
+  '@eventcatalog/sdk@2.18.4':
+    resolution: { integrity: sha512-kRTfHknSbVHXaTOaciaTh9I1c788YLKNVsj2fuU3aE7PfviqByEKvaNm9Prbq/v8iynd5RJLooE5k/dObDLmjg== }
 
   '@eventcatalog/sdk@2.9.6':
     resolution: { integrity: sha512-u1/IlS82Su55IJgJivzi5eZp1nfW6Lpf5PPhw1/q3EVlhVDZbEVDVuYtgQlnIGLDi144m4QKtzYCHI8824icLQ== }
@@ -5611,6 +5614,15 @@ snapshots:
       - supports-color
 
   '@eventcatalog/sdk@2.18.2':
+    dependencies:
+      fs-extra: 11.3.3
+      glob: 13.0.6
+      gray-matter: 4.0.3
+      proper-lockfile: 4.1.2
+      semver: 7.7.3
+      slugify: 1.6.6
+
+  '@eventcatalog/sdk@2.18.4':
     dependencies:
       fs-extra: 11.3.3
       glob: 13.0.6

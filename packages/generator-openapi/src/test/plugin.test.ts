@@ -2130,6 +2130,53 @@ describe('OpenAPI EventCatalog Plugin', () => {
           })
         );
       });
+
+      it('when the OpenAPI service is already defined in EventCatalog and the versions match, the flows and entities are persisted and not overwritten', async () => {
+        const { writeService, getService } = utils(catalogDir);
+
+        await writeService(
+          {
+            id: 'swagger-petstore-flows-entities',
+            version: '1.0.0',
+            name: 'Random Name',
+            markdown: 'Here is my original markdown, please do not override this!',
+            flows: [
+              { id: 'AgencySelfServeBusinessProcessFlow', version: '1.0.0' },
+              { id: 'BiddingFlow', version: '1.0.0' },
+              { id: 'CampaignSetupFlow', version: '1.0.0' },
+            ],
+            entities: [
+              { id: 'LeadType', version: '1.0.0' },
+              { id: 'ProductCatalog', version: '1.0.0' },
+              { id: 'ProductGroup', version: '1.0.0' },
+            ],
+          },
+          { path: 'Swagger Petstore' }
+        );
+
+        await plugin(config, {
+          services: [{ path: join(openAPIExamples, 'petstore.yml'), id: 'swagger-petstore-flows-entities' }],
+        });
+
+        const service = await getService('swagger-petstore-flows-entities', '1.0.0');
+        expect(service).toEqual(
+          expect.objectContaining({
+            id: 'swagger-petstore-flows-entities',
+            name: 'Swagger Petstore',
+            version: '1.0.0',
+            flows: [
+              { id: 'AgencySelfServeBusinessProcessFlow', version: '1.0.0' },
+              { id: 'BiddingFlow', version: '1.0.0' },
+              { id: 'CampaignSetupFlow', version: '1.0.0' },
+            ],
+            entities: [
+              { id: 'LeadType', version: '1.0.0' },
+              { id: 'ProductCatalog', version: '1.0.0' },
+              { id: 'ProductGroup', version: '1.0.0' },
+            ],
+          })
+        );
+      });
     });
 
     describe('parsing multiple OpenAPI files to the same service', () => {
