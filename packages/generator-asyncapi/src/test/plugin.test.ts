@@ -563,6 +563,39 @@ describe('AsyncAPI EventCatalog Plugin', () => {
         ]);
       });
 
+      it('when parseChannels is true and the same message is sent to the same channel via multiple operations, duplicate channels are removed', async () => {
+        const { getService } = utils(catalogDir);
+
+        await plugin(config, {
+          services: [
+            { path: join(asyncAPIExamplesDir, 'shared-message-duplicate-channel.asyncapi.yml'), id: 'dup-channel-service' },
+          ],
+          parseChannels: true,
+        });
+
+        const service = await getService('dup-channel-service', '1.0.0');
+
+        // message_1 is sent via channel_1 twice (two operations) and channel_2 once — should deduplicate channel_1
+        expect(service.sends).toHaveLength(1);
+        expect(service.sends).toEqual([
+          {
+            id: 'message_1',
+            version: '1.0.0',
+            to: [{ id: 'channel_1' }, { id: 'channel_2' }],
+          },
+        ]);
+
+        // message_2 is received via channel_1 twice — should deduplicate
+        expect(service.receives).toHaveLength(1);
+        expect(service.receives).toEqual([
+          {
+            id: 'message_2',
+            version: '1.0.0',
+            from: [{ id: 'channel_1' }],
+          },
+        ]);
+      });
+
       it('when parseChannels is false, sends do not include `to`', async () => {
         const { getService } = utils(catalogDir);
 
