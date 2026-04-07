@@ -156,6 +156,26 @@ const toUniqueArray = (array: { id: string; version: string }[]) => {
   return array.filter((item, index, self) => index === self.findIndex((t) => t.id === item.id && t.version === item.version));
 };
 
+// Consolidate sends/receives entries that share the same message id+version by merging their to/from channel arrays
+const consolidateMessages = <T extends { id: string; version?: string; to?: any[]; from?: any[] }>(array: T[]): T[] => {
+  const map = new Map<string, T>();
+  for (const item of array) {
+    const key = `${item.id}::${item.version}`;
+    const existing = map.get(key);
+    if (existing) {
+      if (item.to) {
+        existing.to = [...(existing.to || []), ...item.to];
+      }
+      if (item.from) {
+        existing.from = [...(existing.from || []), ...item.from];
+      }
+    } else {
+      map.set(key, { ...item });
+    }
+  }
+  return Array.from(map.values());
+};
+
 // Helper to merge asyncapi path into existing specifications, preserving format (array or object)
 const mergeAsyncApiIntoSpecifications = (existingSpecs: any, asyncapiFileName: string): any => {
   if (Array.isArray(existingSpecs)) {
@@ -637,6 +657,10 @@ export default async (config: any, options: Props) => {
     }
 
     const fileName = path.basename(service.path);
+
+    // Consolidate sends/receives so the same message sent to multiple channels has all channels in one entry
+    sends = consolidateMessages(sends);
+    receives = consolidateMessages(receives);
 
     await writeService(
       {
