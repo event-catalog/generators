@@ -1,0 +1,75 @@
+asyncapi: 3.1.0
+info:
+  title: Only 1 channel visible
+  version: 1.0.0
+operations:
+  operation_1:
+    action: send
+    channel:
+      $ref: '#/channels/channel_1'
+    messages:
+      - $ref: '#/channels/channel_1/messages/message_1'
+  operation_2:
+    action: send
+    channel:
+      $ref: '#/channels/channel_2'
+    messages:
+      - $ref: '#/channels/channel_2/messages/message_1'
+  operation_3:
+    action: send
+    channel:
+      $ref: '#/channels/channel_3'
+    messages:
+      - $ref: '#/channels/channel_3/messages/message_1'
+  operation_4:
+    action: receive
+    channel:
+      $ref: '#/channels/channel_1'
+    messages:
+      - $ref: '#/channels/channel_1/messages/message_2'
+  operation_5:
+    action: receive
+    channel:
+      $ref: '#/channels/channel_2'
+    messages:
+      - $ref: '#/channels/channel_2/messages/message_2'
+channels:
+  channel_1:
+    address: channel_1
+    messages:
+      message_1:
+        $ref: '#/components/messages/message_1'
+      message_2:
+        $ref: '#/components/messages/message_2'
+  channel_2:
+    address: channel_2
+    description: Please describe what this topic means for other teams
+    messages:
+      message_1:
+        $ref: '#/components/messages/message_1'
+      message_2:
+        $ref: '#/components/messages/message_2'
+  channel_3:
+    address: channel_3
+    description: Please describe what this topic means for other teams
+    messages:
+      message_1:
+        $ref: '#/components/messages/message_1'
+components:
+  messages:
+    message_1:
+      x-eventcatalog-message-type: event
+      payload:
+        type: object
+        properties:
+          sender:
+            type: string
+            description: The string which identifies the producer of this message.
+    message_2:
+      x-eventcatalog-message-type: command
+      payload:
+        type: object
+        properties:
+          action:
+            type: string
+            description: The action to perform.

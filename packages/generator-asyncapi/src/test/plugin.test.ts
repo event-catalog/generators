@@ -540,6 +540,29 @@ describe('AsyncAPI EventCatalog Plugin', () => {
         ]);
       });
 
+      it('when parseChannels is true and the same message is sent to multiple channels, sends are consolidated with all channels in `to`', async () => {
+        const { getService } = utils(catalogDir);
+
+        await plugin(config, {
+          services: [
+            { path: join(asyncAPIExamplesDir, 'shared-message-multiple-channels.asyncapi.yml'), id: 'multi-channel-service' },
+          ],
+          parseChannels: true,
+        });
+
+        const service = await getService('multi-channel-service', '1.0.0');
+
+        // The same message_1 is sent to 3 different channels, should be consolidated into one sends entry
+        expect(service.sends).toHaveLength(1);
+        expect(service.sends).toEqual([
+          {
+            id: 'message_1',
+            version: '1.0.0',
+            to: [{ id: 'channel_1' }, { id: 'channel_2' }, { id: 'channel_3' }],
+          },
+        ]);
+      });
+
       it('when parseChannels is false, sends do not include `to`', async () => {
         const { getService } = utils(catalogDir);
 
@@ -630,6 +653,29 @@ describe('AsyncAPI EventCatalog Plugin', () => {
           { id: 'GetUserByEmail', version: '1.0.0' },
           { id: 'CheckEmailAvailability', version: '1.0.0' },
           { id: 'UserSubscribed', version: '1.0.0' },
+        ]);
+      });
+
+      it('when parseChannels is true and the same message is received from multiple channels, receives are consolidated with all channels in `from`', async () => {
+        const { getService } = utils(catalogDir);
+
+        await plugin(config, {
+          services: [
+            { path: join(asyncAPIExamplesDir, 'shared-message-multiple-channels.asyncapi.yml'), id: 'multi-channel-service' },
+          ],
+          parseChannels: true,
+        });
+
+        const service = await getService('multi-channel-service', '1.0.0');
+
+        // The same message_2 is received from 2 different channels, should be consolidated into one receives entry
+        expect(service.receives).toHaveLength(1);
+        expect(service.receives).toEqual([
+          {
+            id: 'message_2',
+            version: '1.0.0',
+            from: [{ id: 'channel_1' }, { id: 'channel_2' }],
+          },
         ]);
       });
 
@@ -1847,11 +1893,11 @@ describe('AsyncAPI EventCatalog Plugin', () => {
             from: [{ id: 'lightingMeasured' }],
           });
 
-          // turnOn is a 'send' operation on channel lightTurnOn
+          // turnOn (turnOnOff message) is sent to both lightTurnOn and lightTurnOff channels, consolidated into one entry
           expect(service.sends).toContainEqual({
             id: 'turnOn',
             version: '1.0.0',
-            to: [{ id: 'lightTurnOn' }],
+            to: [{ id: 'lightTurnOn' }, { id: 'lightTurnOff' }],
           });
 
           // dimLight is a 'send' operation on channel lightsDim (with x-eventcatalog-channel-version: 2.0.0)
@@ -1872,11 +1918,12 @@ describe('AsyncAPI EventCatalog Plugin', () => {
 
           const service = await getService('streetlights-service', '1.0.0');
 
-          // lightTurnOn has no x-eventcatalog-channel-version, so no version in the pointer
+          // lightTurnOn and lightTurnOff have no x-eventcatalog-channel-version, so no version in the pointers
+          // Both use the same turnOnOff message, so they are consolidated
           expect(service.sends).toContainEqual({
             id: 'turnOn',
             version: '1.0.0',
-            to: [{ id: 'lightTurnOn' }],
+            to: [{ id: 'lightTurnOn' }, { id: 'lightTurnOff' }],
           });
 
           // lightingMeasured has no x-eventcatalog-channel-version, so no version in the pointer
