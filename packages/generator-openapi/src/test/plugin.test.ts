@@ -2526,6 +2526,39 @@ describe('OpenAPI EventCatalog Plugin', () => {
         expect(consumer.sends).toHaveLength(8);
       });
 
+      it('does not create a duplicate service when consumer already exists with a different version than the default', async () => {
+        const { writeService, getService } = utils(catalogDir);
+
+        // Pre-create the consumer service with a non-default version (not 1.0.0)
+        await writeService({
+          id: 'public-website',
+          version: '0.0.1',
+          name: 'Public Website',
+          markdown: '# Public Website',
+          sends: [],
+        });
+
+        await plugin(config, {
+          services: [
+            {
+              path: join(openAPIExamples, 'petstore.yml'),
+              id: 'swagger-petstore',
+              // Consumer does NOT specify a version — the generator should find the existing service
+              consumers: [{ id: 'public-website' }],
+            },
+          ],
+        });
+
+        // The existing service should be updated with sends, not a new one created
+        const consumer = await getService('public-website', '0.0.1');
+
+        expect(consumer).toBeDefined();
+        expect(consumer.name).toEqual('Public Website');
+        expect(consumer.markdown).toEqual('# Public Website');
+        // Should have the sends from the petstore spec merged in
+        expect(consumer.sends).toHaveLength(7);
+      });
+
       it('merges sends with existing sends on the consumer service without duplicates', async () => {
         const { writeService, getService } = utils(catalogDir);
 

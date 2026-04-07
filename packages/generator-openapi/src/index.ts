@@ -347,11 +347,12 @@ export default async (_: any, options: Props) => {
       // Process consumer services
       const consumers = serviceSpec.consumers || [];
       for (const consumer of consumers) {
-        const consumerVersion = consumer.version || '1.0.0';
         const filteredSends = filterMessagesByRoutes(allGeneratedMessages, consumer.routes);
 
-        // Check if consumer already exists
-        const existingConsumer = await getService(consumer.id, consumerVersion);
+        // Check if consumer already exists — look up latest first so we don't miss
+        // services whose version differs from the configured/default version
+        const existingConsumer = await getService(consumer.id, consumer.version || 'latest');
+        const consumerVersion = consumer.version || existingConsumer?.version || '1.0.0';
 
         if (existingConsumer) {
           // Merge sends, preserving existing service data
