@@ -3243,6 +3243,56 @@ describe('OpenAPI EventCatalog Plugin', () => {
         const petsDomainFileContent = await fs.readFile(petsDomainFilePath, 'utf-8');
         expect(petsDomainFileContent).not.toContain('orders-service');
       });
+
+      it('when a consumer service already exists in another domain with a different version and no version is specified, its sends are still updated', async () => {
+        const { writeDomain, addServiceToDomain, writeService, getService } = utils(catalogDir);
+
+        // Create a separate domain and place the consumer inside it (version 0.0.1, not 1.0.0)
+        await writeDomain({
+          id: 'website',
+          name: 'Website Domain',
+          version: '1.0.0',
+          markdown: '',
+        });
+
+        await writeService(
+          {
+            id: 'public-website',
+            version: '0.0.1',
+            name: 'Public Website',
+            markdown: '# Public Website',
+          },
+          { path: join('../', 'domains', 'website', 'services', 'public-website') }
+        );
+
+        await addServiceToDomain('website', { id: 'public-website', version: '0.0.1' }, '1.0.0');
+
+        // Run the plugin with the consumer NOT specifying a version
+        await plugin(config, {
+          services: [
+            {
+              path: join(openAPIExamples, 'petstore.yml'),
+              id: 'swagger-petstore',
+              consumers: [{ id: 'public-website' }],
+            },
+          ],
+          domain: { id: 'pets', name: 'Pets Domain', version: '1.0.0' },
+        });
+
+        const consumer = await getService('public-website', '0.0.1');
+
+        // The existing service should be found and its sends updated
+        expect(consumer).toBeDefined();
+        expect(consumer.name).toEqual('Public Website');
+        expect(consumer.markdown).toEqual('# Public Website');
+        expect(consumer.sends!.length).toBeGreaterThan(0);
+
+        // Consumer should still live inside the website domain on disk
+        const consumerInWebsiteDomain = existsSync(
+          join(catalogDir, 'domains', 'website', 'services', 'public-website', 'index.mdx')
+        );
+        expect(consumerInWebsiteDomain).toBe(true);
+      });
     });
 
     describe('consumers with multiple OpenAPI services', () => {
