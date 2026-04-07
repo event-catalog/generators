@@ -1,5 +1,11 @@
 # @eventcatalog/sdk
 
+## 6.3.0
+
+### Minor Changes
+
+- f7789e5: Consolidate sends/receives entries when the same message is used across multiple channels, merging channel pointers into a single `to`/`from` array
+
 ## 6.2.1
 
 ### Patch Changes
