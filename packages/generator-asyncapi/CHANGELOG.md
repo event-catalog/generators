@@ -1,5 +1,11 @@
 # @eventcatalog/sdk
 
+## 6.3.1
+
+### Patch Changes
+
+- dc7a1cd: fix duplicate channels in sends/receives when same message appears in multiple operations on the same channel
+
 ## 6.3.0
 
 ### Minor Changes
