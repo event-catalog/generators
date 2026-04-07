@@ -164,10 +164,12 @@ const consolidateMessages = <T extends { id: string; version?: string; to?: any[
     const existing = map.get(key);
     if (existing) {
       if (item.to) {
-        existing.to = [...(existing.to || []), ...item.to];
+        const merged = [...(existing.to || []), ...item.to];
+        existing.to = merged.filter((ch, i, arr) => i === arr.findIndex((c) => c.id === ch.id));
       }
       if (item.from) {
-        existing.from = [...(existing.from || []), ...item.from];
+        const merged = [...(existing.from || []), ...item.from];
+        existing.from = merged.filter((ch, i, arr) => i === arr.findIndex((c) => c.id === ch.id));
       }
     } else {
       map.set(key, { ...item });
