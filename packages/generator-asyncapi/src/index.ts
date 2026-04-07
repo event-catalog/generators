@@ -157,10 +157,8 @@ const toUniqueArray = (array: { id: string; version: string }[]) => {
 };
 
 // Consolidate sends/receives entries that share the same message id+version by merging their to/from channel arrays
-const consolidateMessages = (
-  array: { id: string; version: string; to?: { id: string; version?: string }[]; from?: { id: string; version?: string }[] }[]
-) => {
-  const map = new Map<string, (typeof array)[number]>();
+const consolidateMessages = <T extends { id: string; version?: string; to?: any[]; from?: any[] }>(array: T[]): T[] => {
+  const map = new Map<string, T>();
   for (const item of array) {
     const key = `${item.id}::${item.version}`;
     const existing = map.get(key);
