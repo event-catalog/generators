@@ -1,5 +1,11 @@
 # @eventcatalog/sdk
 
+## 6.4.0
+
+### Minor Changes
+
+- 1787e13: Add `groupMessagesBy` option to group messages in the EventCatalog visualiser. OpenAPI supports `x-extension` (via `x-eventcatalog-group`) and `path-prefix` (derived from URL path). AsyncAPI supports `x-extension` (via `x-eventcatalog-group` on messages).
+
 ## 6.3.1
 
 ### Patch Changes
