@@ -1,5 +1,11 @@
 # @eventcatalog/generator-openapi
 
+## 7.12.1
+
+### Patch Changes
+
+- bbbcdde: Fix path-prefix grouping: include single-segment paths when other paths share the same prefix, use regex for version segment detection, and output group names as /prefix format
+
 ## 7.12.0
 
 ### Minor Changes
