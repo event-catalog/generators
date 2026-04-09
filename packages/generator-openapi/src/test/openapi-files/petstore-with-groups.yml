@@ -1,0 +1,188 @@
+openapi: '3.0.0'
+info:
+  version: 1.0.0
+  title: Petstore With Groups
+  description: Petstore API with message grouping support — covers various path structures.
+paths:
+  # --- Single-segment paths (no group for path-prefix) ---
+  /pets:
+    get:
+      summary: List all pets
+      operationId: listPets
+      tags:
+        - pets
+      x-eventcatalog-group: Pet Management
+      responses:
+        '200':
+          description: A list of pets
+    post:
+      summary: Create a pet
+      operationId: createPets
+      tags:
+        - pets
+      x-eventcatalog-group: Pet Management
+      responses:
+        '201':
+          description: Null response
+  /health:
+    get:
+      summary: Health check
+      operationId: healthCheck
+      responses:
+        '200':
+          description: OK
+
+  # --- Multi-segment paths with path params ---
+  /pets/{petId}:
+    get:
+      summary: Info for a specific pet
+      operationId: showPetById
+      tags:
+        - pets
+      x-eventcatalog-group: Pet Management
+      parameters:
+        - name: petId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Expected response to a valid request
+    delete:
+      summary: Delete a pet
+      operationId: deletePet
+      tags:
+        - pets
+      x-eventcatalog-group: Pet Management
+      parameters:
+        - name: petId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Pet deleted
+
+  # --- Deeply nested path (3+ segments) ---
+  /pets/{petId}/adopt:
+    post:
+      summary: Adopt a pet
+      operationId: adoptPet
+      tags:
+        - adoptions
+      x-eventcatalog-group: Adoptions
+      parameters:
+        - name: petId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Pet adopted
+  /pets/{petId}/vaccinations:
+    get:
+      summary: List vaccinations for a pet
+      operationId: listVaccinations
+      tags:
+        - pets
+      x-eventcatalog-group: Pet Management
+      parameters:
+        - name: petId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of vaccinations
+
+  # --- Different resource path (orders) ---
+  /orders:
+    post:
+      summary: Place an adoption order
+      operationId: placeOrder
+      tags:
+        - orders
+      x-eventcatalog-group: Orders
+      responses:
+        '201':
+          description: Order placed
+  /orders/{orderId}:
+    get:
+      summary: Get order by ID
+      operationId: getOrderById
+      tags:
+        - orders
+      x-eventcatalog-group: Orders
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Order details
+  /orders/{orderId}/cancel:
+    post:
+      summary: Cancel an order
+      operationId: cancelOrder
+      tags:
+        - orders
+      x-eventcatalog-group: Orders
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Order cancelled
+
+  # --- API-versioned prefix path (should skip api/v1) ---
+  /api/v1/billing/invoices:
+    get:
+      summary: List invoices
+      operationId: listInvoices
+      tags:
+        - billing
+      x-eventcatalog-group: Billing
+      responses:
+        '200':
+          description: List of invoices
+  /api/v1/billing/payments:
+    post:
+      summary: Submit a payment
+      operationId: submitPayment
+      tags:
+        - billing
+      x-eventcatalog-group: Billing
+      responses:
+        '201':
+          description: Payment submitted
+
+  # --- Operation with no extension and no tags (edge case) ---
+  /status:
+    get:
+      summary: System status
+      operationId: getStatus
+      responses:
+        '200':
+          description: System status
+
+  # --- Operation that uses x-eventcatalog-message-action to mark as sends ---
+  /notifications/send:
+    post:
+      summary: Send a notification
+      operationId: sendNotification
+      tags:
+        - notifications
+      x-eventcatalog-group: Notifications
+      x-eventcatalog-message-action: sends
+      responses:
+        '200':
+          description: Notification sent

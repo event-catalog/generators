@@ -146,6 +146,11 @@ const optionsSchema = z.object({
   parseExamples: z.boolean().optional(),
   attachHeadersToSchema: z.boolean().optional(),
   saveParsedSpecFile: z.boolean({ invalid_type_error: 'The saveParsedSpecFile is not a boolean in options' }).optional(),
+  /**
+   * Group messages in the visualiser using the `x-eventcatalog-group` extension
+   * on each message in the AsyncAPI spec.
+   */
+  groupMessagesBy: z.enum(['x-extension']).optional(),
 });
 
 type Props = z.infer<typeof optionsSchema>;
@@ -592,6 +597,12 @@ export default async (config: any, options: Props) => {
           // Message is not owned by this service, therefore we don't need to document it
           console.log(chalk.yellow(` - Skipping external message: ${getMessageName(message)}(v${messageVersion})`));
         }
+        // Derive group from x-eventcatalog-group extension if groupMessagesBy is configured
+        const group =
+          options.groupMessagesBy === 'x-extension'
+            ? message.extensions().get('x-eventcatalog-group')?.value() || undefined
+            : undefined;
+
         // Add the message to the correct array, with channel info if parseChannels is enabled
         if (parseChannels) {
           const operationChannels = operation.channels().all();
@@ -602,16 +613,22 @@ export default async (config: any, options: Props) => {
           });
 
           if (isSent)
-            sends.push({ id: messageId, version: messageVersion, ...(channelPointers.length > 0 && { to: channelPointers }) });
+            sends.push({
+              id: messageId,
+              version: messageVersion,
+              ...(channelPointers.length > 0 && { to: channelPointers }),
+              ...(group && { group }),
+            });
           if (isReceived)
             receives.push({
               id: messageId,
               version: messageVersion,
               ...(channelPointers.length > 0 && { from: channelPointers }),
+              ...(group && { group }),
             });
         } else {
-          if (isSent) sends.push({ id: messageId, version: messageVersion });
-          if (isReceived) receives.push({ id: messageId, version: messageVersion });
+          if (isSent) sends.push({ id: messageId, version: messageVersion, ...(group && { group }) });
+          if (isReceived) receives.push({ id: messageId, version: messageVersion, ...(group && { group }) });
         }
       }
     }
