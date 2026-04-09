@@ -8,7 +8,7 @@ import { defaultMarkdown as generateMarkdownForDomain } from './utils/domains';
 import { buildService, getSummary } from './utils/services';
 import { buildMessage } from './utils/messages';
 import { getOperationsByType, getExamplesByOperationId } from './utils/openapi';
-import { Domain, Service, Message, Pointer } from './types';
+import { Domain, Service, Message, Operation, Pointer } from './types';
 import { getMessageTypeUtils } from './utils/catalog-shorthand';
 import { OpenAPI } from 'openapi-types';
 import checkLicense from '../../../shared/checkLicense';
