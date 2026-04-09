@@ -1,5 +1,15 @@
 # @eventcatalog/generator-openapi
 
+## 7.12.0
+
+### Minor Changes
+
+- 1787e13: Add `groupMessagesBy` option to group messages in the EventCatalog visualiser. OpenAPI supports `x-extension` (via `x-eventcatalog-group`) and `path-prefix` (derived from URL path). AsyncAPI supports `x-extension` (via `x-eventcatalog-group` on messages).
+
+### Patch Changes
+
+- 7b50f8b: Fix consumer lookup to use latest version when no version is specified, preventing duplicate service creation when existing consumer has a non-default version
+
 ## 7.11.2
 
 ### Patch Changes
