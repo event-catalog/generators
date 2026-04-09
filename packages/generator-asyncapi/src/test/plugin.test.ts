@@ -2815,4 +2815,130 @@ describe('AsyncAPI EventCatalog Plugin', () => {
       });
     });
   });
+
+  describe('message grouping (groupMessagesBy)', () => {
+    describe('x-extension', () => {
+      it('ShipmentDispatched (send, x-eventcatalog-group: Shipping) has group "Shipping" in sends', async () => {
+        const { getService } = utils(catalogDir);
+
+        await plugin(config, {
+          services: [{ path: join(asyncAPIExamplesDir, 'grouped-messages.asyncapi.yml'), id: 'warehouse-service' }],
+          groupMessagesBy: 'x-extension',
+        });
+
+        const service = await getService('warehouse-service', '1.0.0');
+        const shipmentDispatched = service.sends?.find((s: any) => s.id === 'ShipmentDispatched');
+
+        expect(shipmentDispatched).toEqual(expect.objectContaining({ id: 'ShipmentDispatched', group: 'Shipping' }));
+      });
+
+      it('ShipmentFailed (send, x-eventcatalog-group: Shipping) has group "Shipping" in sends', async () => {
+        const { getService } = utils(catalogDir);
+
+        await plugin(config, {
+          services: [{ path: join(asyncAPIExamplesDir, 'grouped-messages.asyncapi.yml'), id: 'warehouse-service' }],
+          groupMessagesBy: 'x-extension',
+        });
+
+        const service = await getService('warehouse-service', '1.0.0');
+        const shipmentFailed = service.sends?.find((s: any) => s.id === 'ShipmentFailed');
+
+        expect(shipmentFailed).toEqual(expect.objectContaining({ id: 'ShipmentFailed', group: 'Shipping' }));
+      });
+
+      it('PickRequested (receive, x-eventcatalog-group: Picking) has group "Picking" in receives', async () => {
+        const { getService } = utils(catalogDir);
+
+        await plugin(config, {
+          services: [{ path: join(asyncAPIExamplesDir, 'grouped-messages.asyncapi.yml'), id: 'warehouse-service' }],
+          groupMessagesBy: 'x-extension',
+        });
+
+        const service = await getService('warehouse-service', '1.0.0');
+        const pickRequested = service.receives?.find((r: any) => r.id === 'PickRequested');
+
+        expect(pickRequested).toEqual(expect.objectContaining({ id: 'PickRequested', group: 'Picking' }));
+      });
+
+      it('PickCompleted (receive, x-eventcatalog-group: Picking) has group "Picking" in receives', async () => {
+        const { getService } = utils(catalogDir);
+
+        await plugin(config, {
+          services: [{ path: join(asyncAPIExamplesDir, 'grouped-messages.asyncapi.yml'), id: 'warehouse-service' }],
+          groupMessagesBy: 'x-extension',
+        });
+
+        const service = await getService('warehouse-service', '1.0.0');
+        const pickCompleted = service.receives?.find((r: any) => r.id === 'PickCompleted');
+
+        expect(pickCompleted).toEqual(expect.objectContaining({ id: 'PickCompleted', group: 'Picking' }));
+      });
+
+      it('StockLevelUpdated (send, no x-eventcatalog-group) has no group property', async () => {
+        const { getService } = utils(catalogDir);
+
+        await plugin(config, {
+          services: [{ path: join(asyncAPIExamplesDir, 'grouped-messages.asyncapi.yml'), id: 'warehouse-service' }],
+          groupMessagesBy: 'x-extension',
+        });
+
+        const service = await getService('warehouse-service', '1.0.0');
+        const stockLevelUpdated = service.sends?.find((s: any) => s.id === 'StockLevelUpdated');
+
+        expect(stockLevelUpdated).toBeDefined();
+        expect(stockLevelUpdated).not.toHaveProperty('group');
+      });
+
+      it('SystemAlert (receive, no x-eventcatalog-group) has no group property', async () => {
+        const { getService } = utils(catalogDir);
+
+        await plugin(config, {
+          services: [{ path: join(asyncAPIExamplesDir, 'grouped-messages.asyncapi.yml'), id: 'warehouse-service' }],
+          groupMessagesBy: 'x-extension',
+        });
+
+        const service = await getService('warehouse-service', '1.0.0');
+        const systemAlert = service.receives?.find((r: any) => r.id === 'SystemAlert');
+
+        expect(systemAlert).toBeDefined();
+        expect(systemAlert).not.toHaveProperty('group');
+      });
+
+      it('group is preserved alongside channel pointers when parseChannels is enabled', async () => {
+        const { getService } = utils(catalogDir);
+
+        await plugin(config, {
+          services: [{ path: join(asyncAPIExamplesDir, 'grouped-messages.asyncapi.yml'), id: 'warehouse-service' }],
+          groupMessagesBy: 'x-extension',
+          parseChannels: true,
+        });
+
+        const service = await getService('warehouse-service', '1.0.0');
+        const shipmentDispatched = service.sends?.find((s: any) => s.id === 'ShipmentDispatched');
+
+        expect(shipmentDispatched).toEqual(
+          expect.objectContaining({
+            id: 'ShipmentDispatched',
+            group: 'Shipping',
+            to: expect.arrayContaining([expect.objectContaining({ id: 'shippingChannel' })]),
+          })
+        );
+      });
+    });
+
+    it('no messages have a group property when groupMessagesBy is not configured', async () => {
+      const { getService } = utils(catalogDir);
+
+      await plugin(config, {
+        services: [{ path: join(asyncAPIExamplesDir, 'grouped-messages.asyncapi.yml'), id: 'warehouse-service' }],
+      });
+
+      const service = await getService('warehouse-service', '1.0.0');
+
+      const allMessages = [...(service.sends || []), ...(service.receives || [])];
+      for (const msg of allMessages) {
+        expect(msg).not.toHaveProperty('group');
+      }
+    });
+  });
 });

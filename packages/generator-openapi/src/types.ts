@@ -12,6 +12,7 @@ export type Domain = {
 export type Pointer = {
   id: string;
   version?: string;
+  group?: string;
 };
 
 export type RouteFilter = {

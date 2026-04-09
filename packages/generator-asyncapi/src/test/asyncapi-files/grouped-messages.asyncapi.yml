@@ -1,0 +1,133 @@
+asyncapi: 3.0.0
+info:
+  title: Warehouse Service
+  version: 1.0.0
+  description: Service that manages warehouse operations with grouped messages.
+channels:
+  shippingChannel:
+    address: warehouse/shipping
+    messages:
+      ShipmentDispatched:
+        $ref: '#/components/messages/ShipmentDispatched'
+      ShipmentFailed:
+        $ref: '#/components/messages/ShipmentFailed'
+  pickingChannel:
+    address: warehouse/picking
+    messages:
+      PickRequested:
+        $ref: '#/components/messages/PickRequested'
+      PickCompleted:
+        $ref: '#/components/messages/PickCompleted'
+  inventoryChannel:
+    address: warehouse/inventory
+    messages:
+      StockLevelUpdated:
+        $ref: '#/components/messages/StockLevelUpdated'
+  alertsChannel:
+    address: warehouse/alerts
+    messages:
+      SystemAlert:
+        $ref: '#/components/messages/SystemAlert'
+operations:
+  sendShipmentDispatched:
+    action: send
+    channel:
+      $ref: '#/channels/shippingChannel'
+    messages:
+      - $ref: '#/channels/shippingChannel/messages/ShipmentDispatched'
+  sendShipmentFailed:
+    action: send
+    channel:
+      $ref: '#/channels/shippingChannel'
+    messages:
+      - $ref: '#/channels/shippingChannel/messages/ShipmentFailed'
+  receivePickRequested:
+    action: receive
+    channel:
+      $ref: '#/channels/pickingChannel'
+    messages:
+      - $ref: '#/channels/pickingChannel/messages/PickRequested'
+  receivePickCompleted:
+    action: receive
+    channel:
+      $ref: '#/channels/pickingChannel'
+    messages:
+      - $ref: '#/channels/pickingChannel/messages/PickCompleted'
+  sendStockLevelUpdated:
+    action: send
+    channel:
+      $ref: '#/channels/inventoryChannel'
+    messages:
+      - $ref: '#/channels/inventoryChannel/messages/StockLevelUpdated'
+  receiveSystemAlert:
+    action: receive
+    channel:
+      $ref: '#/channels/alertsChannel'
+    messages:
+      - $ref: '#/channels/alertsChannel/messages/SystemAlert'
+components:
+  messages:
+    ShipmentDispatched:
+      description: 'A shipment has been dispatched from the warehouse'
+      x-eventcatalog-message-type: event
+      x-eventcatalog-group: Shipping
+      payload:
+        type: object
+        properties:
+          shipmentId:
+            type: string
+          trackingNumber:
+            type: string
+    ShipmentFailed:
+      description: 'A shipment has failed to dispatch'
+      x-eventcatalog-message-type: event
+      x-eventcatalog-group: Shipping
+      payload:
+        type: object
+        properties:
+          shipmentId:
+            type: string
+          reason:
+            type: string
+    PickRequested:
+      description: 'A pick has been requested for an order'
+      x-eventcatalog-message-type: command
+      x-eventcatalog-group: Picking
+      payload:
+        type: object
+        properties:
+          orderId:
+            type: string
+          items:
+            type: array
+            items:
+              type: string
+    PickCompleted:
+      description: 'A pick has been completed'
+      x-eventcatalog-message-type: event
+      x-eventcatalog-group: Picking
+      payload:
+        type: object
+        properties:
+          orderId:
+            type: string
+    StockLevelUpdated:
+      description: 'Stock level has been updated'
+      x-eventcatalog-message-type: event
+      payload:
+        type: object
+        properties:
+          productId:
+            type: string
+          newLevel:
+            type: integer
+    SystemAlert:
+      description: 'A system alert has been received'
+      x-eventcatalog-message-type: event
+      payload:
+        type: object
+        properties:
+          alertId:
+            type: string
+          severity:
+            type: string

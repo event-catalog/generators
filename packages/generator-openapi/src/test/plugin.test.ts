@@ -3323,4 +3323,283 @@ describe('OpenAPI EventCatalog Plugin', () => {
       });
     });
   });
+
+  describe('message grouping (groupMessagesBy)', () => {
+    describe('x-extension', () => {
+      it('listPets (GET /pets) receives group "Pet Management" from its x-eventcatalog-group extension', async () => {
+        const { getService } = utils(catalogDir);
+
+        await plugin(config, {
+          services: [{ path: join(openAPIExamples, 'petstore-with-groups.yml'), id: 'petstore-grouped' }],
+          groupMessagesBy: 'x-extension',
+        });
+
+        const service = await getService('petstore-grouped', '1.0.0');
+        const listPets = service.receives?.find((r: any) => r.id === 'listPets');
+
+        expect(listPets).toEqual(expect.objectContaining({ id: 'listPets', group: 'Pet Management' }));
+      });
+
+      it('adoptPet (POST /pets/{petId}/adopt) receives group "Adoptions" from its x-eventcatalog-group extension', async () => {
+        const { getService } = utils(catalogDir);
+
+        await plugin(config, {
+          services: [{ path: join(openAPIExamples, 'petstore-with-groups.yml'), id: 'petstore-grouped' }],
+          groupMessagesBy: 'x-extension',
+        });
+
+        const service = await getService('petstore-grouped', '1.0.0');
+        const adoptPet = service.receives?.find((r: any) => r.id === 'adoptPet');
+
+        expect(adoptPet).toEqual(expect.objectContaining({ id: 'adoptPet', group: 'Adoptions' }));
+      });
+
+      it('getOrderById (GET /orders/{orderId}) receives group "Orders" from its x-eventcatalog-group extension', async () => {
+        const { getService } = utils(catalogDir);
+
+        await plugin(config, {
+          services: [{ path: join(openAPIExamples, 'petstore-with-groups.yml'), id: 'petstore-grouped' }],
+          groupMessagesBy: 'x-extension',
+        });
+
+        const service = await getService('petstore-grouped', '1.0.0');
+        const getOrderById = service.receives?.find((r: any) => r.id === 'getOrderById');
+
+        expect(getOrderById).toEqual(expect.objectContaining({ id: 'getOrderById', group: 'Orders' }));
+      });
+
+      it('listInvoices (GET /api/v1/billing/invoices) receives group "Billing" from its x-eventcatalog-group extension', async () => {
+        const { getService } = utils(catalogDir);
+
+        await plugin(config, {
+          services: [{ path: join(openAPIExamples, 'petstore-with-groups.yml'), id: 'petstore-grouped' }],
+          groupMessagesBy: 'x-extension',
+        });
+
+        const service = await getService('petstore-grouped', '1.0.0');
+        const listInvoices = service.receives?.find((r: any) => r.id === 'listInvoices');
+
+        expect(listInvoices).toEqual(expect.objectContaining({ id: 'listInvoices', group: 'Billing' }));
+      });
+
+      it('sendNotification (POST /notifications/send, action=sends) is placed in sends with group "Notifications"', async () => {
+        const { getService } = utils(catalogDir);
+
+        await plugin(config, {
+          services: [{ path: join(openAPIExamples, 'petstore-with-groups.yml'), id: 'petstore-grouped' }],
+          groupMessagesBy: 'x-extension',
+        });
+
+        const service = await getService('petstore-grouped', '1.0.0');
+        const sendNotification = service.sends?.find((s: any) => s.id === 'sendNotification');
+
+        expect(sendNotification).toEqual(expect.objectContaining({ id: 'sendNotification', group: 'Notifications' }));
+      });
+
+      it('healthCheck (GET /health) has no group because it has no x-eventcatalog-group extension', async () => {
+        const { getService } = utils(catalogDir);
+
+        await plugin(config, {
+          services: [{ path: join(openAPIExamples, 'petstore-with-groups.yml'), id: 'petstore-grouped' }],
+          groupMessagesBy: 'x-extension',
+        });
+
+        const service = await getService('petstore-grouped', '1.0.0');
+        const healthCheck = service.receives?.find((r: any) => r.id === 'healthCheck');
+
+        expect(healthCheck).toBeDefined();
+        expect(healthCheck).not.toHaveProperty('group');
+      });
+
+      it('getStatus (GET /status) has no group because it has no x-eventcatalog-group extension', async () => {
+        const { getService } = utils(catalogDir);
+
+        await plugin(config, {
+          services: [{ path: join(openAPIExamples, 'petstore-with-groups.yml'), id: 'petstore-grouped' }],
+          groupMessagesBy: 'x-extension',
+        });
+
+        const service = await getService('petstore-grouped', '1.0.0');
+        const getStatus = service.receives?.find((r: any) => r.id === 'getStatus');
+
+        expect(getStatus).toBeDefined();
+        expect(getStatus).not.toHaveProperty('group');
+      });
+    });
+
+    describe('path-prefix', () => {
+      it('showPetById (GET /pets/{petId}) receives group "Pets" — two segments, first is "pets"', async () => {
+        const { getService } = utils(catalogDir);
+
+        await plugin(config, {
+          services: [{ path: join(openAPIExamples, 'petstore-with-groups.yml'), id: 'petstore-path' }],
+          groupMessagesBy: 'path-prefix',
+        });
+
+        const service = await getService('petstore-path', '1.0.0');
+        const showPetById = service.receives?.find((r: any) => r.id === 'showPetById');
+
+        expect(showPetById).toEqual(expect.objectContaining({ id: 'showPetById', group: 'Pets' }));
+      });
+
+      it('adoptPet (POST /pets/{petId}/adopt) receives group "Pets" — three segments, first is "pets"', async () => {
+        const { getService } = utils(catalogDir);
+
+        await plugin(config, {
+          services: [{ path: join(openAPIExamples, 'petstore-with-groups.yml'), id: 'petstore-path' }],
+          groupMessagesBy: 'path-prefix',
+        });
+
+        const service = await getService('petstore-path', '1.0.0');
+        const adoptPet = service.receives?.find((r: any) => r.id === 'adoptPet');
+
+        expect(adoptPet).toEqual(expect.objectContaining({ id: 'adoptPet', group: 'Pets' }));
+      });
+
+      it('listVaccinations (GET /pets/{petId}/vaccinations) receives group "Pets" — three segments, first is "pets"', async () => {
+        const { getService } = utils(catalogDir);
+
+        await plugin(config, {
+          services: [{ path: join(openAPIExamples, 'petstore-with-groups.yml'), id: 'petstore-path' }],
+          groupMessagesBy: 'path-prefix',
+        });
+
+        const service = await getService('petstore-path', '1.0.0');
+        const listVaccinations = service.receives?.find((r: any) => r.id === 'listVaccinations');
+
+        expect(listVaccinations).toEqual(expect.objectContaining({ id: 'listVaccinations', group: 'Pets' }));
+      });
+
+      it('getOrderById (GET /orders/{orderId}) receives group "Orders" — two segments, first is "orders"', async () => {
+        const { getService } = utils(catalogDir);
+
+        await plugin(config, {
+          services: [{ path: join(openAPIExamples, 'petstore-with-groups.yml'), id: 'petstore-path' }],
+          groupMessagesBy: 'path-prefix',
+        });
+
+        const service = await getService('petstore-path', '1.0.0');
+        const getOrderById = service.receives?.find((r: any) => r.id === 'getOrderById');
+
+        expect(getOrderById).toEqual(expect.objectContaining({ id: 'getOrderById', group: 'Orders' }));
+      });
+
+      it('cancelOrder (POST /orders/{orderId}/cancel) receives group "Orders" — three segments, first is "orders"', async () => {
+        const { getService } = utils(catalogDir);
+
+        await plugin(config, {
+          services: [{ path: join(openAPIExamples, 'petstore-with-groups.yml'), id: 'petstore-path' }],
+          groupMessagesBy: 'path-prefix',
+        });
+
+        const service = await getService('petstore-path', '1.0.0');
+        const cancelOrder = service.receives?.find((r: any) => r.id === 'cancelOrder');
+
+        expect(cancelOrder).toEqual(expect.objectContaining({ id: 'cancelOrder', group: 'Orders' }));
+      });
+
+      it('listInvoices (GET /api/v1/billing/invoices) receives group "Billing" — skips "api" and "v1" prefixes', async () => {
+        const { getService } = utils(catalogDir);
+
+        await plugin(config, {
+          services: [{ path: join(openAPIExamples, 'petstore-with-groups.yml'), id: 'petstore-path' }],
+          groupMessagesBy: 'path-prefix',
+        });
+
+        const service = await getService('petstore-path', '1.0.0');
+        const listInvoices = service.receives?.find((r: any) => r.id === 'listInvoices');
+
+        expect(listInvoices).toEqual(expect.objectContaining({ id: 'listInvoices', group: 'Billing' }));
+      });
+
+      it('sendNotification (POST /notifications/send, action=sends) is placed in sends with group "Notifications"', async () => {
+        const { getService } = utils(catalogDir);
+
+        await plugin(config, {
+          services: [{ path: join(openAPIExamples, 'petstore-with-groups.yml'), id: 'petstore-path' }],
+          groupMessagesBy: 'path-prefix',
+        });
+
+        const service = await getService('petstore-path', '1.0.0');
+        const sendNotification = service.sends?.find((s: any) => s.id === 'sendNotification');
+
+        expect(sendNotification).toEqual(expect.objectContaining({ id: 'sendNotification', group: 'Notifications' }));
+      });
+
+      it('listPets (GET /pets) has no group because /pets is a single-segment path', async () => {
+        const { getService } = utils(catalogDir);
+
+        await plugin(config, {
+          services: [{ path: join(openAPIExamples, 'petstore-with-groups.yml'), id: 'petstore-path' }],
+          groupMessagesBy: 'path-prefix',
+        });
+
+        const service = await getService('petstore-path', '1.0.0');
+        const listPets = service.receives?.find((r: any) => r.id === 'listPets');
+
+        expect(listPets).toBeDefined();
+        expect(listPets).not.toHaveProperty('group');
+      });
+
+      it('healthCheck (GET /health) has no group because /health is a single-segment path', async () => {
+        const { getService } = utils(catalogDir);
+
+        await plugin(config, {
+          services: [{ path: join(openAPIExamples, 'petstore-with-groups.yml'), id: 'petstore-path' }],
+          groupMessagesBy: 'path-prefix',
+        });
+
+        const service = await getService('petstore-path', '1.0.0');
+        const healthCheck = service.receives?.find((r: any) => r.id === 'healthCheck');
+
+        expect(healthCheck).toBeDefined();
+        expect(healthCheck).not.toHaveProperty('group');
+      });
+
+      it('getStatus (GET /status) has no group because /status is a single-segment path', async () => {
+        const { getService } = utils(catalogDir);
+
+        await plugin(config, {
+          services: [{ path: join(openAPIExamples, 'petstore-with-groups.yml'), id: 'petstore-path' }],
+          groupMessagesBy: 'path-prefix',
+        });
+
+        const service = await getService('petstore-path', '1.0.0');
+        const getStatus = service.receives?.find((r: any) => r.id === 'getStatus');
+
+        expect(getStatus).toBeDefined();
+        expect(getStatus).not.toHaveProperty('group');
+      });
+
+      it('placeOrder (POST /orders) has no group because /orders is a single-segment path', async () => {
+        const { getService } = utils(catalogDir);
+
+        await plugin(config, {
+          services: [{ path: join(openAPIExamples, 'petstore-with-groups.yml'), id: 'petstore-path' }],
+          groupMessagesBy: 'path-prefix',
+        });
+
+        const service = await getService('petstore-path', '1.0.0');
+        const placeOrder = service.receives?.find((r: any) => r.id === 'placeOrder');
+
+        expect(placeOrder).toBeDefined();
+        expect(placeOrder).not.toHaveProperty('group');
+      });
+    });
+
+    it('no messages have a group property when groupMessagesBy is not configured', async () => {
+      const { getService } = utils(catalogDir);
+
+      await plugin(config, {
+        services: [{ path: join(openAPIExamples, 'petstore-with-groups.yml'), id: 'petstore-no-group' }],
+      });
+
+      const service = await getService('petstore-no-group', '1.0.0');
+
+      const allMessages = [...(service.receives || []), ...(service.sends || [])];
+      for (const msg of allMessages) {
+        expect(msg).not.toHaveProperty('group');
+      }
+    });
+  });
 });

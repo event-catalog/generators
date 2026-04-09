@@ -36,10 +36,51 @@ type Props = {
   httpMethodsToMessages?: HTTP_METHOD_TO_MESSAGE_TYPE;
   preserveExistingMessages?: boolean;
   parseExamples?: boolean;
+  /**
+   * Group messages in the visualiser by a derived value.
+   * - `'x-extension'`: Use the `x-eventcatalog-group` extension on each operation.
+   * - `'path-prefix'`: Derive the group from the first meaningful URL path segment
+   *    (skips common prefixes like `api`, `v1`, `v2`).
+   */
+  groupMessagesBy?: 'x-extension' | 'path-prefix';
 };
 
 const toUniqueArray = (array: Pointer[]) => {
   return array.filter((item, index, self) => index === self.findIndex((t) => t.id === item.id && t.version === item.version));
+};
+
+// Common API path prefixes to skip when deriving group from path
+const SKIP_PATH_SEGMENTS = new Set(['api', 'v1', 'v2', 'v3', 'v4', 'v5']);
+
+/**
+ * Derive a group name for a message based on the configured strategy.
+ * Returns undefined if no group can be determined.
+ */
+const getMessageGroup = (operation: Operation, groupMessagesBy?: Props['groupMessagesBy']): string | undefined => {
+  if (!groupMessagesBy) return undefined;
+
+  if (groupMessagesBy === 'x-extension') {
+    return operation.extensions?.['x-eventcatalog-group'] || undefined;
+  }
+
+  if (groupMessagesBy === 'path-prefix') {
+    // Split into all non-empty segments (including path params like {petId})
+    const allSegments = operation.path.split('/').filter(Boolean);
+
+    // Skip common API prefixes to find the first meaningful segment
+    const meaningfulSegments = allSegments.filter((s) => !SKIP_PATH_SEGMENTS.has(s.toLowerCase()));
+
+    // Single-segment paths like /health have nothing to group by
+    if (meaningfulSegments.length < 2) return undefined;
+
+    // Use the first non-param segment as the group name: "pets" → "Pets"
+    const prefix = meaningfulSegments.find((s) => !s.startsWith('{'));
+    if (!prefix) return undefined;
+
+    return prefix.charAt(0).toUpperCase() + prefix.slice(1).toLowerCase();
+  }
+
+  return undefined;
 };
 
 // Helper to fetch authenticated URLs and parse the spec in memory
@@ -544,16 +585,17 @@ const processMessagesForOpenAPISpec = async (
     );
 
     // If the message send or recieved by the service?
+    const group = getMessageGroup(operation, options.groupMessagesBy);
+    const pointer: Pointer = {
+      id: message.id,
+      version: message.version,
+      ...(group ? { group } : {}),
+    };
+
     if (messageAction === 'sends') {
-      sends.push({
-        id: message.id,
-        version: message.version,
-      });
+      sends.push(pointer);
     } else {
-      receives.push({
-        id: message.id,
-        version: message.version,
-      });
+      receives.push(pointer);
     }
 
     allGeneratedMessages.push({
