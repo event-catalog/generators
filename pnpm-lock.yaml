@@ -131,11 +131,11 @@ importers:
         specifier: ^2.27.8
         version: 2.29.5
       '@eventcatalog/generator-asyncapi':
-        specifier: '>=6.3.0'
-        version: 6.3.0
+        specifier: '>=6.4.0'
+        version: 6.4.0
       '@eventcatalog/generator-openapi':
-        specifier: '>=7.11.0'
-        version: 7.11.0(@types/node@20.19.1)
+        specifier: '>=7.12.0'
+        version: 7.12.0(@types/node@20.19.1)
       '@eventcatalog/sdk':
         specifier: ^2.18.2
         version: 2.18.2
@@ -1246,11 +1246,11 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@eventcatalog/generator-asyncapi@6.3.0':
-    resolution: { integrity: sha512-qabrs7i13g1dQqY9a8lfeL3iZc8M6pNyVWcFk4I4IbNvNt9/2OylavsQV93GgrL6H69XxUD6UK+Kq9b1izlEAw== }
+  '@eventcatalog/generator-asyncapi@6.4.0':
+    resolution: { integrity: sha512-ujUXISpn70TgoRBC0hSxnghoQ8PTbz+8j51y9t6WAd8+MKPYjUfeyXM1kdo+3g8ESbnsmnAH+8m0H5KEVpyG8g== }
 
-  '@eventcatalog/generator-openapi@7.11.0':
-    resolution: { integrity: sha512-pNNWFEubZ5a0qZEMWX7XoePfnmcV5s61RlPxTSyvPDh1D1yZ31rCpCLWQ2TFIvX7a4po3pSeA8bR9opbOUWeUg== }
+  '@eventcatalog/generator-openapi@7.12.0':
+    resolution: { integrity: sha512-C9ocArCAt39YB1gmAR5yNr0uas+Qd0KGflT6cxWP6RWBziAd74QUO27BdNYb5D88HCj1GOnoENbuZJ+FaEBkrg== }
 
   '@eventcatalog/license@0.0.7':
     resolution: { integrity: sha512-izSIn3Dfc6LTcPiA89EqZ4/l5WCitLxt0XVu2yilyaibMOioxW7ABRFZY8/Azocd6ULKseVA2lCcoeT35/GRcg== }
@@ -5572,7 +5572,7 @@ snapshots:
   '@esbuild/win32-x64@0.25.5':
     optional: true
 
-  '@eventcatalog/generator-asyncapi@6.3.0':
+  '@eventcatalog/generator-asyncapi@6.4.0':
     dependencies:
       '@asyncapi/avro-schema-parser': 3.0.24
       '@asyncapi/parser': 3.6.0
@@ -5590,11 +5590,11 @@ snapshots:
     transitivePeerDependencies:
       - encoding
 
-  '@eventcatalog/generator-openapi@7.11.0(@types/node@20.19.1)':
+  '@eventcatalog/generator-openapi@7.12.0(@types/node@20.19.1)':
     dependencies:
       '@apidevtools/swagger-parser': 10.1.1(openapi-types@12.1.3)
       '@changesets/cli': 2.29.8(@types/node@20.19.1)
-      '@eventcatalog/sdk': 2.18.2
+      '@eventcatalog/sdk': 2.18.4
       chalk: 4.1.2
       js-yaml: 4.1.1
       openapi-types: 12.1.3

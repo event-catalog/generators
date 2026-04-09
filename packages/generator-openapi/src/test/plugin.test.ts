@@ -3428,7 +3428,7 @@ describe('OpenAPI EventCatalog Plugin', () => {
     });
 
     describe('path-prefix', () => {
-      it('showPetById (GET /pets/{petId}) receives group "Pets" — two segments, first is "pets"', async () => {
+      it('showPetById (GET /pets/{petId}) receives group "/pets"', async () => {
         const { getService } = utils(catalogDir);
 
         await plugin(config, {
@@ -3439,10 +3439,10 @@ describe('OpenAPI EventCatalog Plugin', () => {
         const service = await getService('petstore-path', '1.0.0');
         const showPetById = service.receives?.find((r: any) => r.id === 'showPetById');
 
-        expect(showPetById).toEqual(expect.objectContaining({ id: 'showPetById', group: 'Pets' }));
+        expect(showPetById).toEqual(expect.objectContaining({ id: 'showPetById', group: '/pets' }));
       });
 
-      it('adoptPet (POST /pets/{petId}/adopt) receives group "Pets" — three segments, first is "pets"', async () => {
+      it('adoptPet (POST /pets/{petId}/adopt) receives group "/pets"', async () => {
         const { getService } = utils(catalogDir);
 
         await plugin(config, {
@@ -3453,10 +3453,10 @@ describe('OpenAPI EventCatalog Plugin', () => {
         const service = await getService('petstore-path', '1.0.0');
         const adoptPet = service.receives?.find((r: any) => r.id === 'adoptPet');
 
-        expect(adoptPet).toEqual(expect.objectContaining({ id: 'adoptPet', group: 'Pets' }));
+        expect(adoptPet).toEqual(expect.objectContaining({ id: 'adoptPet', group: '/pets' }));
       });
 
-      it('listVaccinations (GET /pets/{petId}/vaccinations) receives group "Pets" — three segments, first is "pets"', async () => {
+      it('listVaccinations (GET /pets/{petId}/vaccinations) receives group "/pets"', async () => {
         const { getService } = utils(catalogDir);
 
         await plugin(config, {
@@ -3467,10 +3467,10 @@ describe('OpenAPI EventCatalog Plugin', () => {
         const service = await getService('petstore-path', '1.0.0');
         const listVaccinations = service.receives?.find((r: any) => r.id === 'listVaccinations');
 
-        expect(listVaccinations).toEqual(expect.objectContaining({ id: 'listVaccinations', group: 'Pets' }));
+        expect(listVaccinations).toEqual(expect.objectContaining({ id: 'listVaccinations', group: '/pets' }));
       });
 
-      it('getOrderById (GET /orders/{orderId}) receives group "Orders" — two segments, first is "orders"', async () => {
+      it('getOrderById (GET /orders/{orderId}) receives group "/orders"', async () => {
         const { getService } = utils(catalogDir);
 
         await plugin(config, {
@@ -3481,10 +3481,10 @@ describe('OpenAPI EventCatalog Plugin', () => {
         const service = await getService('petstore-path', '1.0.0');
         const getOrderById = service.receives?.find((r: any) => r.id === 'getOrderById');
 
-        expect(getOrderById).toEqual(expect.objectContaining({ id: 'getOrderById', group: 'Orders' }));
+        expect(getOrderById).toEqual(expect.objectContaining({ id: 'getOrderById', group: '/orders' }));
       });
 
-      it('cancelOrder (POST /orders/{orderId}/cancel) receives group "Orders" — three segments, first is "orders"', async () => {
+      it('cancelOrder (POST /orders/{orderId}/cancel) receives group "/orders"', async () => {
         const { getService } = utils(catalogDir);
 
         await plugin(config, {
@@ -3495,10 +3495,10 @@ describe('OpenAPI EventCatalog Plugin', () => {
         const service = await getService('petstore-path', '1.0.0');
         const cancelOrder = service.receives?.find((r: any) => r.id === 'cancelOrder');
 
-        expect(cancelOrder).toEqual(expect.objectContaining({ id: 'cancelOrder', group: 'Orders' }));
+        expect(cancelOrder).toEqual(expect.objectContaining({ id: 'cancelOrder', group: '/orders' }));
       });
 
-      it('listInvoices (GET /api/v1/billing/invoices) receives group "Billing" — skips "api" and "v1" prefixes', async () => {
+      it('listInvoices (GET /api/v1/billing/invoices) receives group "/billing" — skips "api" and "v1" prefixes', async () => {
         const { getService } = utils(catalogDir);
 
         await plugin(config, {
@@ -3509,10 +3509,10 @@ describe('OpenAPI EventCatalog Plugin', () => {
         const service = await getService('petstore-path', '1.0.0');
         const listInvoices = service.receives?.find((r: any) => r.id === 'listInvoices');
 
-        expect(listInvoices).toEqual(expect.objectContaining({ id: 'listInvoices', group: 'Billing' }));
+        expect(listInvoices).toEqual(expect.objectContaining({ id: 'listInvoices', group: '/billing' }));
       });
 
-      it('sendNotification (POST /notifications/send, action=sends) is placed in sends with group "Notifications"', async () => {
+      it('sendNotification (POST /notifications/send) has no group because no other paths share the /notifications prefix', async () => {
         const { getService } = utils(catalogDir);
 
         await plugin(config, {
@@ -3523,10 +3523,11 @@ describe('OpenAPI EventCatalog Plugin', () => {
         const service = await getService('petstore-path', '1.0.0');
         const sendNotification = service.sends?.find((s: any) => s.id === 'sendNotification');
 
-        expect(sendNotification).toEqual(expect.objectContaining({ id: 'sendNotification', group: 'Notifications' }));
+        expect(sendNotification).toBeDefined();
+        expect(sendNotification).not.toHaveProperty('group');
       });
 
-      it('listPets (GET /pets) has no group because /pets is a single-segment path', async () => {
+      it('listPets (GET /pets) receives group "/pets" because other paths share the /pets prefix', async () => {
         const { getService } = utils(catalogDir);
 
         await plugin(config, {
@@ -3537,11 +3538,24 @@ describe('OpenAPI EventCatalog Plugin', () => {
         const service = await getService('petstore-path', '1.0.0');
         const listPets = service.receives?.find((r: any) => r.id === 'listPets');
 
-        expect(listPets).toBeDefined();
-        expect(listPets).not.toHaveProperty('group');
+        expect(listPets).toEqual(expect.objectContaining({ id: 'listPets', group: '/pets' }));
       });
 
-      it('healthCheck (GET /health) has no group because /health is a single-segment path', async () => {
+      it('placeOrder (POST /orders) receives group "/orders" because other paths share the /orders prefix', async () => {
+        const { getService } = utils(catalogDir);
+
+        await plugin(config, {
+          services: [{ path: join(openAPIExamples, 'petstore-with-groups.yml'), id: 'petstore-path' }],
+          groupMessagesBy: 'path-prefix',
+        });
+
+        const service = await getService('petstore-path', '1.0.0');
+        const placeOrder = service.receives?.find((r: any) => r.id === 'placeOrder');
+
+        expect(placeOrder).toEqual(expect.objectContaining({ id: 'placeOrder', group: '/orders' }));
+      });
+
+      it('healthCheck (GET /health) has no group because no other paths share the /health prefix', async () => {
         const { getService } = utils(catalogDir);
 
         await plugin(config, {
@@ -3556,7 +3570,7 @@ describe('OpenAPI EventCatalog Plugin', () => {
         expect(healthCheck).not.toHaveProperty('group');
       });
 
-      it('getStatus (GET /status) has no group because /status is a single-segment path', async () => {
+      it('getStatus (GET /status) has no group because no other paths share the /status prefix', async () => {
         const { getService } = utils(catalogDir);
 
         await plugin(config, {
@@ -3569,21 +3583,6 @@ describe('OpenAPI EventCatalog Plugin', () => {
 
         expect(getStatus).toBeDefined();
         expect(getStatus).not.toHaveProperty('group');
-      });
-
-      it('placeOrder (POST /orders) has no group because /orders is a single-segment path', async () => {
-        const { getService } = utils(catalogDir);
-
-        await plugin(config, {
-          services: [{ path: join(openAPIExamples, 'petstore-with-groups.yml'), id: 'petstore-path' }],
-          groupMessagesBy: 'path-prefix',
-        });
-
-        const service = await getService('petstore-path', '1.0.0');
-        const placeOrder = service.receives?.find((r: any) => r.id === 'placeOrder');
-
-        expect(placeOrder).toBeDefined();
-        expect(placeOrder).not.toHaveProperty('group');
       });
     });
 
