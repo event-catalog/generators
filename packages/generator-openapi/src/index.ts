@@ -49,14 +49,49 @@ const toUniqueArray = (array: Pointer[]) => {
   return array.filter((item, index, self) => index === self.findIndex((t) => t.id === item.id && t.version === item.version));
 };
 
-// Common API path prefixes to skip when deriving group from path
-const SKIP_PATH_SEGMENTS = new Set(['api', 'v1', 'v2', 'v3', 'v4', 'v5']);
+// Matches common API versioning segments like "api", "v1", "v2", "v10", etc.
+const isSkippableSegment = (segment: string): boolean => /^(api|v\d+)$/i.test(segment);
+
+/**
+ * Extract the first meaningful path segment from a URL path,
+ * skipping common prefixes like /api, /v1, /v2, etc.
+ */
+const getPathPrefix = (path: string): string | undefined => {
+  const segments = path.split('/').filter(Boolean);
+  const meaningful = segments.filter((s) => !isSkippableSegment(s));
+  return meaningful.find((s) => !s.startsWith('{'));
+};
+
+/**
+ * Build a set of path prefixes that appear across 2+ distinct paths.
+ * Only prefixes shared by multiple paths are worth grouping — e.g. /orders
+ * and /orders/{id} both share "orders", but /health is the only path with "health".
+ */
+const buildGroupablePrefixes = (operations: Operation[]): Set<string> => {
+  const prefixToPaths = new Map<string, Set<string>>();
+  for (const op of operations) {
+    const prefix = getPathPrefix(op.path);
+    if (!prefix) continue;
+    if (!prefixToPaths.has(prefix)) prefixToPaths.set(prefix, new Set());
+    prefixToPaths.get(prefix)!.add(op.path);
+  }
+  const groupable = new Set<string>();
+  for (const [prefix, paths] of prefixToPaths) {
+    if (paths.size >= 2) groupable.add(prefix);
+  }
+  return groupable;
+};
 
 /**
  * Derive a group name for a message based on the configured strategy.
- * Returns undefined if no group can be determined.
+ * For 'path-prefix', groupablePrefixes must be pre-built from all operations
+ * using buildGroupablePrefixes().
  */
-const getMessageGroup = (operation: Operation, groupMessagesBy?: Props['groupMessagesBy']): string | undefined => {
+const getMessageGroup = (
+  operation: Operation,
+  groupMessagesBy?: Props['groupMessagesBy'],
+  groupablePrefixes?: Set<string>
+): string | undefined => {
   if (!groupMessagesBy) return undefined;
 
   if (groupMessagesBy === 'x-extension') {
@@ -64,20 +99,13 @@ const getMessageGroup = (operation: Operation, groupMessagesBy?: Props['groupMes
   }
 
   if (groupMessagesBy === 'path-prefix') {
-    // Split into all non-empty segments (including path params like {petId})
-    const allSegments = operation.path.split('/').filter(Boolean);
-
-    // Skip common API prefixes to find the first meaningful segment
-    const meaningfulSegments = allSegments.filter((s) => !SKIP_PATH_SEGMENTS.has(s.toLowerCase()));
-
-    // Single-segment paths like /health have nothing to group by
-    if (meaningfulSegments.length < 2) return undefined;
-
-    // Use the first non-param segment as the group name: "pets" → "Pets"
-    const prefix = meaningfulSegments.find((s) => !s.startsWith('{'));
+    const prefix = getPathPrefix(operation.path);
     if (!prefix) return undefined;
 
-    return prefix.charAt(0).toUpperCase() + prefix.slice(1).toLowerCase();
+    // Only group if this prefix is shared by multiple distinct paths
+    if (!groupablePrefixes?.has(prefix)) return undefined;
+
+    return `/${prefix}`;
   }
 
   return undefined;
@@ -509,6 +537,9 @@ const processMessagesForOpenAPISpec = async (
   const parseExamples = options.parseExamples ?? true;
   const isDraft = options.isDraft ?? null;
 
+  // Pre-build the set of path prefixes shared by 2+ distinct paths (for path-prefix grouping)
+  const groupablePrefixes = options.groupMessagesBy === 'path-prefix' ? buildGroupablePrefixes(operations) : undefined;
+
   let receives = [],
     sends = [];
   let allGeneratedMessages: Array<{ id: string; version: string; path: string }> = [];
@@ -585,7 +616,7 @@ const processMessagesForOpenAPISpec = async (
     );
 
     // If the message send or recieved by the service?
-    const group = getMessageGroup(operation, options.groupMessagesBy);
+    const group = getMessageGroup(operation, options.groupMessagesBy, groupablePrefixes);
     const pointer: Pointer = {
       id: message.id,
       version: message.version,
