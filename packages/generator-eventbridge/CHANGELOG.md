@@ -1,5 +1,11 @@
 # @eventcatalog/generator-eventbridge
 
+## 3.4.2
+
+### Patch Changes
+
+- ba34dd9: Fix `writeToRoot` / `writeFilesToRoot`: when an existing service is nested under a domain or subdomain and the option is later enabled, the service is now moved to the root `/services` folder instead of leaving a stale copy behind.
+
 ## 3.4.1
 
 ### Patch Changes
