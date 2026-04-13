@@ -1,5 +1,11 @@
 # @eventcatalog/generator-openapi
 
+## 7.12.3
+
+### Patch Changes
+
+- 6ad035f: Fix consumer route wildcard matching so patterns with a leading `*` (e.g. `*/adopted`) correctly match OpenAPI paths that start with `/`.
+
 ## 7.12.2
 
 ### Patch Changes
