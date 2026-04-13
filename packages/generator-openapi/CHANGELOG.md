@@ -1,5 +1,11 @@
 # @eventcatalog/generator-openapi
 
+## 7.12.2
+
+### Patch Changes
+
+- 327cf42: Fix: schemas, parameters, and request bodies are now correctly generated per-operation when OpenAPI specs omit `operationId`. Previously all operation-id-less operations received the first such operation's schemas due to `undefined === undefined` matching.
+
 ## 7.12.1
 
 ### Patch Changes
