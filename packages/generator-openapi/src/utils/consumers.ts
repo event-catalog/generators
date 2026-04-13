@@ -13,10 +13,15 @@ type Pointer = {
 
 const toArray = (value: string | string[]): string[] => (Array.isArray(value) ? value : [value]);
 
+const escapeRegExp = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
 const matchesWildcard = (operationPath: string, pattern: string): boolean => {
-  // Convert wildcard pattern to regex: * matches one or more path segments
-  const regexStr = '^' + pattern.replace(/\*/g, '[^/]+(/[^/]+)*') + '$';
-  return new RegExp(regexStr).test(operationPath);
+  // Compare normalized paths so leading wildcards also match OpenAPI paths that start with /
+  const normalizedPath = operationPath.replace(/^\/+/, '');
+  const normalizedPattern = pattern.replace(/^\/+/, '');
+  const regexStr = '^' + normalizedPattern.split('*').map(escapeRegExp).join('[^/]+(?:/[^/]+)*') + '$';
+
+  return new RegExp(regexStr).test(normalizedPath);
 };
 
 const matchesSingleFilter = (operationPath: string, filter: RouteFilter): boolean => {

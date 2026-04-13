@@ -2989,6 +2989,32 @@ describe('OpenAPI EventCatalog Plugin', () => {
     });
 
     describe('route filtering - wildcard match', () => {
+      it('wildcard * at the start matches paths with leading segments', async () => {
+        const { getService } = utils(catalogDir);
+
+        await plugin(config, {
+          services: [
+            {
+              path: join(openAPIExamples, 'petstore.yml'),
+              id: 'swagger-petstore',
+              consumers: [
+                {
+                  id: 'orders-service',
+                  version: '1.0.0',
+                  routes: [{ match: '*/adopted' }],
+                },
+              ],
+            },
+          ],
+        });
+
+        const consumer = await getService('orders-service', '1.0.0');
+
+        // */adopted should match /pets/{petId}/adopted
+        expect(consumer.sends).toHaveLength(1);
+        expect(consumer.sends).toEqual(expect.arrayContaining([expect.objectContaining({ id: 'petAdopted' })]));
+      });
+
       it('wildcard * matches any path segments', async () => {
         const { getService } = utils(catalogDir);
 
