@@ -1576,6 +1576,52 @@ describe('OpenAPI EventCatalog Plugin', () => {
           expect(command.markdown).toContain(`### Parameters
 - **limit** (query): How many items to return at one time (max 100)`);
         });
+
+        // Regression test for https://github.com/event-catalog/generators/issues/219
+        it('when operations have no operationId, each message still gets its own schemas, parameters, and request bodies', async () => {
+          const { getQuery, getCommand } = utils(catalogDir);
+
+          await plugin(config, {
+            services: [{ path: join(openAPIExamples, 'without-operationIds.yml'), id: 'product-api' }],
+          });
+
+          // GET /{productId} — should expose its productId path parameter
+          const getProductById = await getQuery('product-api_GET_{productId}');
+          expect(getProductById.markdown).toContain('- **productId** (path)');
+
+          // GET /{productId}/reviews — should expose productId parameter too
+          const getReviews = await getQuery('product-api_GET_{productId}_reviews');
+          expect(getReviews.markdown).toContain('- **productId** (path)');
+
+          // POST /{productId}/reviews — should have a request body schema file
+          const submitReview = await getCommand('product-api_POST_{productId}_reviews');
+          expect(submitReview.schemaPath).toEqual('request-body.json');
+          const requestBodyPath = join(
+            catalogDir,
+            'services',
+            'product-api',
+            'commands',
+            'product-api_POST_{productId}_reviews',
+            'request-body.json'
+          );
+          const requestBody = await fs.readFile(requestBodyPath, 'utf8');
+          expect(requestBody).toContain('productId');
+
+          // GET /{productId} 200 response should reference the Product schema (not the root GET array)
+          const productByIdResponsePath = join(
+            catalogDir,
+            'services',
+            'product-api',
+            'queries',
+            'product-api_GET_{productId}',
+            'response-200.json'
+          );
+          const productByIdResponse = await fs.readFile(productByIdResponsePath, 'utf8');
+          const parsed = JSON.parse(productByIdResponse);
+          // Single Product object, not an array — proves it's this operation's schema, not /'s
+          expect(parsed.type).toEqual('object');
+          expect(parsed.properties).toHaveProperty('id');
+        });
       });
 
       describe('config option: generateMarkdown', () => {
