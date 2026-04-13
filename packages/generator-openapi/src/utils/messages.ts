@@ -170,7 +170,11 @@ export const buildMessage = async (
   serviceVersion?: string
 ) => {
   // Pass the document to avoid re-parsing (needed for authenticated URLs)
-  const requestBodiesAndResponses = await getSchemasByOperationId(pathToFile, operation.operationId, document as any);
+  // When operationId is missing, fall back to path+method so each operation gets its own schemas
+  const requestBodiesAndResponses = await getSchemasByOperationId(pathToFile, operation.operationId, document as any, {
+    path: operation.path,
+    method: operation.method,
+  });
   const extensions = operation.extensions || {};
 
   const operationTags = operation.tags.map((badge) => ({
