@@ -1210,6 +1210,99 @@ describe('EventBridge EventCatalog Plugin', () => {
       const services = await fs.readdir(path.join(catalogDir, 'services'));
       expect(services).toEqual(['Orders Service']);
     });
+
+    // Reproduces https://github.com/event-catalog/eventcatalog/issues/2394
+    it('when a service has writeToRoot: true and the domain is a subdomain, the service is written to the root /services folder (not under the subdomain)', async () => {
+      const { writeDomain, addSubDomainToDomain } = utils(catalogDir);
+
+      const subdomainDir = join(catalogDir, 'domains', 'Buyer', 'subdomains', 'Agency');
+      await fs.mkdir(subdomainDir, { recursive: true });
+      await fs.writeFile(join(subdomainDir, 'index.mdx'), '---\nid: Agency\nname: Agency Domain\nversion: 1.0.0\n---\n');
+
+      await writeDomain({
+        id: 'Buyer',
+        name: 'Buyer Domain',
+        version: '1.0.0',
+        markdown: '',
+      });
+
+      await addSubDomainToDomain('Buyer', { id: 'Agency', version: '1.0.0' });
+
+      await plugin(config, {
+        region: 'us-east-1',
+        registryName: 'discovered-schemas',
+        services: [{ id: 'Orders Service', version: '1.0.0', sends: [{ prefix: 'myapp.orders' }], writeToRoot: true }],
+        domain: { id: 'Agency', name: 'Agency Domain', version: '1.0.0' },
+      });
+
+      // Service should exist at the catalog root /services folder
+      const rootServices = await fs.readdir(path.join(catalogDir, 'services'));
+      expect(rootServices).toContain('Orders Service');
+
+      // And should NOT exist under the subdomain path
+      const subdomainServicePath = path.join(
+        catalogDir,
+        'domains',
+        'Buyer',
+        'subdomains',
+        'Agency',
+        'services',
+        'Orders Service'
+      );
+      expect(existsSync(subdomainServicePath)).toBe(false);
+    });
+
+    // Reproduces https://github.com/event-catalog/eventcatalog/issues/2394
+    // Scenario: service was previously generated under a subdomain (no writeToRoot).
+    // User later adds writeToRoot: true and re-runs generate.
+    it('when a service was previously written under a subdomain and writeToRoot: true is then set, the service is moved to the root /services folder', async () => {
+      const { writeDomain, addSubDomainToDomain } = utils(catalogDir);
+
+      const subdomainDir = join(catalogDir, 'domains', 'Buyer', 'subdomains', 'Agency');
+      await fs.mkdir(subdomainDir, { recursive: true });
+      await fs.writeFile(join(subdomainDir, 'index.mdx'), '---\nid: Agency\nname: Agency Domain\nversion: 1.0.0\n---\n');
+
+      await writeDomain({
+        id: 'Buyer',
+        name: 'Buyer Domain',
+        version: '1.0.0',
+        markdown: '',
+      });
+
+      await addSubDomainToDomain('Buyer', { id: 'Agency', version: '1.0.0' });
+
+      // First run: service is generated nested under the subdomain
+      await plugin(config, {
+        region: 'us-east-1',
+        registryName: 'discovered-schemas',
+        services: [{ id: 'Orders Service', version: '1.0.0', sends: [{ prefix: 'myapp.orders' }] }],
+        domain: { id: 'Agency', name: 'Agency Domain', version: '1.0.0' },
+      });
+
+      const subdomainServicePath = path.join(
+        catalogDir,
+        'domains',
+        'Buyer',
+        'subdomains',
+        'Agency',
+        'services',
+        'Orders Service'
+      );
+      expect(existsSync(subdomainServicePath)).toBe(true);
+
+      // Second run: user now sets writeToRoot: true
+      await plugin(config, {
+        region: 'us-east-1',
+        registryName: 'discovered-schemas',
+        services: [{ id: 'Orders Service', version: '1.0.0', sends: [{ prefix: 'myapp.orders' }], writeToRoot: true }],
+        domain: { id: 'Agency', name: 'Agency Domain', version: '1.0.0' },
+      });
+
+      // Expected: service now lives at the root /services folder and is removed from the subdomain
+      const rootServices = await fs.readdir(path.join(catalogDir, 'services'));
+      expect(rootServices).toContain('Orders Service');
+      expect(existsSync(subdomainServicePath)).toBe(false);
+    });
   });
 
   describe('events', () => {

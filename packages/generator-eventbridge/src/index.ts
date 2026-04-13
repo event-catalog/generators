@@ -19,6 +19,7 @@ import { generatedMarkdownByEventBus } from './utils/channel';
 import { parse } from '@aws-sdk/util-arn-parser';
 import { DescribeEventBusCommand, EventBridgeClient } from '@aws-sdk/client-eventbridge';
 import path, { join } from 'node:path';
+import fs from 'node:fs/promises';
 import pkgJSON from '../package.json';
 import { checkForPackageUpdate } from '../../../shared/check-for-package-update';
 
@@ -295,6 +296,18 @@ export default async (config: EventCatalogConfig, options: GeneratorProps) => {
         );
         // Removed rmServiceById - writeService with override:true handles overwriting
         // and rmServiceById deletes the entire directory including child resources (e.g. containers)
+      }
+    }
+
+    // If writing to root but the existing service is nested under a domain/subdomain,
+    // remove the stale nested copy so the service is effectively moved to the root.
+    // See https://github.com/event-catalog/eventcatalog/issues/2394
+    if (latestServiceInCatalog && (options.writeFilesToRoot || service.writeToRoot)) {
+      const existingServicePath = await getResourcePath(eventCatalogDirectory, service.id, latestServiceInCatalog.version);
+      const expectedRootDir = path.join(path.sep, 'services', service.id);
+      if (existingServicePath && existingServicePath.directory !== expectedRootDir) {
+        await fs.rm(path.join(eventCatalogDirectory, existingServicePath.directory), { recursive: true, force: true });
+        console.log(chalk.cyan(` - Moved service (${service.id}) to the root /services folder`));
       }
     }
 
