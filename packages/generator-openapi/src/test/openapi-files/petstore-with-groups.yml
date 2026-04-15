@@ -186,3 +186,24 @@ paths:
       responses:
         '200':
           description: Notification sent
+
+  # --- Single path with multiple verbs — should group by /basket even though no sibling path shares the prefix ---
+  /basket:
+    post:
+      summary: Create a basket
+      operationId: createBasket
+      responses:
+        '201':
+          description: Basket created
+    get:
+      summary: Show basket
+      operationId: showBasket
+      responses:
+        '200':
+          description: Basket shown
+    put:
+      summary: Update basket
+      operationId: updateBasket
+      responses:
+        '200':
+          description: Basket updated
