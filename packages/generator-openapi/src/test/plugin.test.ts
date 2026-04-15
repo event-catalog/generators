@@ -3677,6 +3677,39 @@ describe('OpenAPI EventCatalog Plugin', () => {
       });
     });
 
+    describe('single-group', () => {
+      it('every message gets the single group labelled "operations"', async () => {
+        const { getService } = utils(catalogDir);
+
+        await plugin(config, {
+          services: [{ path: join(openAPIExamples, 'petstore-with-groups.yml'), id: 'petstore-single-group' }],
+          groupMessagesBy: 'single-group',
+        });
+
+        const service = await getService('petstore-single-group', '1.0.0');
+        const allMessages = [...(service.receives || []), ...(service.sends || [])];
+
+        expect(allMessages.length).toBeGreaterThan(0);
+        for (const msg of allMessages) {
+          expect(msg).toEqual(expect.objectContaining({ group: 'operations' }));
+        }
+      });
+
+      it('getStatus (GET /status) receives group "operations" even though path-prefix would not group it', async () => {
+        const { getService } = utils(catalogDir);
+
+        await plugin(config, {
+          services: [{ path: join(openAPIExamples, 'petstore-with-groups.yml'), id: 'petstore-single-group-lone' }],
+          groupMessagesBy: 'single-group',
+        });
+
+        const service = await getService('petstore-single-group-lone', '1.0.0');
+        const getStatus = service.receives?.find((r: any) => r.id === 'getStatus');
+
+        expect(getStatus).toEqual(expect.objectContaining({ id: 'getStatus', group: 'operations' }));
+      });
+    });
+
     it('no messages have a group property when groupMessagesBy is not configured', async () => {
       const { getService } = utils(catalogDir);
 
