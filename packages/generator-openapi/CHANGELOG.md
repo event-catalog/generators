@@ -1,5 +1,11 @@
 # @eventcatalog/generator-openapi
 
+## 7.12.6
+
+### Patch Changes
+
+- 9a2f4f5: feat(generator-openapi): warn when a spec has 50+ operations without `groupMessagesBy` set
+
 ## 7.12.5
 
 ### Patch Changes
