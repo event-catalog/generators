@@ -3656,6 +3656,25 @@ describe('OpenAPI EventCatalog Plugin', () => {
         expect(getStatus).toBeDefined();
         expect(getStatus).not.toHaveProperty('group');
       });
+
+      it('POST/GET/PUT on the same /basket path all receive group "/basket" even though only one distinct path uses that prefix', async () => {
+        const { getService } = utils(catalogDir);
+
+        await plugin(config, {
+          services: [{ path: join(openAPIExamples, 'petstore-with-groups.yml'), id: 'petstore-path' }],
+          groupMessagesBy: 'path-prefix',
+        });
+
+        const service = await getService('petstore-path', '1.0.0');
+
+        const createBasket = service.receives?.find((r: any) => r.id === 'createBasket');
+        const showBasket = service.receives?.find((r: any) => r.id === 'showBasket');
+        const updateBasket = service.receives?.find((r: any) => r.id === 'updateBasket');
+
+        expect(createBasket).toEqual(expect.objectContaining({ id: 'createBasket', group: '/basket' }));
+        expect(showBasket).toEqual(expect.objectContaining({ id: 'showBasket', group: '/basket' }));
+        expect(updateBasket).toEqual(expect.objectContaining({ id: 'updateBasket', group: '/basket' }));
+      });
     });
 
     it('no messages have a group property when groupMessagesBy is not configured', async () => {

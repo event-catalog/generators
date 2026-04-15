@@ -63,21 +63,21 @@ const getPathPrefix = (path: string): string | undefined => {
 };
 
 /**
- * Build a set of path prefixes that appear across 2+ distinct paths.
- * Only prefixes shared by multiple paths are worth grouping — e.g. /orders
- * and /orders/{id} both share "orders", but /health is the only path with "health".
+ * Build a set of path prefixes shared by 2+ operations.
+ * Prefixes with only a single operation aren't worth grouping. Counts operations
+ * rather than distinct paths so that multiple verbs on the same path (e.g.
+ * GET/POST/PUT on /basket) still group together.
  */
 const buildGroupablePrefixes = (operations: Operation[]): Set<string> => {
-  const prefixToPaths = new Map<string, Set<string>>();
+  const prefixCounts = new Map<string, number>();
   for (const op of operations) {
     const prefix = getPathPrefix(op.path);
     if (!prefix) continue;
-    if (!prefixToPaths.has(prefix)) prefixToPaths.set(prefix, new Set());
-    prefixToPaths.get(prefix)!.add(op.path);
+    prefixCounts.set(prefix, (prefixCounts.get(prefix) ?? 0) + 1);
   }
   const groupable = new Set<string>();
-  for (const [prefix, paths] of prefixToPaths) {
-    if (paths.size >= 2) groupable.add(prefix);
+  for (const [prefix, count] of prefixCounts) {
+    if (count >= 2) groupable.add(prefix);
   }
   return groupable;
 };
