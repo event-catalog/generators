@@ -358,7 +358,7 @@ describe('OpenAPI EventCatalog Plugin', () => {
         );
       });
 
-      it('when the OpenAPI service is already defined in EventCatalog and the versions match, the `sends` list of messages is persisted, as the plugin does not create them', async () => {
+      it('when the OpenAPI service is already defined in EventCatalog and the versions match, pre-existing `sends` pointers are preserved alongside any `sends` generated from the spec', async () => {
         // Create a service with the same name and version as the OpenAPI file for testing
         const { writeService, getService } = utils(catalogDir);
 
@@ -376,11 +376,15 @@ describe('OpenAPI EventCatalog Plugin', () => {
         await plugin(config, { services: [{ path: join(openAPIExamples, 'petstore.yml'), id: 'swagger-petstore' }] });
 
         const service = await getService('swagger-petstore', '1.0.0');
-        expect(service).toEqual(
-          expect.objectContaining({
-            sends: [{ id: 'usersignedup', version: '1.0.0' }],
-          })
+        // petVaccinated is generated from the spec (x-eventcatalog-message-action: sends);
+        // usersignedup was added by hand and should be preserved.
+        expect(service.sends).toEqual(
+          expect.arrayContaining([
+            { id: 'petVaccinated', version: '1.0.0' },
+            { id: 'usersignedup', version: '1.0.0' },
+          ])
         );
+        expect(service.sends).toHaveLength(2);
       });
 
       it('when the OpenAPI service is already defined in EventCatalog and the processed specification version is greater than the existing service version, a new service is created and the old one is versioned', async () => {
@@ -943,15 +947,17 @@ describe('OpenAPI EventCatalog Plugin', () => {
 
         const service = await getService('swagger-petstore-3', '1.0.0');
         expect(service.receives).toHaveLength(7);
-        expect(service.receives).toEqual([
-          { id: 'userloggedin', version: '1.0.0' },
-          { id: 'list-pets', version: '5.0.0' },
-          { id: 'createPets', version: '1.0.0' },
-          { id: 'showPetById', version: '1.0.0' },
-          { id: 'updatePet', version: '1.0.0' },
-          { id: 'deletePet', version: '1.0.0' },
-          { id: 'petAdopted', version: '1.0.0' },
-        ]);
+        expect(service.receives).toEqual(
+          expect.arrayContaining([
+            { id: 'userloggedin', version: '1.0.0' },
+            { id: 'list-pets', version: '5.0.0' },
+            { id: 'createPets', version: '1.0.0' },
+            { id: 'showPetById', version: '1.0.0' },
+            { id: 'updatePet', version: '1.0.0' },
+            { id: 'deletePet', version: '1.0.0' },
+            { id: 'petAdopted', version: '1.0.0' },
+          ])
+        );
       });
 
       it('all the endpoints in the OpenAPI spec are messages the service `receives`. If the version matches the latest the receives are persisted, any duplicated are removed', async () => {
@@ -3675,6 +3681,61 @@ describe('OpenAPI EventCatalog Plugin', () => {
         expect(showBasket).toEqual(expect.objectContaining({ id: 'showBasket', group: '/basket' }));
         expect(updateBasket).toEqual(expect.objectContaining({ id: 'updateBasket', group: '/basket' }));
       });
+
+      it('groups remain on receives across consecutive runs with the same groupMessagesBy config', async () => {
+        const { getService } = utils(catalogDir);
+
+        // First run — groups should be written
+        await plugin(config, {
+          services: [{ path: join(openAPIExamples, 'petstore-with-groups.yml'), id: 'petstore-rerun' }],
+          groupMessagesBy: 'path-prefix',
+        });
+
+        let service = await getService('petstore-rerun', '1.0.0');
+        expect(service.receives?.find((r: any) => r.id === 'showPetById')).toEqual(
+          expect.objectContaining({ id: 'showPetById', group: '/pets' })
+        );
+        expect(service.receives?.find((r: any) => r.id === 'createBasket')).toEqual(
+          expect.objectContaining({ id: 'createBasket', group: '/basket' })
+        );
+
+        // Second run — groups should still be present
+        await plugin(config, {
+          services: [{ path: join(openAPIExamples, 'petstore-with-groups.yml'), id: 'petstore-rerun' }],
+          groupMessagesBy: 'path-prefix',
+        });
+
+        service = await getService('petstore-rerun', '1.0.0');
+        expect(service.receives?.find((r: any) => r.id === 'showPetById')).toEqual(
+          expect.objectContaining({ id: 'showPetById', group: '/pets' })
+        );
+        expect(service.receives?.find((r: any) => r.id === 'createBasket')).toEqual(
+          expect.objectContaining({ id: 'createBasket', group: '/basket' })
+        );
+      });
+
+      it('groups are applied on a second run when the service was originally generated without groupMessagesBy', async () => {
+        const { getService } = utils(catalogDir);
+
+        // First run — no groupMessagesBy, service written without group fields
+        await plugin(config, {
+          services: [{ path: join(openAPIExamples, 'petstore-with-groups.yml'), id: 'petstore-add-groups' }],
+        });
+
+        let service = await getService('petstore-add-groups', '1.0.0');
+        expect(service.receives?.find((r: any) => r.id === 'showPetById')).not.toHaveProperty('group');
+
+        // Second run — user adds groupMessagesBy: 'path-prefix', groups should now be applied
+        await plugin(config, {
+          services: [{ path: join(openAPIExamples, 'petstore-with-groups.yml'), id: 'petstore-add-groups' }],
+          groupMessagesBy: 'path-prefix',
+        });
+
+        service = await getService('petstore-add-groups', '1.0.0');
+        expect(service.receives?.find((r: any) => r.id === 'showPetById')).toEqual(
+          expect.objectContaining({ id: 'showPetById', group: '/pets' })
+        );
+      });
     });
 
     describe('single-group', () => {
@@ -3707,6 +3768,57 @@ describe('OpenAPI EventCatalog Plugin', () => {
         const getStatus = service.receives?.find((r: any) => r.id === 'getStatus');
 
         expect(getStatus).toEqual(expect.objectContaining({ id: 'getStatus', group: 'operations' }));
+      });
+
+      it('groups on sends are applied on a second run when the service was originally generated without groupMessagesBy', async () => {
+        const { getService } = utils(catalogDir);
+
+        // First run — no groupMessagesBy, sends written without group fields
+        await plugin(config, {
+          services: [{ path: join(openAPIExamples, 'petstore-with-groups.yml'), id: 'petstore-sends-add-groups' }],
+        });
+
+        let service = await getService('petstore-sends-add-groups', '1.0.0');
+        expect(service.sends?.find((s: any) => s.id === 'sendNotification')).not.toHaveProperty('group');
+
+        // Second run — user adds groupMessagesBy: 'single-group', groups should now be applied to sends
+        await plugin(config, {
+          services: [{ path: join(openAPIExamples, 'petstore-with-groups.yml'), id: 'petstore-sends-add-groups' }],
+          groupMessagesBy: 'single-group',
+        });
+
+        service = await getService('petstore-sends-add-groups', '1.0.0');
+        expect(service.sends?.find((s: any) => s.id === 'sendNotification')).toEqual(
+          expect.objectContaining({ id: 'sendNotification', group: 'operations' })
+        );
+      });
+    });
+
+    describe('switching grouping strategy across runs', () => {
+      it('switching from path-prefix to single-group replaces the group values on re-run', async () => {
+        const { getService } = utils(catalogDir);
+
+        // First run — path-prefix assigns "/pets" to showPetById
+        await plugin(config, {
+          services: [{ path: join(openAPIExamples, 'petstore-with-groups.yml'), id: 'petstore-switch-strategy' }],
+          groupMessagesBy: 'path-prefix',
+        });
+
+        let service = await getService('petstore-switch-strategy', '1.0.0');
+        expect(service.receives?.find((r: any) => r.id === 'showPetById')).toEqual(
+          expect.objectContaining({ id: 'showPetById', group: '/pets' })
+        );
+
+        // Second run — user switches to single-group, groups should become "operations"
+        await plugin(config, {
+          services: [{ path: join(openAPIExamples, 'petstore-with-groups.yml'), id: 'petstore-switch-strategy' }],
+          groupMessagesBy: 'single-group',
+        });
+
+        service = await getService('petstore-switch-strategy', '1.0.0');
+        expect(service.receives?.find((r: any) => r.id === 'showPetById')).toEqual(
+          expect.objectContaining({ id: 'showPetById', group: 'operations' })
+        );
       });
     });
 
