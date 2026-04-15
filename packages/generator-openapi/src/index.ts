@@ -52,6 +52,9 @@ const toUniqueArray = (array: Pointer[]) => {
   return array.filter((item, index, self) => index === self.findIndex((t) => t.id === item.id && t.version === item.version));
 };
 
+// Warn the user when a spec is large enough that the visualiser becomes hard to read without grouping.
+const LARGE_SPEC_OPERATION_THRESHOLD = 50;
+
 // Matches common API versioning segments like "api", "v1", "v2", "v10", etc.
 const isSkippableSegment = (segment: string): boolean => /^(api|v\d+)$/i.test(segment);
 
@@ -546,6 +549,12 @@ const processMessagesForOpenAPISpec = async (
 
   // Pre-build the set of path prefixes shared by 2+ distinct paths (for path-prefix grouping)
   const groupablePrefixes = options.groupMessagesBy === 'path-prefix' ? buildGroupablePrefixes(operations) : undefined;
+
+  if (!options.groupMessagesBy && operations.length >= LARGE_SPEC_OPERATION_THRESHOLD) {
+    console.warn(
+      `[generator-openapi] This spec has ${operations.length} operations. The EventCatalog visualiser may be hard to read — consider setting groupMessagesBy: 'path-prefix' or 'single-group' to group them. See https://www.eventcatalog.dev/docs/plugins/openapi/features#group-messages`
+    );
+  }
 
   let receives = [],
     sends = [];
