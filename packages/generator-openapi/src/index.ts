@@ -41,8 +41,11 @@ type Props = {
    * - `'x-extension'`: Use the `x-eventcatalog-group` extension on each operation.
    * - `'path-prefix'`: Derive the group from the first meaningful URL path segment
    *    (skips common prefixes like `api`, `v1`, `v2`).
+   * - `'single-group'`: Put every operation into one group (labelled `operations`).
+   *    Useful for large APIs where the visualiser would otherwise render hundreds
+   *    of top-level nodes.
    */
-  groupMessagesBy?: 'x-extension' | 'path-prefix';
+  groupMessagesBy?: 'x-extension' | 'path-prefix' | 'single-group';
 };
 
 const toUniqueArray = (array: Pointer[]) => {
@@ -96,6 +99,10 @@ const getMessageGroup = (
 
   if (groupMessagesBy === 'x-extension') {
     return operation.extensions?.['x-eventcatalog-group'] || undefined;
+  }
+
+  if (groupMessagesBy === 'single-group') {
+    return 'operations';
   }
 
   if (groupMessagesBy === 'path-prefix') {
