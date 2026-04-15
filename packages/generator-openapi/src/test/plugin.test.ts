@@ -3710,6 +3710,69 @@ describe('OpenAPI EventCatalog Plugin', () => {
       });
     });
 
+    describe('large-spec warning', () => {
+      const buildLargeSpec = async (operationCount: number): Promise<string> => {
+        const paths: Record<string, any> = {};
+        for (let i = 0; i < operationCount; i++) {
+          paths[`/thing-${i}`] = {
+            get: {
+              summary: `get thing ${i}`,
+              operationId: `getThing${i}`,
+              responses: { '200': { description: 'ok' } },
+            },
+          };
+        }
+        const spec = {
+          openapi: '3.0.0',
+          info: { title: 'Large', version: '1.0.0' },
+          paths,
+        };
+        const specPath = join(catalogDir, 'large-spec.json');
+        await fs.writeFile(specPath, JSON.stringify(spec));
+        return specPath;
+      };
+
+      it('warns when the spec has 50+ operations and groupMessagesBy is not set', async () => {
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+        const specPath = await buildLargeSpec(50);
+
+        await plugin(config, {
+          services: [{ path: specPath, id: 'large-no-group' }],
+        });
+
+        const warned = warn.mock.calls.some((args) => String(args[0]).includes('50 operations'));
+        expect(warned).toBe(true);
+        warn.mockRestore();
+      });
+
+      it('does not warn when groupMessagesBy is set, even for large specs', async () => {
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+        const specPath = await buildLargeSpec(50);
+
+        await plugin(config, {
+          services: [{ path: specPath, id: 'large-with-group' }],
+          groupMessagesBy: 'single-group',
+        });
+
+        const warned = warn.mock.calls.some((args) => String(args[0]).includes('operations'));
+        expect(warned).toBe(false);
+        warn.mockRestore();
+      });
+
+      it('does not warn for specs under the threshold', async () => {
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+        const specPath = await buildLargeSpec(10);
+
+        await plugin(config, {
+          services: [{ path: specPath, id: 'small-no-group' }],
+        });
+
+        const warned = warn.mock.calls.some((args) => String(args[0]).includes('operations'));
+        expect(warned).toBe(false);
+        warn.mockRestore();
+      });
+    });
+
     it('no messages have a group property when groupMessagesBy is not configured', async () => {
       const { getService } = utils(catalogDir);
 
