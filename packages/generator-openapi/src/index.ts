@@ -52,6 +52,16 @@ const toUniqueArray = (array: Pointer[]) => {
   return array.filter((item, index, self) => index === self.findIndex((t) => t.id === item.id && t.version === item.version));
 };
 
+// Merge freshly-generated pointers with pointers already in the catalog, letting the
+// freshly-generated ones win on id+version collisions. This ensures fields derived from
+// current generator options (e.g. `group`) reflect the latest config on re-runs, while
+// still preserving any catalog-only pointers that were added by hand.
+const mergePointersPreferringFresh = (fresh: Pointer[], existing: Pointer[]): Pointer[] => {
+  const freshKeys = new Set(fresh.map((p) => `${p.id}@${p.version}`));
+  const existingOnly = existing.filter((p) => !freshKeys.has(`${p.id}@${p.version}`));
+  return [...fresh, ...existingOnly];
+};
+
 // Warn the user when a spec is large enough that the visualiser becomes hard to read without grouping.
 const LARGE_SPEC_OPERATION_THRESHOLD = 50;
 
@@ -338,7 +348,9 @@ export default async (_: any, options: Props) => {
       if (latestServiceInCatalog) {
         serviceMarkdown = latestServiceInCatalog.markdown;
         serviceSpecificationsFiles = await getExistingSpecificationFiles(service.id, latestServiceInCatalog.specifications);
-        sends = latestServiceInCatalog.sends || ([] as any);
+        // Merge fresh sends (carrying current `group` values derived from groupMessagesBy)
+        // with any catalog-only pointers, preferring the fresh ones on id+version collisions.
+        sends = mergePointersPreferringFresh(sends, latestServiceInCatalog.sends || []);
         owners = latestServiceInCatalog.owners || ([] as any);
         repository = latestServiceInCatalog.repository || null;
         styles = latestServiceInCatalog.styles || null;
@@ -361,8 +373,7 @@ export default async (_: any, options: Props) => {
         if (latestServiceInCatalog.version === version) {
           // @ts-ignore
           receives = latestServiceInCatalog.receives
-            ? // @ts-ignore
-              toUniqueArray([...latestServiceInCatalog.receives, ...receives])
+            ? mergePointersPreferringFresh(receives, latestServiceInCatalog.receives as Pointer[])
             : receives;
 
           serviceWritesTo = latestServiceInCatalog.writesTo
