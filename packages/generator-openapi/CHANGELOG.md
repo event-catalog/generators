@@ -1,5 +1,11 @@
 # @eventcatalog/generator-openapi
 
+## 7.12.4
+
+### Patch Changes
+
+- 3f5ff74: fix(generator-openapi): group path-prefix when multiple verbs share a single path
+
 ## 7.12.3
 
 ### Patch Changes
