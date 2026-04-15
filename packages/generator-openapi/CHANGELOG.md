@@ -1,5 +1,11 @@
 # @eventcatalog/generator-openapi
 
+## 7.12.5
+
+### Patch Changes
+
+- c0c209f: feat(generator-openapi): add `single-group` option to `groupMessagesBy` for large APIs
+
 ## 7.12.4
 
 ### Patch Changes
