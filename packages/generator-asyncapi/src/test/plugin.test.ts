@@ -275,6 +275,43 @@ describe('AsyncAPI EventCatalog Plugin', () => {
       );
     });
 
+    it('when the AsyncAPI service already exists inside a domain and no domain is configured on the generator, the service stays in that domain and is not duplicated at the catalog root', async () => {
+      const { writeDomain, addServiceToDomain, writeService, getService } = utils(catalogDir);
+
+      await writeDomain({
+        id: 'orders',
+        name: 'Orders Domain',
+        version: '1.0.0',
+        markdown: '',
+      });
+
+      await writeService(
+        {
+          id: 'account-service',
+          version: '1.0.0',
+          name: 'Account Service',
+          markdown: '# Existing',
+        },
+        { path: join('../', 'domains', 'orders', 'services', 'account-service') }
+      );
+
+      await addServiceToDomain('orders', { id: 'account-service', version: '1.0.0' }, '1.0.0');
+
+      await plugin(config, {
+        services: [{ path: join(asyncAPIExamplesDir, 'simple.asyncapi.yml'), id: 'account-service' }],
+      });
+
+      const service = await getService('account-service', '1.0.0');
+      expect(service).toBeDefined();
+
+      // Service should still live inside the orders domain on disk, not duplicated at /services
+      const serviceInDomain = existsSync(join(catalogDir, 'domains', 'orders', 'services', 'account-service', 'index.mdx'));
+      expect(serviceInDomain).toBe(true);
+
+      const serviceAtRoot = existsSync(join(catalogDir, 'services', 'account-service', 'index.mdx'));
+      expect(serviceAtRoot).toBe(false);
+    });
+
     it('when the AsyncAPI service is already defined in EventCatalog and the versions match, only metadata is updated', async () => {
       // Create a service with the same name and version as the AsyncAPI file for testing
       const { writeService, getService } = utils(catalogDir);

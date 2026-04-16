@@ -397,6 +397,20 @@ export default async (config: any, options: Props) => {
       } else {
         servicePath = path.join('../', 'domains', options.domain.id, 'services', service.id);
       }
+    } else {
+      // No domain configured, but the service may already exist somewhere in the catalog
+      // (e.g. inside a domain). Write back in-place so we don't duplicate it at /services.
+      const existingService = await getService(serviceId, 'latest');
+      if (existingService) {
+        const existingServiceResource = await getResourcePath(
+          process.env.PROJECT_DIR as string,
+          serviceId,
+          existingService.version
+        );
+        if (existingServiceResource) {
+          servicePath = path.join('../', existingServiceResource.directory);
+        }
+      }
     }
     if (options.writeFilesToRoot) {
       servicePath = service.id;
