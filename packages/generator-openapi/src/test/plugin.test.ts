@@ -387,6 +387,43 @@ describe('OpenAPI EventCatalog Plugin', () => {
         expect(service.sends).toHaveLength(2);
       });
 
+      it('when the OpenAPI service already exists inside a domain and no domain is configured on the generator, the service stays in that domain and is not duplicated at the catalog root', async () => {
+        const { writeDomain, addServiceToDomain, writeService, getService } = utils(catalogDir);
+
+        await writeDomain({
+          id: 'orders',
+          name: 'Orders Domain',
+          version: '1.0.0',
+          markdown: '',
+        });
+
+        await writeService(
+          {
+            id: 'swagger-petstore',
+            version: '1.0.0',
+            name: 'Swagger Petstore',
+            markdown: '# Existing',
+          },
+          { path: join('../', 'domains', 'orders', 'services', 'swagger-petstore') }
+        );
+
+        await addServiceToDomain('orders', { id: 'swagger-petstore', version: '1.0.0' }, '1.0.0');
+
+        await plugin(config, {
+          services: [{ path: join(openAPIExamples, 'petstore.yml'), id: 'swagger-petstore' }],
+        });
+
+        const service = await getService('swagger-petstore', '1.0.0');
+        expect(service).toBeDefined();
+
+        // Service should still live inside the orders domain on disk, not duplicated at /services
+        const serviceInDomain = existsSync(join(catalogDir, 'domains', 'orders', 'services', 'swagger-petstore', 'index.mdx'));
+        expect(serviceInDomain).toBe(true);
+
+        const serviceAtRoot = existsSync(join(catalogDir, 'services', 'swagger-petstore', 'index.mdx'));
+        expect(serviceAtRoot).toBe(false);
+      });
+
       it('when the OpenAPI service is already defined in EventCatalog and the processed specification version is greater than the existing service version, a new service is created and the old one is versioned', async () => {
         // Create a service with the same name and version as the OpenAPI file for testing
         const { writeService, getService } = utils(catalogDir);

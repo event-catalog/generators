@@ -287,6 +287,11 @@ export default async (_: any, options: Props) => {
         await addServiceToDomain(domainId, { id: service.id, version: service.version }, domainVersion);
       }
 
+      // Check if service is already defined... if the versions do not match then create service.
+      const latestServiceInCatalog = await getService(service.id, 'latest');
+      const versionTheService = latestServiceInCatalog && isVersionGreaterThan(version, latestServiceInCatalog.version);
+      console.log(chalk.blue(`Processing service: ${document.info.title} (v${version})`));
+
       // Have to ../ as the SDK will put the files into hard coded folders
       // Use getResourcePath to resolve the actual domain location (supports subdomains)
       let servicePath = join('../', 'services', service.id);
@@ -301,15 +306,21 @@ export default async (_: any, options: Props) => {
         } else {
           servicePath = join('../', 'domains', options.domain.id, 'services', service.id);
         }
+      } else if (latestServiceInCatalog) {
+        // No domain configured, but the service already exists somewhere in the catalog
+        // (e.g. inside a domain). Write back in-place so we don't duplicate it at /services.
+        const existingServiceResource = await getResourcePath(
+          process.env.PROJECT_DIR as string,
+          service.id,
+          latestServiceInCatalog.version
+        );
+        if (existingServiceResource) {
+          servicePath = join('../', existingServiceResource.directory);
+        }
       }
       if (options.writeFilesToRoot) {
         servicePath = service.id;
       }
-
-      // Check if service is already defined... if the versions do not match then create service.
-      const latestServiceInCatalog = await getService(service.id, 'latest');
-      const versionTheService = latestServiceInCatalog && isVersionGreaterThan(version, latestServiceInCatalog.version);
-      console.log(chalk.blue(`Processing service: ${document.info.title} (v${version})`));
 
       // If the version is less than the latest service version, we need to write is a versioned service
       if (latestServiceInCatalog && isVersionLessThan(version, latestServiceInCatalog.version)) {
