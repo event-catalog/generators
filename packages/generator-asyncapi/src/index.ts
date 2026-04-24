@@ -22,6 +22,7 @@ import {
 import { defaultMarkdown as generateMarkdownForService, getSummary as getServiceSummary } from './utils/services';
 import { defaultMarkdown as generateMarkdownForDomain } from './utils/domains';
 import { defaultMarkdown as generateMarkdownForChannel, getChannelProtocols, getChannelTags } from './utils/channels';
+import { isNewerVersion, isSameVersion } from './utils/versions';
 import checkLicense from '../../../shared/checkLicense';
 
 import { EventType, MessageOperations } from './types';
@@ -478,7 +479,7 @@ export default async (config: any, options: Props) => {
     for (const operation of operations) {
       for (const message of operation.messages()) {
         const eventType = (message.extensions().get('x-eventcatalog-message-type')?.value() as EventType) || 'event';
-        const messageVersion = message.extensions().get('x-eventcatalog-message-version')?.value() || version;
+        let messageVersion = message.extensions().get('x-eventcatalog-message-version')?.value() || version;
         const deprecatedDate = message.extensions().get('x-eventcatalog-deprecated-date')?.value() || null;
         const deprecatedMessage = message.extensions().get('x-eventcatalog-deprecated-message')?.value() || null;
         const isMessageMarkedAsDraft =
@@ -532,6 +533,7 @@ export default async (config: any, options: Props) => {
         if (serviceOwnsMessageContract) {
           // Check if the message already exists in the catalog
           const catalogedMessage = await getMessage(messageId, 'latest');
+          let shouldWriteMessage = true;
 
           if (catalogedMessage) {
             // persist markdown, badges and attachments if it exists
@@ -539,72 +541,88 @@ export default async (config: any, options: Props) => {
             messageBadges = catalogedMessage.badges || null;
             messageAttachments = catalogedMessage.attachments || null;
 
-            if (catalogedMessage.version !== messageVersion) {
-              // if the version does not match, we need to version the message
+            const catalogedVersion = catalogedMessage.version ?? '';
+
+            if (isSameVersion(catalogedVersion, messageVersion)) {
+              // Same version - continue and overwrite the message in place
+            } else if (isNewerVersion(messageVersion, catalogedVersion)) {
+              // Incoming is strictly newer - version the cataloged one and write the new one at root
               await versionMessage(messageId);
               console.log(chalk.cyan(` - Versioned previous message: (v${catalogedMessage.version})`));
+            } else {
+              // Incoming is older than (or not confidently newer than) the cataloged version.
+              // Leave the cataloged entry alone and point the service's sends/receives at it.
+              console.log(
+                chalk.yellow(
+                  ` - Skipping ${messageId} (v${messageVersion}) - catalog already has a newer version (v${catalogedVersion})`
+                )
+              );
+              messageVersion = catalogedVersion;
+              shouldWriteMessage = false;
             }
           }
 
-          await writeMessage(
-            {
-              id: messageId,
-              version: messageVersion,
-              name: getMessageName(message),
-              summary: getMessageSummary(message),
-              markdown: messageMarkdown,
-              badges:
-                messageBadges || badges.map((badge) => ({ content: badge.name(), textColor: 'blue', backgroundColor: 'blue' })),
-              ...(messageHasSchema(message) && { schemaPath: getSchemaFileName(message) }),
-              ...(owners && { owners }),
-              ...(messageAttachments && { attachments: messageAttachments }),
-              ...(deprecatedDate && {
-                deprecated: { date: deprecatedDate, ...(deprecatedMessage && { message: deprecatedMessage }) },
-              }),
-              ...(isMessageMarkedAsDraft && { draft: true }),
-            },
-            {
-              override: true,
-              path: messagePath,
-            }
-          );
-
-          console.log(chalk.cyan(` - Message (v${messageVersion}) created`));
-
-          // Check if the message has a payload, if it does then document in EventCatalog
-          if (messageHasSchema(message)) {
-            const schema = getSchemaForMessage(message, attachHeadersToSchema);
-
-            // Normalize path separators and remove leading relative path segments (../ or ./ for both Unix and Windows)
-            const cleanedMessagePath = messagePath
-              .replace(/\\/g, '/') // Convert all backslashes to forward slashes
-              .replace(/^(\.\.\/|\.\/)+/g, ''); // Remove all leading ../ or ./ segments
-
-            await addSchemaToMessage(
-              messageId,
+          if (shouldWriteMessage) {
+            await writeMessage(
               {
-                fileName: getSchemaFileName(message),
-                schema: safeStringify(schema, 4),
+                id: messageId,
+                version: messageVersion,
+                name: getMessageName(message),
+                summary: getMessageSummary(message),
+                markdown: messageMarkdown,
+                badges:
+                  messageBadges || badges.map((badge) => ({ content: badge.name(), textColor: 'blue', backgroundColor: 'blue' })),
+                ...(messageHasSchema(message) && { schemaPath: getSchemaFileName(message) }),
+                ...(owners && { owners }),
+                ...(messageAttachments && { attachments: messageAttachments }),
+                ...(deprecatedDate && {
+                  deprecated: { date: deprecatedDate, ...(deprecatedMessage && { message: deprecatedMessage }) },
+                }),
+                ...(isMessageMarkedAsDraft && { draft: true }),
               },
-              messageVersion,
-              { path: cleanedMessagePath }
-            );
-            console.log(chalk.cyan(` - Schema added to message (v${messageVersion})`));
-          }
-
-          // Add examples to the message if parseExamples is enabled
-          if (parseExamples) {
-            const messageExamples = message.examples().all();
-            for (let i = 0; i < messageExamples.length; i++) {
-              const example = messageExamples[i];
-              const payload = example.payload();
-              if (payload) {
-                const fileName = example.hasName() ? `${example.name()}.json` : `example-${i}.json`;
-                await addExampleToMessage(messageId, { content: JSON.stringify(payload, null, 2), fileName }, messageVersion);
+              {
+                override: true,
+                path: messagePath,
               }
+            );
+
+            console.log(chalk.cyan(` - Message (v${messageVersion}) created`));
+
+            // Check if the message has a payload, if it does then document in EventCatalog
+            if (messageHasSchema(message)) {
+              const schema = getSchemaForMessage(message, attachHeadersToSchema);
+
+              // Normalize path separators and remove leading relative path segments (../ or ./ for both Unix and Windows)
+              const cleanedMessagePath = messagePath
+                .replace(/\\/g, '/') // Convert all backslashes to forward slashes
+                .replace(/^(\.\.\/|\.\/)+/g, ''); // Remove all leading ../ or ./ segments
+
+              await addSchemaToMessage(
+                messageId,
+                {
+                  fileName: getSchemaFileName(message),
+                  schema: safeStringify(schema, 4),
+                },
+                messageVersion,
+                { path: cleanedMessagePath }
+              );
+              console.log(chalk.cyan(` - Schema added to message (v${messageVersion})`));
             }
-            if (messageExamples.length > 0) {
-              console.log(chalk.cyan(` - ${messageExamples.length} example(s) added to message (v${messageVersion})`));
+
+            // Add examples to the message if parseExamples is enabled
+            if (parseExamples) {
+              const messageExamples = message.examples().all();
+              for (let i = 0; i < messageExamples.length; i++) {
+                const example = messageExamples[i];
+                const payload = example.payload();
+                if (payload) {
+                  const fileName = example.hasName() ? `${example.name()}.json` : `example-${i}.json`;
+                  await addExampleToMessage(messageId, { content: JSON.stringify(payload, null, 2), fileName }, messageVersion);
+                }
+              }
+              if (messageExamples.length > 0) {
+                console.log(chalk.cyan(` - ${messageExamples.length} example(s) added to message (v${messageVersion})`));
+              }
             }
           }
         } else {

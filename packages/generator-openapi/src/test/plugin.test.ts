@@ -1446,6 +1446,28 @@ describe('OpenAPI EventCatalog Plugin', () => {
         expect(newEvent).toBeDefined();
       });
 
+      it('when the incoming message version is older than the cataloged one, the newer cataloged message is not demoted', async () => {
+        // petstore.yml declares info.version 1.0.0, so createPets will be generated at v1.0.0.
+        // The catalog already has v2.0.0 (e.g. from a previous run against a newer spec).
+        // Regenerating from the older spec must NOT demote v2.0.0 and replace it with v1.0.0.
+        const { writeCommand, getCommand } = utils(catalogDir);
+
+        await writeCommand({
+          id: 'createPets',
+          name: 'createPets',
+          version: '2.0.0',
+          summary: 'Create a pet',
+          markdown: 'cataloged at v2.0.0',
+        });
+
+        await plugin(config, { services: [{ path: join(openAPIExamples, 'petstore.yml'), id: 'swagger-petstore' }] });
+
+        const latest = await getCommand('createPets', 'latest');
+        expect(latest).toBeDefined();
+        expect(latest.version).toEqual('2.0.0');
+        expect(latest.markdown).toEqual('cataloged at v2.0.0');
+      });
+
       it('when a the message already exists in EventCatalog the markdown, badges and attachments are persisted and not overwritten by default', async () => {
         const { writeCommand, getCommand } = utils(catalogDir);
 

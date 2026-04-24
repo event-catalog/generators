@@ -16,7 +16,7 @@ import yaml from 'js-yaml';
 import { join } from 'node:path';
 import pkgJSON from '../package.json';
 import { checkForPackageUpdate } from '../../../shared/check-for-package-update';
-import { isVersionGreaterThan, isVersionLessThan } from './utils/versions';
+import { isVersionGreaterThan, isVersionLessThan, isNewerVersion, isSameVersion } from './utils/versions';
 import { mergeSpecifications, type Specification, type Specifications } from './utils/specifications';
 import { filterMessagesByRoutes, mergeSends } from './utils/consumers';
 
@@ -612,6 +612,7 @@ const processMessagesForOpenAPISpec = async (
 
     // Check if the message already exists in the catalog
     const catalogedMessage = await getMessage(message.id, 'latest');
+    let shouldWriteMessage = true;
 
     if (catalogedMessage) {
       // always preserve badges and attachments
@@ -623,12 +624,25 @@ const processMessagesForOpenAPISpec = async (
         messageMarkdown = catalogedMessage.markdown;
       }
 
-      // if the version matches, we can override the message but keep markdown as it  was
-      if (catalogedMessage.version !== message.version) {
+      const catalogedVersion = catalogedMessage.version ?? '';
+
+      if (isSameVersion(catalogedVersion, message.version)) {
+        // Same version - overwrite in place
+      } else if (isNewerVersion(message.version, catalogedVersion)) {
         console.log('versioning message', message.id);
-        // if the version does not match, we need to version the message
+        // Incoming is strictly newer - version the cataloged one and write the new one at root
         await versionMessage(message.id);
         console.log(chalk.cyan(` - Versioned previous message: ${message.id} (v${catalogedMessage.version})`));
+      } else {
+        // Incoming is older than (or not confidently newer than) the cataloged version.
+        // Leave the cataloged entry alone and point the service's sends/receives at it.
+        console.log(
+          chalk.yellow(
+            ` - Skipping ${message.id} (v${message.version}) - catalog already has a newer version (v${catalogedVersion})`
+          )
+        );
+        message.version = catalogedVersion;
+        shouldWriteMessage = false;
       }
     }
 
@@ -639,19 +653,21 @@ const processMessagesForOpenAPISpec = async (
     }
 
     // Write the message to the catalog
-    await writeMessage(
-      {
-        ...message,
-        badges: messageBadges || message.badges,
-        markdown: messageMarkdown,
-        ...(options.owners ? { owners: options.owners } : {}),
-        ...(messageAttachments ? { attachments: messageAttachments } : {}),
-        // only if its defined add it to the sidebar
-        ...(sidebarBadgeType === 'HTTP_METHOD' ? { sidebar } : {}),
-        ...(isDraft ? { draft: true } : {}),
-      },
-      { path: options.pathForMessages || messagePath, override: true }
-    );
+    if (shouldWriteMessage) {
+      await writeMessage(
+        {
+          ...message,
+          badges: messageBadges || message.badges,
+          markdown: messageMarkdown,
+          ...(options.owners ? { owners: options.owners } : {}),
+          ...(messageAttachments ? { attachments: messageAttachments } : {}),
+          // only if its defined add it to the sidebar
+          ...(sidebarBadgeType === 'HTTP_METHOD' ? { sidebar } : {}),
+          ...(isDraft ? { draft: true } : {}),
+        },
+        { path: options.pathForMessages || messagePath, override: true }
+      );
+    }
 
     // If the message send or recieved by the service?
     const group = getMessageGroup(operation, options.groupMessagesBy, groupablePrefixes);
@@ -674,7 +690,7 @@ const processMessagesForOpenAPISpec = async (
     });
 
     // Does the message have a request body or responses?
-    if (requestBodiesAndResponses?.requestBody) {
+    if (shouldWriteMessage && requestBodiesAndResponses?.requestBody) {
       await addFileToMessage(
         message.id,
         {
@@ -685,7 +701,7 @@ const processMessagesForOpenAPISpec = async (
       );
     }
 
-    if (requestBodiesAndResponses?.responses) {
+    if (shouldWriteMessage && requestBodiesAndResponses?.responses) {
       for (const [statusCode, schema] of Object.entries(requestBodiesAndResponses.responses)) {
         const getContent = () => {
           try {
@@ -719,7 +735,7 @@ const processMessagesForOpenAPISpec = async (
     }
 
     // Add examples to the message if parseExamples is enabled
-    if (parseExamples && operation.operationId) {
+    if (shouldWriteMessage && parseExamples && operation.operationId) {
       const operationExamples = await getExamplesByOperationId(pathToSpec, operation.operationId, document as any);
       for (const example of operationExamples) {
         await addExampleToMessage(message.id, { content: example.content, fileName: example.fileName }, message.version);

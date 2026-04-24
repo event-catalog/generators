@@ -1614,5 +1614,40 @@ describe('EventBridge EventCatalog Plugin', () => {
         );
       });
     });
+
+    describe('version ordering', () => {
+      it('does not demote a newer cataloged event when the incoming version is older', async () => {
+        // Reproduces https://discord/... user report: EventBridge schema has VersionCount=10 (older)
+        // but the catalog already has OrderPlaced v100 from a previous run. The generator must not
+        // move v100 into `versioned/` and replace it with v10. Older versions should never demote newer.
+        const { writeEvent, getEvent } = utils(catalogDir);
+
+        await writeEvent({
+          id: 'OrderPlaced',
+          version: '100',
+          name: 'OrderPlaced',
+          markdown: 'cataloged at v100',
+        });
+
+        await plugin(config, {
+          region: 'us-east-1',
+          registryName: 'discovered-schemas',
+          services: [
+            {
+              id: 'Orders Service',
+              version: '1.0.0',
+              sends: [{ source: ['myapp.orders'] }],
+            },
+          ],
+        });
+
+        const latest = await getEvent('OrderPlaced', 'latest');
+        expect(latest).toBeDefined();
+        expect(latest.version).toEqual('100');
+
+        const versionedV100 = await getEvent('OrderPlaced', '100');
+        expect(versionedV100.markdown).toEqual('cataloged at v100');
+      });
+    });
   });
 });

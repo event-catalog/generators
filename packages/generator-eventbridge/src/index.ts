@@ -22,6 +22,7 @@ import path, { join } from 'node:path';
 import fs from 'node:fs/promises';
 import pkgJSON from '../package.json';
 import { checkForPackageUpdate } from '../../../shared/check-for-package-update';
+import { isNewerVersion, isSameVersion } from './utils/versions';
 
 async function tryFetchJSONSchema(
   schemasClient: SchemasClient,
@@ -371,13 +372,24 @@ const processEvents = async (events: Event[], options: GeneratorProps, servicePa
       messageBadges = catalogedEvent.badges || messageBadges;
       messageAttachments = catalogedEvent.attachments;
       messageSummary = catalogedEvent.summary;
-      // if the version matches, we can override the message but keep markdown as it  was
-      if (catalogedEvent.version === event.version) {
+
+      const incomingVersion = event.version ?? '';
+      const cataloged = catalogedEvent.version ?? '';
+
+      if (isSameVersion(cataloged, incomingVersion)) {
+        // Same version - override the message but keep markdown as it was
         await rmEventById(event.id, event.version);
-      } else {
-        // if the version does not match, we need to version the message
+      } else if (isNewerVersion(incomingVersion, cataloged)) {
+        // Incoming is strictly newer - version the cataloged one and write the new one at root
         await versionEvent(event.id);
         console.log(chalk.cyan(` - Versioned previous message: (v${catalogedEvent.version})`));
+      } else {
+        // Incoming is older than (or not confidently newer than) the cataloged version.
+        // Skip to avoid demoting the newer cataloged entry.
+        console.log(
+          chalk.yellow(` - Skipping ${event.id} (v${incomingVersion}) - catalog already has a newer version (v${cataloged})`)
+        );
+        continue;
       }
     }
 
