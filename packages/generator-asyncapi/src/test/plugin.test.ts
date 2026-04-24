@@ -1378,6 +1378,28 @@ describe('AsyncAPI EventCatalog Plugin', () => {
       expect(newEvent).toBeDefined();
     });
 
+    it('when the incoming message version is older than the cataloged one, the newer cataloged message is not demoted', async () => {
+      // The AsyncAPI spec for this service is version 1.0.0, so the UserSignedUp message
+      // is generated at v1.0.0. The catalog already has v2.0.0 (e.g. from a previous run
+      // against a newer spec). Regenerating from the older spec must NOT demote v2.0.0
+      // into `versioned/` and replace it with v1.0.0.
+      const { writeEvent, getEvent } = utils(catalogDir);
+
+      await writeEvent({
+        id: 'UserSignedUp',
+        version: '2.0.0',
+        name: 'UserSignedUp',
+        markdown: 'cataloged at v2.0.0',
+      });
+
+      await plugin(config, { services: [{ path: join(asyncAPIExamplesDir, 'simple.asyncapi.yml'), id: 'account-service' }] });
+
+      const latest = await getEvent('UserSignedUp', 'latest');
+      expect(latest).toBeDefined();
+      expect(latest.version).toEqual('2.0.0');
+      expect(latest.markdown).toEqual('cataloged at v2.0.0');
+    });
+
     it('when a message already exists in EventCatalog the markdown, badges and attachments are persisted and not overwritten', async () => {
       const { writeEvent, getEvent } = utils(catalogDir);
 

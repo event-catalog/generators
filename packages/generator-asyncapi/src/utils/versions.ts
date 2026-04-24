@@ -1,14 +1,4 @@
-import { satisfies, valid as semverValid, gt as semverGt, eq as semverEq, coerce as semverCoerce } from 'semver';
-
-// version is greater than or equal to the given version
-export const isVersionGreaterThan = (version: string, givenVersion: string) => {
-  return satisfies(version, `>${givenVersion}`);
-};
-
-// version is less than or equal to the given version
-export const isVersionLessThan = (version: string, givenVersion: string) => {
-  return satisfies(version, `<${givenVersion}`);
-};
+import { valid as semverValid, gt as semverGt, eq as semverEq, coerce as semverCoerce } from 'semver';
 
 const tryCoerceToSemver = (version: string): string | null => {
   if (semverValid(version)) return version;

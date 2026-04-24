@@ -19,6 +19,7 @@
   "devDependencies": {
     "@smithy/types": "^3.5.0",
     "@types/node": "^20.16.1",
+    "@types/semver": "^7.7.0",
     "prettier": "^3.3.3",
     "tsup": "^8.1.0",
     "typescript": "^5.5.3",
@@ -38,6 +39,7 @@
     "@changesets/cli": "^2.27.8",
     "@eventcatalog/sdk": "^2.18.2",
     "chalk": "4.1.2",
+    "semver": "^7.7.2",
     "update-notifier": "^7.3.1"
   },
   "repository": {
