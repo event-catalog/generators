@@ -534,10 +534,10 @@ export default async (config: any, options: Props) => {
 
         let shouldWriteMessage = true;
 
-        if (serviceOwnsMessageContract) {
-          // Check if the message already exists in the catalog
-          const catalogedMessage = await getMessage(messageId, 'latest');
+        // Check if the message already exists in the catalog
+        const catalogedMessage = await getMessage(messageId, 'latest');
 
+        if (serviceOwnsMessageContract) {
           if (catalogedMessage) {
             // persist markdown, badges and attachments if it exists
             messageMarkdown = catalogedMessage.markdown;
@@ -566,7 +566,6 @@ export default async (config: any, options: Props) => {
           }
         } else {
           // Non-owner: if the message already exists, skip writing to avoid duplicates
-          const catalogedMessage = await getMessage(messageId, 'latest');
           if (catalogedMessage) {
             console.log(chalk.cyan(` - Message ${messageId} (v${messageVersion}) already exists, skipping (non-owner)`));
             shouldWriteMessage = false;
