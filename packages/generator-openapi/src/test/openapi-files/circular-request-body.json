@@ -1,0 +1,159 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "example",
+    "version": "0"
+  },
+  "paths": {
+    "/api/example/v0/operations/create": {
+      "post": {
+        "operationId": "createOperation",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OperationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OperationResult"
+                }
+              }
+            },
+            "description": "Successful operation"
+          }
+        },
+        "summary": "Create a generic operation when the provided request matches the approved result.",
+        "tags": ["operation-controller"]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "OperationRequest": {
+        "required": ["approvedEvaluationResult", "definition"],
+        "type": "object",
+        "properties": {
+          "approvedEvaluationResult": {
+            "$ref": "#/components/schemas/EvaluationResult"
+          },
+          "definition": {
+            "$ref": "#/components/schemas/OperationDefinition"
+          }
+        }
+      },
+      "OperationDefinition": {
+        "required": ["resourceId"],
+        "type": "object",
+        "properties": {
+          "resourceId": {
+            "type": "string"
+          }
+        }
+      },
+      "EvaluationResult": {
+        "required": ["resourceEvaluations"],
+        "type": "object",
+        "properties": {
+          "resourceEvaluations": {
+            "uniqueItems": true,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ResourceEvaluation"
+            }
+          }
+        }
+      },
+      "ResourceEvaluation": {
+        "required": ["itemEvaluations"],
+        "type": "object",
+        "properties": {
+          "itemEvaluations": {
+            "uniqueItems": true,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ItemEvaluation"
+            }
+          }
+        }
+      },
+      "ItemEvaluation": {
+        "required": ["detailEvaluations"],
+        "type": "object",
+        "properties": {
+          "detailEvaluations": {
+            "uniqueItems": true,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DetailEvaluation"
+            }
+          }
+        }
+      },
+      "DetailEvaluation": {
+        "required": ["effects"],
+        "type": "object",
+        "properties": {
+          "effects": {
+            "uniqueItems": true,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DetailEffect"
+            }
+          }
+        }
+      },
+      "DetailEffect": {
+        "required": ["type"],
+        "type": "object",
+        "properties": {
+          "changes": {
+            "$ref": "#/components/schemas/DetailChangeSet"
+          },
+          "type": {
+            "type": "string"
+          }
+        },
+        "discriminator": {
+          "propertyName": "type"
+        },
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/DetailHiddenEffect"
+          }
+        ]
+      },
+      "DetailChangeSet": {
+        "type": "object",
+        "properties": {
+          "isHidden": {
+            "type": "boolean"
+          }
+        }
+      },
+      "DetailHiddenEffect": {
+        "type": "object",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/DetailEffect"
+          }
+        ]
+      },
+      "OperationResult": {
+        "type": "object",
+        "properties": {
+          "operationId": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}
