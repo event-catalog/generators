@@ -52,6 +52,22 @@ const toUniqueArray = (array: Pointer[]) => {
   return array.filter((item, index, self) => index === self.findIndex((t) => t.id === item.id && t.version === item.version));
 };
 
+const stringifySchema = (schema: unknown) => {
+  const seen = new WeakSet();
+
+  return JSON.stringify(
+    schema,
+    (_key, value) => {
+      if (typeof value === 'object' && value !== null) {
+        if (seen.has(value)) return '[Circular]';
+        seen.add(value);
+      }
+      return value;
+    },
+    2
+  );
+};
+
 // Merge freshly-generated pointers with pointers already in the catalog, letting the
 // freshly-generated ones win on id+version collisions. This ensures fields derived from
 // current generator options (e.g. `group`) reflect the latest config on re-runs, while
@@ -695,7 +711,7 @@ const processMessagesForOpenAPISpec = async (
         message.id,
         {
           fileName: 'request-body.json',
-          content: JSON.stringify(requestBodiesAndResponses.requestBody, null, 2),
+          content: stringifySchema(requestBodiesAndResponses.requestBody),
         },
         message.version
       );
@@ -703,31 +719,11 @@ const processMessagesForOpenAPISpec = async (
 
     if (shouldWriteMessage && requestBodiesAndResponses?.responses) {
       for (const [statusCode, schema] of Object.entries(requestBodiesAndResponses.responses)) {
-        const getContent = () => {
-          try {
-            return JSON.stringify(schema, null, 2);
-          } catch (error) {
-            // Handle circular references in JSON.stringify
-            const seen = new WeakSet();
-            return JSON.stringify(
-              schema,
-              (key, value) => {
-                if (typeof value === 'object' && value !== null) {
-                  if (seen.has(value)) return '[Circular]'; // Handle circular references
-                  seen.add(value);
-                }
-                return value;
-              },
-              2
-            );
-          }
-        };
-
         await addFileToMessage(
           message.id,
           {
             fileName: `response-${statusCode}.json`,
-            content: getContent(),
+            content: stringifySchema(schema),
           },
           message.version
         );

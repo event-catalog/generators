@@ -2152,6 +2152,25 @@ describe('OpenAPI EventCatalog Plugin', () => {
 }`);
     });
 
+    it('when a request body contains circular oneOf/allOf references, the generated schema keeps the shape and marks the cycle', async () => {
+      await plugin(config, {
+        services: [{ path: join(openAPIExamples, 'circular-request-body.json'), id: 'circular-request-body-service' }],
+      });
+
+      const schema = await fs.readFile(
+        join(catalogDir, 'services', 'circular-request-body-service', 'queries', 'createOperation', 'request-body.json'),
+        'utf8'
+      );
+      const parsedSchema = JSON.parse(schema);
+      const detailEffect =
+        parsedSchema.properties.approvedEvaluationResult.properties.resourceEvaluations.items.properties.itemEvaluations.items
+          .properties.detailEvaluations.items.properties.effects.items;
+
+      expect(parsedSchema.properties.definition.properties.resourceId.type).toEqual('string');
+      expect(detailEffect.properties.changes.properties.isHidden.type).toEqual('boolean');
+      expect(detailEffect.oneOf[0].allOf[0]).toEqual('[Circular]');
+    });
+
     describe('persisted data', () => {
       it('when the OpenAPI service is already defined in EventCatalog and the versions match, the styles are persisted and not overwritten', async () => {
         // Create a service with the same name and version as the OpenAPI file for testing
