@@ -1472,6 +1472,44 @@ describe('AsyncAPI EventCatalog Plugin', () => {
       expect(service.receives).toContainEqual({ id: 'UserSignedUp', version: '1.0.0' });
     });
 
+    it('without an explicit role, a `receive` operation still documents the message when no other service owns it (non-breaking)', async () => {
+      const { getEvent, getService } = utils(catalogDir);
+
+      await plugin(config, {
+        services: [{ path: join(asyncAPIExamplesDir, 'ownership-subscriber.asyncapi.yml'), id: 'notification-service' }],
+      });
+
+      // Received message is still documented if nothing else owns it yet
+      const event = await getEvent('OrderPlaced', 'latest');
+      expect(event).toBeDefined();
+      expect(event.summary).toEqual("Subscriber's view of the message");
+
+      const service = await getService('notification-service', '1.0.0');
+      expect(service.receives).toContainEqual({ id: 'OrderPlaced', version: '1.0.0' });
+    });
+
+    it('without an explicit role, a `receive` operation references the owner`s message without overwriting it', async () => {
+      const { getEvent, getService } = utils(catalogDir);
+
+      // The sending service owns the message
+      await plugin(config, {
+        services: [{ path: join(asyncAPIExamplesDir, 'ownership-publisher.asyncapi.yml'), id: 'order-service' }],
+      });
+
+      // The receiving service references it - it must not overwrite the owner's contract
+      await plugin(config, {
+        services: [{ path: join(asyncAPIExamplesDir, 'ownership-subscriber.asyncapi.yml'), id: 'notification-service' }],
+      });
+
+      const event = await getEvent('OrderPlaced', 'latest');
+      expect(event.summary).toEqual('Owned by the order service');
+
+      const orderService = await getService('order-service', '1.0.0');
+      const notificationService = await getService('notification-service', '1.0.0');
+      expect(orderService.sends).toContainEqual({ id: 'OrderPlaced', version: '1.0.0' });
+      expect(notificationService.receives).toContainEqual({ id: 'OrderPlaced', version: '1.0.0' });
+    });
+
     it('when the `x-eventcatalog-message-version` is defined on a message that version is used and not the the AsyncAPI version', async () => {
       const { getEvent } = utils(catalogDir);
       const { getService } = utils(catalogDir);
