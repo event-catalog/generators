@@ -485,8 +485,9 @@ export default async (config: any, options: Props) => {
         const isMessageMarkedAsDraft =
           isDomainMarkedAsDraft || isServiceMarkedAsDraft || message.extensions().get('x-eventcatalog-draft')?.value() || null;
 
-        // does this service own or just consume the message?
-        const serviceOwnsMessageContract = isServiceMessageOwner(message, operation);
+        // does this service own, reference, or treat the message as external?
+        const messageOwnership = getMessageOwnership(message, operation);
+        const serviceOwnsMessageContract = messageOwnership === 'owner';
         const isReceived = operation.action() === 'receive' || operation.action() === 'subscribe';
         const isSent = operation.action() === 'send' || operation.action() === 'publish';
 
@@ -530,12 +531,16 @@ export default async (config: any, options: Props) => {
           messagePath = messageId;
         }
 
-        if (serviceOwnsMessageContract) {
+        if (messageOwnership === 'external') {
+          // Explicit `x-eventcatalog-role: client` - the message is owned by another service,
+          // therefore we don't need to document it.
+          console.log(chalk.yellow(` - Skipping external message: ${getMessageName(message)}(v${messageVersion})`));
+        } else {
           // Check if the message already exists in the catalog
           const catalogedMessage = await getMessage(messageId, 'latest');
           let shouldWriteMessage = true;
 
-          if (catalogedMessage) {
+          if (serviceOwnsMessageContract && catalogedMessage) {
             // persist markdown, badges and attachments if it exists
             messageMarkdown = catalogedMessage.markdown;
             messageBadges = catalogedMessage.badges || null;
@@ -560,6 +565,14 @@ export default async (config: any, options: Props) => {
               messageVersion = catalogedVersion;
               shouldWriteMessage = false;
             }
+          } else if (!serviceOwnsMessageContract && catalogedMessage) {
+            // Reference (e.g. a `receive` operation with no explicit role): the owning service has
+            // already documented this message - reference its existing version without overwriting it.
+            console.log(
+              chalk.yellow(` - Referencing existing message ${messageId} (v${catalogedMessage.version}) without overwriting`)
+            );
+            messageVersion = catalogedMessage.version ?? messageVersion;
+            shouldWriteMessage = false;
           }
 
           if (shouldWriteMessage) {
@@ -581,7 +594,8 @@ export default async (config: any, options: Props) => {
                 ...(isMessageMarkedAsDraft && { draft: true }),
               },
               {
-                override: true,
+                // Only owners overwrite an existing entry; references create the message if missing.
+                override: serviceOwnsMessageContract,
                 path: messagePath,
               }
             );
@@ -625,9 +639,6 @@ export default async (config: any, options: Props) => {
               }
             }
           }
-        } else {
-          // Message is not owned by this service, therefore we don't need to document it
-          console.log(chalk.yellow(` - Skipping external message: ${getMessageName(message)}(v${messageVersion})`));
         }
         // Derive group from x-eventcatalog-group extension if groupMessagesBy is configured
         const group =
@@ -835,19 +846,38 @@ const isJSONSchemaMessage = (message: MessageInterface) => {
   return getSchemaFileName(message).endsWith('.json');
 };
 /**
- * Is the AsyncAPI specification (service) the owner of the message?
- * This is determined by the 'x-eventcatalog-role' extension in the message
+ * How does this service relate to the message?
  *
- * @param message
- * @returns boolean
+ * - `owner`: the service owns the message contract and writes it (overriding any existing entry).
+ * - `reference`: the service uses the message but does not own it. It is documented if missing,
+ *    but an existing entry from the owning service is never overwritten.
+ * - `external`: the message is owned elsewhere and is not documented by this service at all.
  *
- * default is provider (AsyncAPI file / service owns the message)
+ * An explicit 'x-eventcatalog-role' extension (operation- or message-level) always wins and
+ * preserves the original behaviour: `provider` => owner, anything else (e.g. `client`) => external.
+ *
+ * Without an explicit role, ownership follows the operation action: `send`/`publish` owns the
+ * message, while `receive`/`subscribe` only references it (the publisher owns the contract).
  */
-const isServiceMessageOwner = (message: MessageInterface, operation?: { extensions: () => any }): boolean => {
-  // Prefer operation-level override to support shared/ref'ed messages where ownership
+type MessageOwnership = 'owner' | 'reference' | 'external';
+
+const getMessageOwnership = (
+  message: MessageInterface,
+  operation?: { extensions: () => any; action?: () => string }
+): MessageOwnership => {
+  // Prefer an explicit role override to support shared/ref'ed messages where ownership
   // needs to be set per operation/service.
   const operationRole = operation?.extensions?.().get?.('x-eventcatalog-role')?.value?.();
   const messageRole = message.extensions().get('x-eventcatalog-role')?.value();
-  const value = operationRole || messageRole || 'provider';
-  return value === 'provider';
+  const explicitRole = operationRole || messageRole;
+  if (explicitRole) {
+    return explicitRole === 'provider' ? 'owner' : 'external';
+  }
+
+  // No explicit role: ownership follows the operation action.
+  const action = operation?.action?.();
+  if (action === 'receive' || action === 'subscribe') {
+    return 'reference';
+  }
+  return 'owner';
 };

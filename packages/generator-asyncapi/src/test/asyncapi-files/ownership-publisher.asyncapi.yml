@@ -1,0 +1,29 @@
+asyncapi: 3.0.0
+info:
+  title: Order Service
+  version: 1.0.0
+  description: Publishes OrderPlaced
+channels:
+  orders:
+    address: orders
+    messages:
+      OrderPlaced:
+        $ref: '#/components/messages/OrderPlaced'
+operations:
+  sendOrderPlaced:
+    action: send
+    channel:
+      $ref: '#/channels/orders'
+    messages:
+      - $ref: '#/channels/orders/messages/OrderPlaced'
+components:
+  messages:
+    OrderPlaced:
+      summary: Owned by the order service
+      payload:
+        type: object
+        properties:
+          orderId:
+            type: string
+          amount:
+            type: number
