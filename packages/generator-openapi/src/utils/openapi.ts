@@ -3,6 +3,45 @@ import { OpenAPIDocument, OpenAPIOperation, OpenAPIParameter, Operation } from '
 import { HTTP_METHOD, HTTP_METHOD_TO_MESSAGE_TYPE } from '../index';
 const DEFAULT_MESSAGE_TYPE = 'query';
 
+const getErrorMessage = (error: unknown) => (error instanceof Error ? error.message : String(error));
+
+const isOpenAPI31LicenseNameOnly = (api: any) => {
+  const license = api?.info?.license;
+
+  return (
+    typeof api?.openapi === 'string' &&
+    api.openapi.startsWith('3.1.') &&
+    license &&
+    typeof license.name === 'string' &&
+    !license.identifier &&
+    !license.url
+  );
+};
+
+const isLicenseNameOnlyValidationError = (error: unknown) => {
+  const message = getErrorMessage(error);
+
+  return (
+    message.includes('#/info/license') &&
+    message.includes("must have required property 'identifier'") &&
+    message.includes("must have required property 'url'") &&
+    message.includes('must match exactly one schema in oneOf')
+  );
+};
+
+export async function validateAndDereferenceOpenAPI(api: string | any) {
+  try {
+    await SwaggerParser.validate(api);
+  } catch (error) {
+    const parsed = await SwaggerParser.parse(api);
+    if (!isLicenseNameOnlyValidationError(error) || !isOpenAPI31LicenseNameOnly(parsed)) {
+      throw error;
+    }
+  }
+
+  return SwaggerParser.dereference(api);
+}
+
 export async function getSchemasByOperationId(
   filePath: string,
   operationId: string | undefined,
@@ -168,7 +207,7 @@ export async function getOperationsByType(
 ) {
   try {
     // Use pre-parsed document if provided, otherwise parse from file
-    const api = parsedDocument || (await SwaggerParser.validate(openApiPath));
+    const api = parsedDocument || (await validateAndDereferenceOpenAPI(openApiPath));
 
     const operations = [];
 

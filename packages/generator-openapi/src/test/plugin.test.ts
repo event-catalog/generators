@@ -310,6 +310,29 @@ describe('OpenAPI EventCatalog Plugin', () => {
         );
       });
 
+      it('OpenAPI 3.1.0 specs allow info.license with only a name', async () => {
+        const { getService, getQuery, getCommand } = utils(catalogDir);
+
+        await plugin(config, {
+          services: [{ path: join(openAPIExamples, 'openapi-3-1-license-name-only.json'), id: 'openapi-3-1-license-name-only' }],
+        });
+
+        const service = await getService('openapi-3-1-license-name-only', '1.0.0');
+        const listPets = await getQuery('listPets', '1.0.0');
+        const createPets = await getCommand('createPets', '1.0.0');
+
+        expect(service).toEqual(
+          expect.objectContaining({
+            id: 'openapi-3-1-license-name-only',
+            name: 'Swagger Petstore',
+            version: '1.0.0',
+            schemaPath: 'openapi-3-1-license-name-only.json',
+          })
+        );
+        expect(listPets).toEqual(expect.objectContaining({ id: 'listPets', version: '1.0.0' }));
+        expect(createPets).toEqual(expect.objectContaining({ id: 'createPets', version: '1.0.0' }));
+      });
+
       it('when the OpenaPI service is already defined in EventCatalog and the versions match, only metadata is updated', async () => {
         // Create a service with the same name and version as the OpenAPI file for testing
         const { writeService, getService } = utils(catalogDir);
