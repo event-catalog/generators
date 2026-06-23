@@ -2,12 +2,11 @@ import utils from '@eventcatalog/sdk';
 import { readFile } from 'node:fs/promises';
 import fs from 'node:fs/promises';
 import chalk from 'chalk';
-import SwaggerParser from '@apidevtools/swagger-parser';
 
 import { defaultMarkdown as generateMarkdownForDomain } from './utils/domains';
 import { buildService, getSummary } from './utils/services';
 import { buildMessage } from './utils/messages';
-import { getOperationsByType, getExamplesByOperationId } from './utils/openapi';
+import { getOperationsByType, getExamplesByOperationId, validateAndDereferenceOpenAPI } from './utils/openapi';
 import { Domain, Service, Message, Operation, Pointer } from './types';
 import { getMessageTypeUtils } from './utils/catalog-shorthand';
 import { OpenAPI } from 'openapi-types';
@@ -212,11 +211,9 @@ export default async (_: any, options: Props) => {
         // If URL with headers, fetch and parse in memory
         if (isUrl && hasHeaders) {
           const parsedSpec = await fetchAuthenticatedSpec(specFile, serviceSpec.headers!);
-          await SwaggerParser.validate(parsedSpec);
-          document = await SwaggerParser.dereference(parsedSpec);
+          document = (await validateAndDereferenceOpenAPI(parsedSpec)) as OpenAPI.Document;
         } else {
-          await SwaggerParser.validate(specFile);
-          document = await SwaggerParser.dereference(specFile);
+          document = (await validateAndDereferenceOpenAPI(specFile)) as OpenAPI.Document;
         }
 
         return {
