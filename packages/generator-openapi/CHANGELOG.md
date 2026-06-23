@@ -1,5 +1,12 @@
 # @eventcatalog/generator-openapi
 
+## 7.12.11
+
+### Patch Changes
+
+- d0417d4: Support OpenAPI 3.1.2 specifications by updating the Swagger Parser dependency.
+- 5bf21e9: Allow OpenAPI 3.1 specs with an `info.license` object that only defines a `name` (no `url` or `identifier`), which is valid per the OpenAPI 3.1 spec but was previously rejected during validation.
+
 ## 7.12.10
 
 ### Patch Changes
