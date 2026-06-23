@@ -286,6 +286,30 @@ describe('OpenAPI EventCatalog Plugin', () => {
         );
       });
 
+      it('OpenAPI 3.1.2 specs are mapped into a service in EventCatalog', async () => {
+        const { getService, getQuery } = utils(catalogDir);
+
+        await plugin(config, { services: [{ path: join(openAPIExamples, 'openapi-3-1-2.yml'), id: 'openapi-3-1-2' }] });
+
+        const service = await getService('openapi-3-1-2', '1.0.0');
+        const query = await getQuery('listPets', '1.0.0');
+
+        expect(service).toEqual(
+          expect.objectContaining({
+            id: 'openapi-3-1-2',
+            name: 'OpenAPI 3.1.2 Pets API',
+            version: '1.0.0',
+            schemaPath: 'openapi-3-1-2.yml',
+          })
+        );
+        expect(query).toEqual(
+          expect.objectContaining({
+            id: 'listPets',
+            version: '1.0.0',
+          })
+        );
+      });
+
       it('when the OpenaPI service is already defined in EventCatalog and the versions match, only metadata is updated', async () => {
         // Create a service with the same name and version as the OpenAPI file for testing
         const { writeService, getService } = utils(catalogDir);
