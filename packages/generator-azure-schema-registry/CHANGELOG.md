@@ -1,5 +1,11 @@
 # @eventcatalog/generator-azure-schema-registry
 
+## 0.1.1
+
+### Patch Changes
+
+- 209f6ec: Allow generators to authenticate using an EventCatalog Scale license key. License checking now accepts a Scale license (via `EVENTCATALOG_SCALE_LICENSE_KEY` or an offline license) in addition to per-plugin license keys, and surfaces clearer messaging when verification fails.
+
 ## 0.1.0
 
 ### Minor Changes
