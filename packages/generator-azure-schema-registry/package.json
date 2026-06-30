@@ -1,6 +1,6 @@
 {
   "name": "@eventcatalog/generator-azure-schema-registry",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Azure Schema Registry generator for EventCatalog",
   "scripts": {
     "build": "tsup",
