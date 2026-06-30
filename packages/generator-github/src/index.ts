@@ -35,7 +35,7 @@ export default async (_: EventCatalogConfig, options: GeneratorProps) => {
 
   // Check for license and package update
   const LICENSE_KEY: string = process.env.EVENTCATALOG_LICENSE_KEY_GITHUB || options.licenseKey || '';
-  await checkLicense(pkgJSON.name, LICENSE_KEY);
+  await checkLicense(pkgJSON.name, LICENSE_KEY, { allowEventCatalogScaleLicense: true });
   await checkForPackageUpdate(pkgJSON.name);
 
   // Remove the tmpDir if it exists

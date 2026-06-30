@@ -182,7 +182,7 @@ export default async (_: any, options: Props) => {
 
   // Check if the license is valid
   const LICENSE_KEY: string = process.env.EVENTCATALOG_LICENSE_KEY_OPENAPI || options.licenseKey || '';
-  await checkLicense(pkgJSON.name, LICENSE_KEY);
+  await checkLicense(pkgJSON.name, LICENSE_KEY, { allowEventCatalogScaleLicense: true });
   await checkForPackageUpdate(pkgJSON.name);
   const {
     getDomain,
