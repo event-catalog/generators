@@ -35,7 +35,7 @@ export default async (config: EventCatalogConfig, options: GeneratorProps) => {
 
   // Check for license and package update
   const LICENSE_KEY: string = process.env.EVENTCATALOG_LICENSE_KEY_AZURE_SCHEMA_REGISTRY || options.licenseKey || '';
-  await checkLicense(pkgJSON.name, LICENSE_KEY);
+  await checkLicense(pkgJSON.name, LICENSE_KEY, { allowEventCatalogScaleLicense: true });
   await checkForPackageUpdate(pkgJSON.name);
 
   console.log(chalk.green(`Fetching schemas from Azure Schema Registry: ${SCHEMA_REGISTRY_URL}...`));

@@ -4,17 +4,104 @@ import plugin from '../index';
 import path, { join } from 'node:path';
 import fs from 'fs/promises';
 import fsExtra from 'fs-extra';
+import os from 'node:os';
+import { execSync } from 'node:child_process';
+import { pathToFileURL } from 'node:url';
 // Fake eventcatalog config
 const eventCatalogConfig = {
   title: 'My EventCatalog',
 };
 
 let catalogDir: string;
+let sourceRepository: string;
+let sourceRepositoryUrl: string;
 
 // Add mock for the local checkLicense module
 vi.mock('../../../../shared/checkLicense', () => ({
   default: () => Promise.resolve(),
 }));
+
+const writeMarkdownResource = async (resourcePath: string, id: string, name = id) => {
+  await fsExtra.outputFile(
+    join(sourceRepository, resourcePath, 'index.md'),
+    `---
+id: ${id}
+name: ${name}
+---
+
+# ${name}
+`
+  );
+};
+
+const createSourceRepository = async () => {
+  sourceRepository = join(os.tmpdir(), `eventcatalog-federation-source-${process.pid}`);
+  sourceRepositoryUrl = pathToFileURL(sourceRepository).href;
+
+  await fsExtra.remove(sourceRepository);
+  await fsExtra.ensureDir(sourceRepository);
+
+  execSync('git init --initial-branch=main', { cwd: sourceRepository });
+  execSync('git config user.email "test@example.com"', { cwd: sourceRepository });
+  execSync('git config user.name "Test User"', { cwd: sourceRepository });
+
+  const orderServices = ['InventoryService', 'OrderService', 'ShippingService', 'ReturnsService', 'BillingService'];
+  const paymentServices = ['PaymentService', 'InvoiceService', 'FraudService', 'TaxService'];
+
+  for (const service of orderServices) {
+    await writeMarkdownResource(
+      join('examples/default/domains/E-Commerce/subdomains/Orders/services', service),
+      service,
+      service.replace(/Service$/, ' Service')
+    );
+  }
+
+  for (const service of paymentServices) {
+    await writeMarkdownResource(
+      join('examples/default/domains/E-Commerce/subdomains/Payment/services', service),
+      service,
+      service.replace(/Service$/, ' Service')
+    );
+  }
+
+  for (const subdomain of ['Orders', 'Payment', 'Shipping', 'CustomerExperience']) {
+    await writeMarkdownResource(join('examples/default/domains/E-Commerce/subdomains', subdomain), subdomain, subdomain);
+  }
+
+  await writeMarkdownResource(join('examples/default/domains/E-Commerce'), 'E-Commerce', 'E-Commerce');
+
+  for (const team of ['Platform', 'Orders', 'Payments', 'Support']) {
+    await writeMarkdownResource(join('examples/default/teams', team), team, team);
+  }
+
+  for (let index = 1; index <= 23; index++) {
+    const user = `user-${index}`;
+    await writeMarkdownResource(join('examples/default/users', user), user, user);
+  }
+
+  for (const domain of ['Orders', 'Payment', 'Subscriptions']) {
+    await writeMarkdownResource(join('domains', domain), domain, domain);
+  }
+
+  for (const team of ['FullStack', 'Mobile']) {
+    await writeMarkdownResource(join('teams', team), team, team);
+  }
+
+  for (const user of ['alice', 'bob', 'charlie']) {
+    await writeMarkdownResource(join('users', user), user, user);
+  }
+
+  execSync('git add .', { cwd: sourceRepository });
+  execSync('git commit -m "Add main catalog fixture"', { cwd: sourceRepository });
+
+  execSync('git checkout -b v1', { cwd: sourceRepository });
+  for (const service of ['AccountService', 'EmailService']) {
+    await writeMarkdownResource(join('examples/basic/services', service), service, service.replace(/Service$/, ' Service'));
+  }
+  execSync('git add .', { cwd: sourceRepository });
+  execSync('git commit -m "Add v1 basic services"', { cwd: sourceRepository });
+  execSync('git checkout main', { cwd: sourceRepository });
+};
 
 describe('generator-federation', () => {
   beforeEach(async () => {
@@ -23,13 +110,19 @@ describe('generator-federation', () => {
     if (fsExtra.existsSync(catalogDir)) {
       await fsExtra.remove(catalogDir);
     }
+
+    await createSourceRepository();
+  });
+
+  afterEach(async () => {
+    await fsExtra.remove(sourceRepository);
   });
 
   it(
     'clones the source directory and copies the files specified in the content to the destination directory',
     async () => {
       await plugin(eventCatalogConfig, {
-        source: 'https://github.com/event-catalog/eventcatalog.git',
+        source: sourceRepositoryUrl,
         copy: [
           {
             content: 'examples/default/domains/E-Commerce/subdomains/Orders/services',
@@ -48,7 +141,7 @@ describe('generator-federation', () => {
     'clones the source directory and copies the files specified in the content array to the destination directory',
     async () => {
       await plugin(eventCatalogConfig, {
-        source: 'https://github.com/event-catalog/eventcatalog.git',
+        source: sourceRepositoryUrl,
         copy: [
           {
             content: [
@@ -70,7 +163,7 @@ describe('generator-federation', () => {
     'if no copy configuration is provided then it clones target directory and copies all resources (e.g events, services, domains, teams, users) into the catalog',
     async () => {
       await plugin(eventCatalogConfig, {
-        source: 'https://github.com/event-catalog/eventcatalog-ai-demo',
+        source: sourceRepositoryUrl,
         override: true,
         destination: path.join(catalogDir),
       });
@@ -91,7 +184,7 @@ describe('generator-federation', () => {
     'if a `sourceRootDir` is provided then it will be used as the root directory to copy files from',
     async () => {
       await plugin(eventCatalogConfig, {
-        source: 'https://github.com/event-catalog/eventcatalog.git',
+        source: sourceRepositoryUrl,
         sourceRootDir: 'examples/default',
         override: true,
         destination: path.join(catalogDir),
@@ -120,7 +213,7 @@ describe('generator-federation', () => {
       'clones the source directory (with the given branch) and copies the files specified in the content array to the destination directory',
       async () => {
         await plugin(eventCatalogConfig, {
-          source: 'https://github.com/event-catalog/eventcatalog.git',
+          source: sourceRepositoryUrl,
           copy: [
             {
               content: ['examples/basic/services'],
@@ -142,7 +235,7 @@ describe('generator-federation', () => {
       'overrides the content if the destination directory already exists and override is true',
       async () => {
         await plugin(eventCatalogConfig, {
-          source: 'https://github.com/event-catalog/eventcatalog.git',
+          source: sourceRepositoryUrl,
           copy: [
             {
               content: ['examples/default/domains/E-Commerce/subdomains/Orders/services'],
@@ -152,7 +245,7 @@ describe('generator-federation', () => {
         });
 
         await plugin(eventCatalogConfig, {
-          source: 'https://github.com/event-catalog/eventcatalog.git',
+          source: sourceRepositoryUrl,
           copy: [
             {
               content: ['examples/default/domains/E-Commerce/subdomains/Orders/services'],
@@ -181,7 +274,7 @@ describe('generator-federation', () => {
         });
 
         await plugin(eventCatalogConfig, {
-          source: 'https://github.com/event-catalog/eventcatalog.git',
+          source: sourceRepositoryUrl,
           copy: [
             {
               content: [
@@ -206,7 +299,7 @@ describe('generator-federation', () => {
       'throws an error if the content trying to copy is already in the destination directory',
       async () => {
         await plugin(eventCatalogConfig, {
-          source: 'https://github.com/event-catalog/eventcatalog.git',
+          source: sourceRepositoryUrl,
           copy: [
             {
               content: ['examples/default/domains/E-Commerce/subdomains/Orders/services'],
@@ -217,7 +310,7 @@ describe('generator-federation', () => {
 
         await expect(
           plugin(eventCatalogConfig, {
-            source: 'https://github.com/event-catalog/eventcatalog.git',
+            source: sourceRepositoryUrl,
             copy: [
               {
                 content: ['examples/default/domains/E-Commerce/subdomains/Orders/services'],
@@ -244,7 +337,7 @@ describe('generator-federation', () => {
 
         await expect(
           plugin(eventCatalogConfig, {
-            source: 'https://github.com/event-catalog/eventcatalog.git',
+            source: sourceRepositoryUrl,
             copy: [
               {
                 content: [
@@ -281,7 +374,7 @@ describe('generator-federation', () => {
 
         await expect(
           plugin(eventCatalogConfig, {
-            source: 'https://github.com/event-catalog/eventcatalog.git',
+            source: sourceRepositoryUrl,
             copy: [
               {
                 content: ['examples/default/domains/E-Commerce/subdomains/Orders/services'],
