@@ -247,6 +247,7 @@ export default async (_: any, options: Props) => {
         document,
         serviceSpec.generateMarkdown
       );
+      const setMessageOwnersToServiceOwners = serviceSpec.setMessageOwnersToServiceOwners ?? true;
 
       let serviceMarkdown = service.markdown;
       let serviceSpecificationsFiles: Array<{ fileName: string; content: string }> = [];
@@ -349,7 +350,7 @@ export default async (_: any, options: Props) => {
       // Process all messages for the OpenAPI spec
       let { sends, receives, allGeneratedMessages } = await processMessagesForOpenAPISpec(specPath, document, servicePath, {
         ...options,
-        owners: service.setMessageOwnersToServiceOwners ? service.owners : [],
+        owners: setMessageOwnersToServiceOwners ? service.owners : [],
         serviceHasMultipleSpecFiles: Array.isArray(serviceSpec.path),
         isDraft: isServiceMarkedAsDraft,
         serviceId: service.id,

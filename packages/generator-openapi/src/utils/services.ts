@@ -51,7 +51,6 @@ export const buildService = (
       : generatedMarkdownForService,
     badges: documentTags.map((tag) => ({ content: tag.name, textColor: 'blue', backgroundColor: 'blue' })),
     owners: serviceOptions.owners || [],
-    setMessageOwnersToServiceOwners: serviceOptions.setMessageOwnersToServiceOwners || true,
     writesTo: serviceOptions.writesTo || [],
     readsFrom: serviceOptions.readsFrom || [],
   };
