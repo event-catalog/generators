@@ -1109,12 +1109,20 @@ describe('OpenAPI EventCatalog Plugin', () => {
         const { getService } = utils(catalogDir);
 
         await plugin(config, {
-          services: [{ path: join(openAPIExamples, 'petstore.yml'), id: 'swagger-petstore', owners: ['John Doe', 'Jane Doe'] }],
+          services: [
+            {
+              path: join(openAPIExamples, 'petstore.yml'),
+              id: 'swagger-petstore',
+              owners: ['John Doe', 'Jane Doe'],
+              setMessageOwnersToServiceOwners: true,
+            },
+          ],
         });
 
         const service = await getService('swagger-petstore', '1.0.0');
 
         expect(service.owners).toEqual(['John Doe', 'Jane Doe']);
+        expect(service).not.toHaveProperty('setMessageOwnersToServiceOwners');
       });
 
       it('if the service has `x-eventcatalog-draft` header set to true, the service is added as `draft` and all the messages are added as `draft`', async () => {
@@ -1630,6 +1638,25 @@ describe('OpenAPI EventCatalog Plugin', () => {
         expect(getCommandMessage).toBeDefined();
         expect(getCommandByProductId.owners).toEqual(['John Doe', 'Jane Doe']);
         expect(getCommandMessage.owners).toEqual(['John Doe', 'Jane Doe']);
+      });
+
+      it('when setMessageOwnersToServiceOwners is false, service owners are not added to messages', async () => {
+        const { getCommand } = utils(catalogDir);
+
+        await plugin(config, {
+          services: [
+            {
+              path: join(openAPIExamples, 'without-operationIds.yml'),
+              id: 'product-api',
+              owners: ['John Doe', 'Jane Doe'],
+              setMessageOwnersToServiceOwners: false,
+            },
+          ],
+        });
+
+        const getCommandMessage = await getCommand('product-api_GET');
+
+        expect(getCommandMessage.owners).toEqual([]);
       });
 
       it('when the message has been marked as deprecated (with x-eventcatalog-deprecated-date and x-eventcatalog-deprecated-message), the message is marked as deprecated in EventCatalog', async () => {
