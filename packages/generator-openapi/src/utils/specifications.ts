@@ -51,9 +51,11 @@ const dedupe = (specifications: Specification[]) => {
 
   for (const spec of specifications) {
     const key = `${spec.type}:${spec.path}`;
-    if (!unique.has(key)) {
-      unique.set(key, spec);
-    }
+    const existing = unique.get(key);
+
+    // Preserve explicitly configured metadata while allowing newly generated
+    // metadata to fill fields missing from older catalog entries.
+    unique.set(key, existing ? { ...spec, ...existing } : spec);
   }
 
   return [...unique.values()];

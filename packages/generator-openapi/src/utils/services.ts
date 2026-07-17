@@ -38,13 +38,14 @@ export const buildService = (
   const documentTags = document.tags || [];
   const serviceId = serviceOptions.id || slugify(document.info.title, { lower: true, strict: true });
   const generatedMarkdownForService = defaultMarkdown(document, schemaPath);
+  const specificationName = document.info.title?.trim() || 'OpenAPI';
   return {
     id: serviceId,
     version: serviceOptions.version || document.info.version,
     name: document.info.title,
     summary: getSummary(document),
     schemaPath,
-    specifications: [{ type: 'openapi', path: schemaPath }] as Specification[],
+    specifications: [{ type: 'openapi', path: schemaPath, name: specificationName }] as Specification[],
     markdown: generateMarkdown
       ? generateMarkdown({ service: serviceOptions, document, markdown: generatedMarkdownForService })
       : generatedMarkdownForService,
