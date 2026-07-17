@@ -744,7 +744,35 @@ describe('OpenAPI EventCatalog Plugin', () => {
 
         const service = await getService('swagger-petstore', '1.0.0');
 
-        expect(service.specifications).toEqual([{ type: 'openapi', path: 'petstore.yml' }]);
+        expect(service.specifications).toEqual([{ type: 'openapi', path: 'petstore.yml', name: 'Swagger Petstore' }]);
+      });
+
+      it('uses the OpenAPI document title as the specification name', async () => {
+        const { getService } = utils(catalogDir);
+
+        await plugin(config, { services: [{ path: join(openAPIExamples, 'petstore.yml'), id: 'swagger-petstore' }] });
+
+        const service = await getService('swagger-petstore', '1.0.0');
+
+        expect(service.specifications).toEqual([{ type: 'openapi', path: 'petstore.yml', name: 'Swagger Petstore' }]);
+      });
+
+      it('uses OpenAPI as the specification name when the document title is blank', async () => {
+        const { getService } = utils(catalogDir);
+
+        await plugin(config, {
+          services: [
+            {
+              path: join(openAPIExamples, 'blank-title.yml'),
+              id: 'blank-title-service',
+              name: 'Blank title service',
+            },
+          ],
+        });
+
+        const service = await getService('blank-title-service', '1.0.0');
+
+        expect(service.specifications).toEqual([{ type: 'openapi', path: 'blank-title.yml', name: 'OpenAPI' }]);
       });
 
       it('when processing multiple OpenAPI contracts for the same service, all OpenAPI specifications are preserved', async () => {
@@ -760,8 +788,8 @@ describe('OpenAPI EventCatalog Plugin', () => {
         const service = await getService('swagger-petstore', '1.0.0');
 
         expect(service.specifications).toEqual([
-          { type: 'openapi', path: 'petstore.yml' },
-          { type: 'openapi', path: 'without-operationIds.yml' },
+          { type: 'openapi', path: 'petstore.yml', name: 'Swagger Petstore' },
+          { type: 'openapi', path: 'without-operationIds.yml', name: 'Product API' },
         ]);
       });
 
@@ -794,8 +822,8 @@ describe('OpenAPI EventCatalog Plugin', () => {
         expect(service.specifications).toEqual([
           { type: 'asyncapi', path: 'asyncapi-1.yml' },
           { type: 'asyncapi', path: 'asyncapi-2.yml' },
-          { type: 'openapi', path: 'petstore.yml' },
-          { type: 'openapi', path: 'without-operationIds.yml' },
+          { type: 'openapi', path: 'petstore.yml', name: 'Swagger Petstore' },
+          { type: 'openapi', path: 'without-operationIds.yml', name: 'Product API' },
         ]);
       });
 
@@ -830,7 +858,7 @@ describe('OpenAPI EventCatalog Plugin', () => {
 
         expect(service.specifications).toEqual([
           { type: 'asyncapi', path: 'asyncapi.yml' },
-          { type: 'openapi', path: 'petstore.yml' },
+          { type: 'openapi', path: 'petstore.yml', name: 'Swagger Petstore' },
         ]);
       });
 
@@ -869,7 +897,7 @@ describe('OpenAPI EventCatalog Plugin', () => {
         expect(service.specifications).toEqual(
           expect.arrayContaining([
             { type: 'asyncapi', path: 'simple.asyncapi.yml' },
-            { type: 'openapi', path: 'petstore.yml' },
+            { type: 'openapi', path: 'petstore.yml', name: 'Swagger Petstore' },
           ])
         );
       });
@@ -919,7 +947,7 @@ describe('OpenAPI EventCatalog Plugin', () => {
         expect(service.specifications).toEqual(
           expect.arrayContaining([
             { type: 'asyncapi', path: 'simple.asyncapi.yml' },
-            { type: 'openapi', path: 'petstore.yml' },
+            { type: 'openapi', path: 'petstore.yml', name: 'Swagger Petstore' },
           ])
         );
       });
@@ -987,7 +1015,7 @@ describe('OpenAPI EventCatalog Plugin', () => {
         expect(service.specifications).toEqual(
           expect.arrayContaining([
             { type: 'asyncapi', path: 'simple.asyncapi.yml' },
-            { type: 'openapi', path: 'petstore.yml' },
+            { type: 'openapi', path: 'petstore.yml', name: 'Swagger Petstore' },
           ])
         );
       });
@@ -2397,7 +2425,7 @@ describe('OpenAPI EventCatalog Plugin', () => {
           expect.objectContaining({
             id: 'swagger-petstore-2',
             version: '2.0.0',
-            specifications: [{ type: 'openapi', path: 'petstore-v2-no-extensions.yml' }],
+            specifications: [{ type: 'openapi', path: 'petstore-v2-no-extensions.yml', name: 'Swagger Petstore' }],
             sends: [],
             receives: [
               { id: 'listPets', version: '2.0.0' },
@@ -2414,7 +2442,7 @@ describe('OpenAPI EventCatalog Plugin', () => {
           expect.objectContaining({
             id: 'swagger-petstore-2',
             version: '1.0.0',
-            specifications: [{ type: 'openapi', path: 'petstore-v1-no-extensions.yml' }],
+            specifications: [{ type: 'openapi', path: 'petstore-v1-no-extensions.yml', name: 'Swagger Petstore' }],
             sends: [],
             receives: [
               { id: 'listPets', version: '1.0.0' },
