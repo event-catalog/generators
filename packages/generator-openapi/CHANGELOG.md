@@ -1,5 +1,11 @@
 # @eventcatalog/generator-openapi
 
+## 7.12.15
+
+### Patch Changes
+
+- c5efd93: chore(plugins): updated js-yaml version
+
 ## 7.12.14
 
 ### Patch Changes
