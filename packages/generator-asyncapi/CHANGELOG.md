@@ -1,5 +1,11 @@
 # @eventcatalog/sdk
 
+## 6.4.4
+
+### Patch Changes
+
+- c5efd93: chore(plugins): updated js-yaml version
+
 ## 6.4.3
 
 ### Patch Changes
