@@ -1,0 +1,8 @@
+openapi: '3.0.0'
+info:
+  version: 10.0.0
+  title: Swagger Petstore
+  description: This is a sample server Petstore server.
+  license:
+    name: MIT
+paths: {}
