@@ -1,5 +1,11 @@
 # @eventcatalog/sdk
 
+## 7.0.1
+
+### Patch Changes
+
+- 78ee74c: Add a `preserveExistingMessages` option to allow generated message markdown to overwrite existing content.
+
 ## 7.0.0
 
 ### Major Changes
