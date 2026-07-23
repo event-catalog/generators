@@ -85,8 +85,8 @@ importers:
         specifier: ^2.27.8
         version: 2.29.5
       '@eventcatalog/generator-asyncapi':
-        specifier: '>=6.4.3'
-        version: 6.4.3
+        specifier: '>=7.0.0'
+        version: 7.0.0
       '@eventcatalog/generator-openapi':
         specifier: '>=8.0.0'
         version: 8.0.0(@types/node@20.19.1)
@@ -1206,8 +1206,8 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@eventcatalog/generator-asyncapi@6.4.3':
-    resolution: { integrity: sha512-VUlLJm5kuXR7FtWzYIzFnPPwpRR1LU+ilXRhjVjSAm+E8Jc5OS3U8JZgGnU16YJRylhqm7dnqlNALBpyQv4YIA== }
+  '@eventcatalog/generator-asyncapi@7.0.0':
+    resolution: { integrity: sha512-4X0op+G+9e9g/H0upmxvZChIv/O9LssIpv4PlBPrS8NthiE7jDtAwguTRUj9PiYhBzgbFsw1dAN5hwYS+iQxow== }
 
   '@eventcatalog/generator-openapi@8.0.0':
     resolution: { integrity: sha512-u/rmuAuKAic2JDbIfxiejYe7mZtd1KaUk4azccAHoWwwT/pBEgL+3UATzje27w8hQ2LyMh5RPAk9L566u6+xqg== }
@@ -5045,7 +5045,7 @@ snapshots:
   '@esbuild/win32-x64@0.25.5':
     optional: true
 
-  '@eventcatalog/generator-asyncapi@6.4.3':
+  '@eventcatalog/generator-asyncapi@7.0.0':
     dependencies:
       '@asyncapi/avro-schema-parser': 3.0.24
       '@asyncapi/parser': 3.6.0
