@@ -1,6 +1,6 @@
 import { AsyncAPIDocumentInterface, MessageInterface, Parser, fromFile, fromURL } from '@asyncapi/parser';
 import utils from '@eventcatalog/sdk';
-import { readFile } from 'node:fs/promises';
+import { cp, mkdir, readFile, rm } from 'node:fs/promises';
 import argv from 'minimist';
 import yaml from 'js-yaml';
 import { z } from 'zod';
@@ -230,6 +230,9 @@ export default async (config: any, options: Props) => {
     versionCommand,
     versionEvent,
     versionQuery,
+    rmCommandById,
+    rmEventById,
+    rmQueryById,
     addSchemaToCommand,
     addSchemaToEvent,
     addSchemaToQuery,
@@ -251,6 +254,7 @@ export default async (config: any, options: Props) => {
       write: writeEvent,
       version: versionEvent,
       get: getEvent,
+      remove: rmEventById,
       addSchema: addSchemaToEvent,
       addExample: addExampleToEvent,
       collection: 'events',
@@ -259,6 +263,7 @@ export default async (config: any, options: Props) => {
       write: writeCommand,
       version: versionCommand,
       get: getCommand,
+      remove: rmCommandById,
       addSchema: addSchemaToCommand,
       addExample: addExampleToCommand,
       collection: 'commands',
@@ -267,6 +272,7 @@ export default async (config: any, options: Props) => {
       write: writeQuery,
       version: versionQuery,
       get: getQuery,
+      remove: rmQueryById,
       addSchema: addSchemaToQuery,
       addExample: addExampleToQuery,
       collection: 'queries',
@@ -485,8 +491,9 @@ export default async (config: any, options: Props) => {
         const isMessageMarkedAsDraft =
           isDomainMarkedAsDraft || isServiceMarkedAsDraft || message.extensions().get('x-eventcatalog-draft')?.value() || null;
 
-        // does this service own or just consume the message?
-        const serviceOwnsMessageContract = isServiceMessageOwner(message, operation);
+        // Does this service own, reference, or treat the message as external?
+        const messageOwnership = getMessageOwnership(message, operation);
+        const serviceOwnsMessageContract = messageOwnership === 'owner';
         const isReceived = operation.action() === 'receive' || operation.action() === 'subscribe';
         const isSent = operation.action() === 'send' || operation.action() === 'publish';
 
@@ -509,6 +516,7 @@ export default async (config: any, options: Props) => {
           write: writeMessage,
           version: versionMessage,
           get: getMessage,
+          remove: removeMessage,
           addSchema: addSchemaToMessage,
           addExample: addExampleToMessage,
           collection: folder,
@@ -530,12 +538,16 @@ export default async (config: any, options: Props) => {
           messagePath = messageId;
         }
 
-        if (serviceOwnsMessageContract) {
+        if (messageOwnership === 'external') {
+          // An explicit client role means the contract is owned outside this service.
+          console.log(chalk.yellow(` - Skipping external message: ${getMessageName(message)}(v${messageVersion})`));
+        } else {
           // Check if the message already exists in the catalog
           const catalogedMessage = await getMessage(messageId, 'latest');
           let shouldWriteMessage = true;
+          let existingMessageDirectoryToRelocate: string | null = null;
 
-          if (catalogedMessage) {
+          if (serviceOwnsMessageContract && catalogedMessage) {
             // persist markdown, badges and attachments if it exists
             messageMarkdown = catalogedMessage.markdown;
             messageBadges = catalogedMessage.badges || null;
@@ -545,6 +557,16 @@ export default async (config: any, options: Props) => {
 
             if (isSameVersion(catalogedVersion, messageVersion)) {
               // Same version - continue and overwrite the message in place
+              const catalogedMessagePath = await getResourcePath(process.env.PROJECT_DIR as string, messageId, catalogedVersion);
+              const targetMessageDirectory = path.resolve(process.env.PROJECT_DIR as string, folder, messagePath);
+              const catalogedMessageDirectory = catalogedMessagePath ? path.dirname(catalogedMessagePath.fullPath) : null;
+
+              if (
+                catalogedMessageDirectory &&
+                path.normalize(catalogedMessageDirectory) !== path.normalize(targetMessageDirectory)
+              ) {
+                existingMessageDirectoryToRelocate = catalogedMessageDirectory;
+              }
             } else if (isNewerVersion(messageVersion, catalogedVersion)) {
               // Incoming is strictly newer - version the cataloged one and write the new one at root
               await versionMessage(messageId);
@@ -560,9 +582,32 @@ export default async (config: any, options: Props) => {
               messageVersion = catalogedVersion;
               shouldWriteMessage = false;
             }
+          } else if (!serviceOwnsMessageContract && catalogedMessage) {
+            // A receiver references the owner's existing contract and version without writing
+            // another copy beneath the receiving service.
+            console.log(
+              chalk.yellow(` - Referencing existing message ${messageId} (v${catalogedMessage.version}) without overwriting`)
+            );
+            messageVersion = catalogedMessage.version ?? messageVersion;
+            shouldWriteMessage = false;
           }
 
           if (shouldWriteMessage) {
+            if (existingMessageDirectoryToRelocate) {
+              const targetMessageDirectory = path.resolve(process.env.PROJECT_DIR as string, folder, messagePath);
+
+              // A receiver may have created a fallback before the owner was generated. Move
+              // that resource to the owner's location so the catalog retains one shared
+              // contract while preserving any files already attached to the fallback.
+              await removeMessage(messageId, messageVersion, true);
+              await mkdir(path.dirname(targetMessageDirectory), { recursive: true });
+              await cp(existingMessageDirectoryToRelocate, targetMessageDirectory, {
+                recursive: true,
+                force: true,
+              });
+              await rm(existingMessageDirectoryToRelocate, { recursive: true, force: true });
+            }
+
             await writeMessage(
               {
                 id: messageId,
@@ -581,7 +626,9 @@ export default async (config: any, options: Props) => {
                 ...(isMessageMarkedAsDraft && { draft: true }),
               },
               {
-                override: true,
+                // References only reach this branch when the message is missing. They may
+                // create a fallback, but only owners may replace an existing contract.
+                override: serviceOwnsMessageContract,
                 path: messagePath,
               }
             );
@@ -625,9 +672,6 @@ export default async (config: any, options: Props) => {
               }
             }
           }
-        } else {
-          // Message is not owned by this service, therefore we don't need to document it
-          console.log(chalk.yellow(` - Skipping external message: ${getMessageName(message)}(v${messageVersion})`));
         }
         // Derive group from x-eventcatalog-group extension if groupMessagesBy is configured
         const group =
@@ -835,19 +879,31 @@ const isJSONSchemaMessage = (message: MessageInterface) => {
   return getSchemaFileName(message).endsWith('.json');
 };
 /**
- * Is the AsyncAPI specification (service) the owner of the message?
- * This is determined by the 'x-eventcatalog-role' extension in the message
+ * How the service described by the AsyncAPI document relates to a message.
  *
- * @param message
- * @returns boolean
- *
- * default is provider (AsyncAPI file / service owns the message)
+ * Explicit operation- or message-level roles retain their existing meaning and
+ * take precedence over the operation action. Without an explicit role, senders
+ * own the contract and receivers only reference it.
  */
-const isServiceMessageOwner = (message: MessageInterface, operation?: { extensions: () => any }): boolean => {
-  // Prefer operation-level override to support shared/ref'ed messages where ownership
-  // needs to be set per operation/service.
+type MessageOwnership = 'owner' | 'reference' | 'external';
+
+const getMessageOwnership = (
+  message: MessageInterface,
+  operation?: { extensions: () => any; action?: () => string }
+): MessageOwnership => {
+  // Prefer operation-level overrides for shared messages whose role differs per operation.
   const operationRole = operation?.extensions?.().get?.('x-eventcatalog-role')?.value?.();
   const messageRole = message.extensions().get('x-eventcatalog-role')?.value();
-  const value = operationRole || messageRole || 'provider';
-  return value === 'provider';
+  const explicitRole = operationRole || messageRole;
+
+  if (explicitRole) {
+    return explicitRole === 'provider' ? 'owner' : 'external';
+  }
+
+  const action = operation?.action?.();
+  if (action === 'receive' || action === 'subscribe') {
+    return 'reference';
+  }
+
+  return 'owner';
 };

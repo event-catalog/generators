@@ -1,0 +1,27 @@
+asyncapi: 3.0.0
+info:
+  title: Notification Service
+  version: 1.0.0
+  description: Receives OrderPlaced
+channels:
+  orders:
+    address: orders
+    messages:
+      OrderPlaced:
+        $ref: '#/components/messages/OrderPlaced'
+operations:
+  receiveOrderPlaced:
+    action: receive
+    channel:
+      $ref: '#/channels/orders'
+    messages:
+      - $ref: '#/channels/orders/messages/OrderPlaced'
+components:
+  messages:
+    OrderPlaced:
+      summary: Receiver's fallback description
+      payload:
+        type: object
+        properties:
+          orderId:
+            type: string

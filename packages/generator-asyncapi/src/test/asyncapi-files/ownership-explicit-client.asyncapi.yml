@@ -1,0 +1,28 @@
+asyncapi: 3.0.0
+info:
+  title: Relay Service
+  version: 1.0.0
+  description: Sends OrderPlaced but explicitly treats its contract as external
+channels:
+  orders:
+    address: orders
+    messages:
+      OrderPlaced:
+        $ref: '#/components/messages/OrderPlaced'
+operations:
+  sendOrderPlaced:
+    action: send
+    x-eventcatalog-role: client
+    channel:
+      $ref: '#/channels/orders'
+    messages:
+      - $ref: '#/channels/orders/messages/OrderPlaced'
+components:
+  messages:
+    OrderPlaced:
+      summary: External message must not be documented
+      payload:
+        type: object
+        properties:
+          relayId:
+            type: string

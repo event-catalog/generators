@@ -1252,6 +1252,147 @@ describe('AsyncAPI EventCatalog Plugin', () => {
   });
 
   describe('messages', () => {
+    describe('rules', () => {
+      describe('message ownership', () => {
+        it('rule 1: an explicit `provider` role wins over a `receive` action and owns the message', async () => {
+          const { getEvent, getService } = utils(catalogDir);
+
+          // Use the same service id so both definitions target the same on-disk message.
+          await plugin(config, {
+            services: [{ path: join(asyncAPIExamplesDir, 'ownership-publisher.asyncapi.yml'), id: 'audit-service' }],
+          });
+          await plugin(config, {
+            services: [{ path: join(asyncAPIExamplesDir, 'ownership-explicit-provider.asyncapi.yml'), id: 'audit-service' }],
+          });
+
+          const event = await getEvent('OrderPlaced', 'latest', { attachSchema: true });
+          const service = await getService('audit-service', '1.0.0');
+
+          expect(event.summary).toEqual('Explicit provider owns this message');
+          expect(event.schema.properties).toHaveProperty('auditId');
+          expect(service.receives).toContainEqual({ id: 'OrderPlaced', version: '1.0.0' });
+        });
+
+        it('rule 1: an explicit `client` role wins over a `send` action and leaves the message external', async () => {
+          const { getEvent, getService } = utils(catalogDir);
+
+          await plugin(config, {
+            services: [{ path: join(asyncAPIExamplesDir, 'ownership-explicit-client.asyncapi.yml'), id: 'relay-service' }],
+          });
+
+          const event = await getEvent('OrderPlaced', 'latest');
+          const service = await getService('relay-service', '1.0.0');
+
+          expect(event).toBeUndefined();
+          expect(service.sends).toContainEqual({ id: 'OrderPlaced', version: '1.0.0' });
+        });
+
+        it('rule 2: without an explicit role, a `send` action owns and documents the message', async () => {
+          const { getEvent, getService } = utils(catalogDir);
+
+          await plugin(config, {
+            services: [{ path: join(asyncAPIExamplesDir, 'ownership-publisher.asyncapi.yml'), id: 'order-service' }],
+          });
+
+          const event = await getEvent('OrderPlaced', 'latest', { attachSchema: true });
+          const service = await getService('order-service', '1.0.0');
+
+          expect(event.summary).toEqual('Owned by the order service');
+          expect(event.schema.properties).toHaveProperty('amount');
+          expect(service.sends).toContainEqual({ id: 'OrderPlaced', version: '1.0.0' });
+        });
+
+        it('rule 3: without an explicit role, a `receive` action creates a fallback when the message is missing', async () => {
+          const { getEvent, getService } = utils(catalogDir);
+
+          await plugin(config, {
+            services: [{ path: join(asyncAPIExamplesDir, 'ownership-receiver.asyncapi.yml'), id: 'notification-service' }],
+          });
+
+          const event = await getEvent('OrderPlaced', 'latest');
+          const service = await getService('notification-service', '1.0.0');
+
+          expect(event.summary).toEqual("Receiver's fallback description");
+          expect(existsSync(join(catalogDir, 'services', 'notification-service', 'events', 'OrderPlaced'))).toBe(true);
+          expect(service.receives).toContainEqual({ id: 'OrderPlaced', version: '1.0.0' });
+        });
+
+        it('rule 3: without an explicit role, a `receive` action references an existing message without overwriting it', async () => {
+          const { getEvent, getService } = utils(catalogDir);
+
+          await plugin(config, {
+            services: [{ path: join(asyncAPIExamplesDir, 'ownership-publisher.asyncapi.yml'), id: 'order-service' }],
+          });
+          await plugin(config, {
+            services: [{ path: join(asyncAPIExamplesDir, 'ownership-receiver.asyncapi.yml'), id: 'notification-service' }],
+          });
+
+          const event = await getEvent('OrderPlaced', 'latest', { attachSchema: true });
+          const service = await getService('notification-service', '1.0.0');
+
+          expect(event.summary).toEqual('Owned by the order service');
+          expect(event.schema.properties).toHaveProperty('amount');
+          expect(existsSync(join(catalogDir, 'services', 'notification-service', 'events', 'OrderPlaced'))).toBe(false);
+          expect(service.receives).toContainEqual({ id: 'OrderPlaced', version: '1.0.0' });
+        });
+
+        it('rule 4: a producer replaces a fallback that was created by a receiver', async () => {
+          const { getEvent, getService } = utils(catalogDir);
+
+          await plugin(config, {
+            services: [{ path: join(asyncAPIExamplesDir, 'ownership-receiver.asyncapi.yml'), id: 'notification-service' }],
+          });
+          await plugin(config, {
+            services: [{ path: join(asyncAPIExamplesDir, 'ownership-publisher.asyncapi.yml'), id: 'order-service' }],
+          });
+
+          const event = await getEvent('OrderPlaced', 'latest', { attachSchema: true });
+          const publisher = await getService('order-service', '1.0.0');
+          const receiver = await getService('notification-service', '1.0.0');
+
+          expect(event.summary).toEqual('Owned by the order service');
+          expect(event.schema.properties).toHaveProperty('amount');
+          expect(existsSync(join(catalogDir, 'services', 'notification-service', 'events', 'OrderPlaced'))).toBe(false);
+          expect(existsSync(join(catalogDir, 'services', 'order-service', 'events', 'OrderPlaced'))).toBe(true);
+          expect(publisher.sends).toContainEqual({ id: 'OrderPlaced', version: '1.0.0' });
+          expect(receiver.receives).toContainEqual({ id: 'OrderPlaced', version: '1.0.0' });
+        });
+
+        it('rule 5: the producer remains authoritative regardless of generation order', async () => {
+          const { getEvent } = utils(catalogDir);
+
+          await plugin(config, {
+            services: [{ path: join(asyncAPIExamplesDir, 'ownership-publisher.asyncapi.yml'), id: 'order-service' }],
+          });
+          await plugin(config, {
+            services: [{ path: join(asyncAPIExamplesDir, 'ownership-receiver.asyncapi.yml'), id: 'notification-service' }],
+          });
+
+          const event = await getEvent('OrderPlaced', 'latest', { attachSchema: true });
+
+          expect(event.summary).toEqual('Owned by the order service');
+          expect(event.schema.properties).toHaveProperty('amount');
+        });
+
+        it('rule 6: ownership does not change the service `sends` and `receives` relationships', async () => {
+          const { getService } = utils(catalogDir);
+
+          await plugin(config, {
+            services: [{ path: join(asyncAPIExamplesDir, 'ownership-publisher.asyncapi.yml'), id: 'order-service' }],
+          });
+          await plugin(config, {
+            services: [{ path: join(asyncAPIExamplesDir, 'ownership-receiver.asyncapi.yml'), id: 'notification-service' }],
+          });
+
+          const publisher = await getService('order-service', '1.0.0');
+          const receiver = await getService('notification-service', '1.0.0');
+
+          expect(publisher.sends).toContainEqual({ id: 'OrderPlaced', version: '1.0.0' });
+          expect(receiver.receives).toContainEqual({ id: 'OrderPlaced', version: '1.0.0' });
+        });
+      });
+    });
+
     it('messages that do not have an eventcatalog header are documented as events by default in EventCatalog', async () => {
       const { getEvent } = utils(catalogDir);
 

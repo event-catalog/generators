@@ -1,0 +1,28 @@
+asyncapi: 3.0.0
+info:
+  title: Audit Service
+  version: 1.0.0
+  description: Receives OrderPlaced but explicitly owns its contract
+channels:
+  orders:
+    address: orders
+    messages:
+      OrderPlaced:
+        $ref: '#/components/messages/OrderPlaced'
+operations:
+  receiveOrderPlaced:
+    action: receive
+    x-eventcatalog-role: provider
+    channel:
+      $ref: '#/channels/orders'
+    messages:
+      - $ref: '#/channels/orders/messages/OrderPlaced'
+components:
+  messages:
+    OrderPlaced:
+      summary: Explicit provider owns this message
+      payload:
+        type: object
+        properties:
+          auditId:
+            type: string
