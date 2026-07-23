@@ -1,5 +1,12 @@
 # @eventcatalog/generator-apicurio
 
+## 13.0.0
+
+### Patch Changes
+
+- Updated dependencies [bf46024]
+  - @eventcatalog/generator-openapi@8.0.0
+
 ## 12.0.1
 
 ### Patch Changes
