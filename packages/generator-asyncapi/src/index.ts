@@ -63,6 +63,7 @@ const cliArgs = argv(process.argv.slice(2));
 const optionsSchema = z.object({
   licenseKey: z.string().optional(),
   writeFilesToRoot: z.boolean().optional(),
+  preserveExistingMessages: z.boolean().optional(),
   services: z.array(
     z.object({
       id: z.string({ required_error: 'The service id is required. please provide the service id' }),
@@ -289,6 +290,7 @@ export default async (config: any, options: Props) => {
     parseChannels = false,
     parseExamples = true,
     attachHeadersToSchema = false,
+    preserveExistingMessages = true,
   } = options;
   // const asyncAPIFiles = Array.isArray(options.path) ? options.path : [options.path];
   console.log(chalk.green(`Processing ${services.length} AsyncAPI files...`));
@@ -548,10 +550,13 @@ export default async (config: any, options: Props) => {
           let existingMessageDirectoryToRelocate: string | null = null;
 
           if (serviceOwnsMessageContract && catalogedMessage) {
-            // persist markdown, badges and attachments if it exists
-            messageMarkdown = catalogedMessage.markdown;
+            // Always preserve user-managed badges and attachments.
             messageBadges = catalogedMessage.badges || null;
             messageAttachments = catalogedMessage.attachments || null;
+
+            if (preserveExistingMessages) {
+              messageMarkdown = catalogedMessage.markdown;
+            }
 
             const catalogedVersion = catalogedMessage.version ?? '';
 
