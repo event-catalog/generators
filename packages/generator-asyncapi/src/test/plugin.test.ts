@@ -1317,13 +1317,14 @@ describe('AsyncAPI EventCatalog Plugin', () => {
           expect(service.receives).toContainEqual({ id: 'OrderPlaced', version: '1.0.0' });
         });
 
-        it('rule 3: without an explicit role, a `receive` action references an existing message without overwriting it', async () => {
+        it('rule 3: without an explicit role, a `receive` action references an existing message without overwriting it even when preserveExistingMessages is false', async () => {
           const { getEvent, getService } = utils(catalogDir);
 
           await plugin(config, {
             services: [{ path: join(asyncAPIExamplesDir, 'ownership-publisher.asyncapi.yml'), id: 'order-service' }],
           });
           await plugin(config, {
+            preserveExistingMessages: false,
             services: [{ path: join(asyncAPIExamplesDir, 'ownership-receiver.asyncapi.yml'), id: 'notification-service' }],
           });
 
@@ -1541,7 +1542,7 @@ describe('AsyncAPI EventCatalog Plugin', () => {
       expect(latest.markdown).toEqual('cataloged at v2.0.0');
     });
 
-    it('when a message already exists in EventCatalog the markdown, badges and attachments are persisted and not overwritten', async () => {
+    it('when a message already exists in EventCatalog the markdown, badges and attachments are persisted and not overwritten by default', async () => {
       const { writeEvent, getEvent } = utils(catalogDir);
 
       await writeEvent({
@@ -1559,6 +1560,26 @@ describe('AsyncAPI EventCatalog Plugin', () => {
       expect(newEvent.markdown).toEqual('please dont override me!');
       expect(newEvent.badges).toEqual([{ backgroundColor: 'red', textColor: 'white', content: 'Custom Badge' }]);
       expect(newEvent.attachments).toEqual(['https://github.com/dboyne/eventcatalog/blob/main/README.md']);
+    });
+
+    it('when preserveExistingMessages is set to false, the existing markdown is overwritten', async () => {
+      const { writeEvent, getEvent } = utils(catalogDir);
+
+      await writeEvent({
+        id: 'UserSignedUp',
+        version: '1.0.0',
+        name: 'UserSignedUp',
+        markdown: 'This markdown is already in the catalog',
+      });
+
+      await plugin(config, {
+        preserveExistingMessages: false,
+        services: [{ path: join(asyncAPIExamplesDir, 'simple.asyncapi.yml'), id: 'account-service' }],
+      });
+
+      const event = await getEvent('UserSignedUp', '1.0.0');
+      expect(event.markdown).not.toContain('This markdown is already in the catalog');
+      expect(event.markdown).toContain('## Schema');
     });
 
     it('when a message already exists in EventCatalog with the same version the metadata is updated', async () => {
