@@ -219,7 +219,7 @@ export default async (_: any, options: Props) => {
         return {
           document,
           path: specFile,
-          version: serviceSpec.version || document.info.version,
+          version: document.info.version,
         };
       } catch (error) {
         console.error(chalk.red(`Failed to parse OpenAPI file: ${specFile}`));
@@ -231,19 +231,24 @@ export default async (_: any, options: Props) => {
     const validSpecs = await Promise.all(specs);
     const validSpecFiles = validSpecs.filter((v) => v !== null);
 
-    const orderedSpecs = validSpecFiles.sort((a, b) => {
-      const versionA = a?.version ?? '';
-      const versionB = b?.version ?? '';
-      return versionA.localeCompare(versionB);
-    });
+    if (validSpecFiles.length === 0) continue;
 
-    for (const specification of orderedSpecs) {
+    // One service configuration entry represents one service version. When the
+    // version is omitted, infer it from the newest OpenAPI document while keeping
+    // every configured path as a specification of that service version.
+    const inferredServiceVersion = validSpecFiles.reduce(
+      (latest, specification) => (isNewerVersion(specification.version, latest) ? specification.version : latest),
+      validSpecFiles[0].version
+    );
+    const serviceVersion = serviceSpec.version || inferredServiceVersion;
+
+    for (const specification of validSpecFiles) {
       const document = specification.document;
-      const version = specification.version;
+      const version = serviceVersion;
       const specPath = specification.path;
 
       const service = buildService(
-        { ...serviceSpec, path: specPath, version: specification.version },
+        { ...serviceSpec, path: specPath, version: serviceVersion },
         document,
         serviceSpec.generateMarkdown
       );
@@ -366,13 +371,8 @@ export default async (_: any, options: Props) => {
       let serviceWritesTo = configuredWritesTo;
       let serviceReadsFrom = configuredReadsFrom;
 
-      // for now, if the user is doing multiple files into the same service,
-      // we don't persist the previous specification files. TODO: fix this
-      const persistPreviousSpecificationFiles = Array.isArray(serviceSpec.path) === false;
-
       if (latestServiceInCatalog) {
         serviceMarkdown = latestServiceInCatalog.markdown;
-        serviceSpecificationsFiles = await getExistingSpecificationFiles(service.id, latestServiceInCatalog.specifications);
         // Merge fresh sends (carrying current `group` values derived from groupMessagesBy)
         // with any catalog-only pointers, preferring the fresh ones on id+version collisions.
         sends = mergePointersPreferringFresh(sends, latestServiceInCatalog.sends || []);
@@ -386,13 +386,16 @@ export default async (_: any, options: Props) => {
         serviceEntities = latestServiceInCatalog.entities || null;
         serviceWritesTo = latestServiceInCatalog.writesTo || ([] as any);
         serviceReadsFrom = latestServiceInCatalog.readsFrom || ([] as any);
-        // persist any specifications that are already in the catalog,
-        // while adding newly generated OpenAPI specs without losing existing AsyncAPI/GraphQL specs
-        if (persistPreviousSpecificationFiles) {
-          serviceSpecifications = mergeSpecifications(latestServiceInCatalog.specifications, serviceSpecifications, {
-            preferArray: true,
-          });
-        }
+        // Specifications accumulate when multiple paths target the same service
+        // version. Across service versions, preserve non-OpenAPI specifications,
+        // but keep each generated OpenAPI contract with the version that produced it.
+        const specificationsToPreserve = isSameVersion(latestServiceInCatalog.version, version)
+          ? latestServiceInCatalog.specifications
+          : toSpecificationEntries(latestServiceInCatalog.specifications).filter((spec) => spec.type !== 'openapi');
+        serviceSpecificationsFiles = await getExistingSpecificationFiles(service.id, specificationsToPreserve);
+        serviceSpecifications = mergeSpecifications(specificationsToPreserve, serviceSpecifications, {
+          preferArray: true,
+        });
 
         // Match found, override it
         if (latestServiceInCatalog.version === version) {
@@ -437,7 +440,7 @@ export default async (_: any, options: Props) => {
       // What files need added to the service (specification files)
       const specFiles = [
         // add any previous spec files to the list
-        ...(persistPreviousSpecificationFiles ? serviceSpecificationsFiles : []),
+        ...serviceSpecificationsFiles,
         {
           content: saveParsedSpecFile
             ? getParsedSpecFile({ ...serviceSpec, path: specPath }, document)

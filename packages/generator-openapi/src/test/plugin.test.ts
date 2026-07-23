@@ -2411,8 +2411,214 @@ describe('OpenAPI EventCatalog Plugin', () => {
       });
     });
 
-    describe('parsing multiple OpenAPI files to the same service', () => {
-      it('when multiple OpenAPI files are parsed to the same service, the services and messages are written to the correct locations', async () => {
+    describe('service and specification versioning patterns', () => {
+      it('Pattern 1 — a single specification without a configured service version uses its OpenAPI version', async () => {
+        // Pattern:
+        // A service has one OpenAPI specification and does not configure `version`.
+        // The OpenAPI document's `info.version` becomes the EventCatalog service version.
+        const { getService } = utils(catalogDir);
+
+        await plugin(config, {
+          services: [
+            {
+              path: join(openAPIExamples, 'petstore-v1-no-extensions.yml'),
+              id: 'single-specification-service',
+            },
+          ],
+        });
+
+        const service = await getService('single-specification-service', '1.0.0');
+
+        expect(service).toEqual(
+          expect.objectContaining({
+            id: 'single-specification-service',
+            version: '1.0.0',
+            specifications: [{ type: 'openapi', path: 'petstore-v1-no-extensions.yml', name: 'Swagger Petstore' }],
+          })
+        );
+      });
+
+      it('Pattern 2 — multiple specifications with a configured service version are attached to that one version', async () => {
+        // Pattern:
+        // A service explicitly owns its lifecycle version and has multiple API contracts.
+        // Every path belongs to the configured service version, regardless of each document's `info.version`.
+        const { getService } = utils(catalogDir);
+
+        await plugin(config, {
+          services: [
+            {
+              path: [
+                join(openAPIExamples, 'petstore-v1-no-extensions.yml'),
+                join(openAPIExamples, 'petstore-v2-no-extensions.yml'),
+              ],
+              id: 'explicit-version-multiple-specifications-service',
+              version: '10.0.0',
+            },
+          ],
+        });
+
+        const service = await getService('explicit-version-multiple-specifications-service', '10.0.0');
+
+        expect(service).toEqual(
+          expect.objectContaining({
+            id: 'explicit-version-multiple-specifications-service',
+            version: '10.0.0',
+            specifications: [
+              { type: 'openapi', path: 'petstore-v1-no-extensions.yml', name: 'Swagger Petstore' },
+              { type: 'openapi', path: 'petstore-v2-no-extensions.yml', name: 'Swagger Petstore' },
+            ],
+          })
+        );
+        expect(existsSync(join(catalogDir, 'services', service.id, 'petstore-v1-no-extensions.yml'))).toBe(true);
+        expect(existsSync(join(catalogDir, 'services', service.id, 'petstore-v2-no-extensions.yml'))).toBe(true);
+      });
+
+      it('Pattern 3 — multiple specifications without a configured service version use the latest OpenAPI version', async () => {
+        // Pattern:
+        // A service has multiple API contracts but does not explicitly own a lifecycle version.
+        // The highest OpenAPI `info.version` becomes the service version and all contracts are attached to it;
+        // specifications in one path array do not independently create historical service records.
+        const { getService } = utils(catalogDir);
+
+        await plugin(config, {
+          services: [
+            {
+              path: [
+                join(openAPIExamples, 'petstore-v1-no-extensions.yml'),
+                join(openAPIExamples, 'petstore-v2-no-extensions.yml'),
+              ],
+              id: 'inferred-version-multiple-specifications-service',
+            },
+          ],
+        });
+
+        const service = await getService('inferred-version-multiple-specifications-service', '2.0.0');
+        const historicalService = await getService('inferred-version-multiple-specifications-service', '1.0.0');
+
+        expect(service).toEqual(
+          expect.objectContaining({
+            id: 'inferred-version-multiple-specifications-service',
+            version: '2.0.0',
+            specifications: [
+              { type: 'openapi', path: 'petstore-v1-no-extensions.yml', name: 'Swagger Petstore' },
+              { type: 'openapi', path: 'petstore-v2-no-extensions.yml', name: 'Swagger Petstore' },
+            ],
+          })
+        );
+        expect(historicalService).toBeUndefined();
+        expect(existsSync(join(catalogDir, 'services', service.id, 'petstore-v1-no-extensions.yml'))).toBe(true);
+        expect(existsSync(join(catalogDir, 'services', service.id, 'petstore-v2-no-extensions.yml'))).toBe(true);
+      });
+
+      it('Pattern 3b — the latest OpenAPI version is selected using semantic version ordering', async () => {
+        // Pattern:
+        // A service has specifications with versions that sort differently as strings and as semantic versions.
+        // Version 10.0.0 is newer than 2.0.0, so it becomes the inferred service version.
+        const { getService } = utils(catalogDir);
+
+        await plugin(config, {
+          services: [
+            {
+              path: [
+                join(openAPIExamples, 'petstore-v2-no-extensions.yml'),
+                join(openAPIExamples, 'petstore-v10-no-extensions.yml'),
+              ],
+              id: 'semantically-ordered-inferred-version-service',
+            },
+          ],
+        });
+
+        const service = await getService('semantically-ordered-inferred-version-service', 'latest');
+
+        expect(service.version).toBe('10.0.0');
+      });
+
+      it('Pattern 4 — separate entries with explicit versions create separate service version records', async () => {
+        // Pattern:
+        // Each `services` entry represents one version of a service. A newer entry versions the older record,
+        // and specifications remain attached only to the service version declared by their entry.
+        const { getService } = utils(catalogDir);
+
+        await plugin(config, {
+          services: [
+            {
+              path: join(openAPIExamples, 'petstore-v1-no-extensions.yml'),
+              id: 'explicit-service-version-history',
+              version: '1.0.0',
+            },
+            {
+              path: join(openAPIExamples, 'petstore-v2-no-extensions.yml'),
+              id: 'explicit-service-version-history',
+              version: '2.0.0',
+            },
+          ],
+        });
+
+        const currentService = await getService('explicit-service-version-history', '2.0.0');
+        const historicalService = await getService('explicit-service-version-history', '1.0.0');
+        const serviceDirectory = join(catalogDir, 'services', 'explicit-service-version-history');
+
+        expect(existsSync(join(serviceDirectory, 'index.mdx'))).toBe(true);
+        expect(existsSync(join(serviceDirectory, 'petstore-v2-no-extensions.yml'))).toBe(true);
+        expect(existsSync(join(serviceDirectory, 'versioned', '1.0.0', 'index.mdx'))).toBe(true);
+        expect(existsSync(join(serviceDirectory, 'versioned', '1.0.0', 'petstore-v1-no-extensions.yml'))).toBe(true);
+        expect(existsSync(join(serviceDirectory, 'petstore-v1-no-extensions.yml'))).toBe(false);
+
+        expect(currentService.specifications).toEqual([
+          { type: 'openapi', path: 'petstore-v2-no-extensions.yml', name: 'Swagger Petstore' },
+        ]);
+        expect(historicalService.specifications).toEqual([
+          { type: 'openapi', path: 'petstore-v1-no-extensions.yml', name: 'Swagger Petstore' },
+        ]);
+      });
+
+      it('Pattern 5 — a newer service version discovered on a later run versions the existing record', async () => {
+        // Pattern:
+        // A catalog already contains a generated service. On a later generator run, a higher version is found.
+        // The previous service and its specification become historical while the new version becomes current.
+        const { getService, writeService, addFileToService } = utils(catalogDir);
+
+        await writeService({
+          id: 'service-updated-across-runs',
+          name: 'Swagger Petstore',
+          version: '1.0.0',
+          schemaPath: 'petstore-v1-no-extensions.yml',
+          specifications: [{ type: 'openapi', path: 'petstore-v1-no-extensions.yml', name: 'Swagger Petstore' }],
+          markdown: '',
+        });
+        await addFileToService(
+          'service-updated-across-runs',
+          {
+            fileName: 'petstore-v1-no-extensions.yml',
+            content: await fs.readFile(join(openAPIExamples, 'petstore-v1-no-extensions.yml'), 'utf8'),
+          },
+          '1.0.0'
+        );
+        expect(await getService('service-updated-across-runs', 'latest')).toBeDefined();
+
+        await plugin(config, {
+          services: [
+            {
+              path: join(openAPIExamples, 'petstore-v2-no-extensions.yml'),
+              id: 'service-updated-across-runs',
+            },
+          ],
+        });
+
+        const currentService = await getService('service-updated-across-runs', '2.0.0');
+        const historicalService = await getService('service-updated-across-runs', '1.0.0');
+
+        expect(currentService.specifications).toEqual([
+          { type: 'openapi', path: 'petstore-v2-no-extensions.yml', name: 'Swagger Petstore' },
+        ]);
+        expect(historicalService.specifications).toEqual([
+          { type: 'openapi', path: 'petstore-v1-no-extensions.yml', name: 'Swagger Petstore' },
+        ]);
+      });
+    });
+
+    describe('attaching multiple OpenAPI files to the same service version', () => {
+      it('writes every specification to the service version inferred from the latest OpenAPI document', async () => {
         const { getService } = utils(catalogDir);
 
         await plugin(config, {
@@ -2431,32 +2637,24 @@ describe('OpenAPI EventCatalog Plugin', () => {
         const service = await getService('swagger-petstore-2', '2.0.0');
 
         expect(service).toBeDefined();
-        expect(previousService).toBeDefined();
-
-        // Expect versioned folder for 1.0.0 and all files are present
-        expect(existsSync(join(catalogDir, 'services', 'swagger-petstore-2', 'versioned', '1.0.0'))).toBe(true);
-        expect(
-          existsSync(join(catalogDir, 'services', 'swagger-petstore-2', 'versioned', '1.0.0', 'petstore-v1-no-extensions.yml'))
-        ).toBe(true);
-
-        expect(
-          existsSync(join(catalogDir, 'services', 'swagger-petstore-2', 'queries', 'createPets', 'versioned', '1.0.0'))
-        ).toBe(true);
-        expect(existsSync(join(catalogDir, 'services', 'swagger-petstore-2', 'versioned', '1.0.0', 'index.mdx'))).toBe(true);
-
-        // Expect 2.0.0 to be the latest version with expected files
+        expect(previousService).toBeUndefined();
+        expect(existsSync(join(catalogDir, 'services', 'swagger-petstore-2', 'versioned', '1.0.0'))).toBe(false);
         expect(existsSync(join(catalogDir, 'services', 'swagger-petstore-2', 'petstore-v2-no-extensions.yml'))).toBe(true);
-        expect(existsSync(join(catalogDir, 'services', 'swagger-petstore-2', 'petstore-v1-no-extensions.yml'))).toBe(false);
+        expect(existsSync(join(catalogDir, 'services', 'swagger-petstore-2', 'petstore-v1-no-extensions.yml'))).toBe(true);
 
         expect(service).toEqual(
           expect.objectContaining({
             id: 'swagger-petstore-2',
             version: '2.0.0',
-            specifications: [{ type: 'openapi', path: 'petstore-v2-no-extensions.yml', name: 'Swagger Petstore' }],
+            specifications: [
+              { type: 'openapi', path: 'petstore-v2-no-extensions.yml', name: 'Swagger Petstore' },
+              { type: 'openapi', path: 'petstore-v1-no-extensions.yml', name: 'Swagger Petstore' },
+            ],
             sends: [],
             receives: [
               { id: 'listPets', version: '2.0.0' },
               { id: 'createPets', version: '2.0.0' },
+              { id: 'showPetById', version: '2.0.0' },
               { id: 'updatePet', version: '2.0.0' },
               { id: 'deletePet', version: '2.0.0' },
               { id: 'petAdopted', version: '2.0.0' },
@@ -2464,27 +2662,9 @@ describe('OpenAPI EventCatalog Plugin', () => {
             ],
           })
         );
-
-        expect(previousService).toEqual(
-          expect.objectContaining({
-            id: 'swagger-petstore-2',
-            version: '1.0.0',
-            specifications: [{ type: 'openapi', path: 'petstore-v1-no-extensions.yml', name: 'Swagger Petstore' }],
-            sends: [],
-            receives: [
-              { id: 'listPets', version: '1.0.0' },
-              { id: 'createPets', version: '1.0.0' },
-              { id: 'showPetById', version: '1.0.0' },
-              { id: 'updatePet', version: '1.0.0' },
-              { id: 'deletePet', version: '1.0.0' },
-              { id: 'petAdopted', version: '1.0.0' },
-              { id: 'petVaccinated', version: '1.0.0' },
-            ],
-          })
-        );
       });
 
-      it('when multiple OpenAPI files are processed, the messages for each spec file are written to the correct locations', async () => {
+      it('writes messages from every specification to the inferred service version without creating implicit history', async () => {
         await plugin(config, {
           services: [
             {
@@ -2509,12 +2689,9 @@ describe('OpenAPI EventCatalog Plugin', () => {
           'updatePet',
         ]);
 
-        const expectedVersionedQueries = ['createPets', 'deletePet', 'listPets', 'updatePet', 'petAdopted', 'petVaccinated'];
-
-        for (const query of expectedVersionedQueries) {
-          expect(existsSync(join(catalogDir, 'services', 'swagger-petstore-2', 'queries', query, 'versioned', '1.0.0'))).toBe(
-            true
-          );
+        for (const query of queries) {
+          expect(existsSync(join(catalogDir, 'services', 'swagger-petstore-2', 'queries', query, 'index.mdx'))).toBe(true);
+          expect(existsSync(join(catalogDir, 'services', 'swagger-petstore-2', 'queries', query, 'versioned'))).toBe(false);
         }
       });
     });
