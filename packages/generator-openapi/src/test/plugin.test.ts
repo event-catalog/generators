@@ -2821,9 +2821,21 @@ describe('OpenAPI EventCatalog Plugin', () => {
   });
 
   describe('consumer services', () => {
+    const writeConsumerService = async (id = 'orders-service', version = '1.0.0') => {
+      const { writeService } = utils(catalogDir);
+
+      await writeService({
+        id,
+        version,
+        name: id,
+        markdown: '',
+      });
+    };
+
     describe('basic consumer configuration', () => {
-      it('creates a consumer service that sends to ALL messages from the OpenAPI spec when no route filters are provided', async () => {
+      it('updates an existing consumer service to send to ALL messages from the OpenAPI spec when no route filters are provided', async () => {
         const { getService } = utils(catalogDir);
+        await writeConsumerService();
 
         await plugin(config, {
           services: [
@@ -2856,8 +2868,10 @@ describe('OpenAPI EventCatalog Plugin', () => {
         );
       });
 
-      it('creates multiple consumer services for the same OpenAPI spec', async () => {
+      it('updates multiple existing consumer services for the same OpenAPI spec', async () => {
         const { getService } = utils(catalogDir);
+        await writeConsumerService();
+        await writeConsumerService('notifications-service', '2.0.0');
 
         await plugin(config, {
           services: [
@@ -2883,7 +2897,7 @@ describe('OpenAPI EventCatalog Plugin', () => {
         expect(notificationsConsumer.sends).toHaveLength(7);
       });
 
-      it('consumer service defaults to version 1.0.0 when no version is specified', async () => {
+      it('does not create a consumer service when it does not exist', async () => {
         const { getService } = utils(catalogDir);
 
         await plugin(config, {
@@ -2896,10 +2910,7 @@ describe('OpenAPI EventCatalog Plugin', () => {
           ],
         });
 
-        const consumer = await getService('orders-service', '1.0.0');
-
-        expect(consumer).toBeDefined();
-        expect(consumer.version).toEqual('1.0.0');
+        expect(await getService('orders-service', 'latest')).toBeUndefined();
       });
 
       it('does not overwrite an existing consumer service, only updates its sends', async () => {
@@ -3110,6 +3121,10 @@ describe('OpenAPI EventCatalog Plugin', () => {
     });
 
     describe('route filtering - exact path match', () => {
+      beforeEach(async () => {
+        await writeConsumerService();
+      });
+
       it('consumer sends only messages matching the exact path', async () => {
         const { getService } = utils(catalogDir);
 
@@ -3197,6 +3212,10 @@ describe('OpenAPI EventCatalog Plugin', () => {
     });
 
     describe('route filtering - prefix match', () => {
+      beforeEach(async () => {
+        await writeConsumerService();
+      });
+
       it('consumer sends messages from paths starting with the given prefix', async () => {
         const { getService } = utils(catalogDir);
 
@@ -3263,6 +3282,10 @@ describe('OpenAPI EventCatalog Plugin', () => {
     });
 
     describe('route filtering - suffix match', () => {
+      beforeEach(async () => {
+        await writeConsumerService();
+      });
+
       it('consumer sends messages from paths ending with the given suffix', async () => {
         const { getService } = utils(catalogDir);
 
@@ -3352,6 +3375,10 @@ describe('OpenAPI EventCatalog Plugin', () => {
     });
 
     describe('route filtering - wildcard match', () => {
+      beforeEach(async () => {
+        await writeConsumerService();
+      });
+
       it('wildcard * at the start matches paths with leading segments', async () => {
         const { getService } = utils(catalogDir);
 
@@ -3470,6 +3497,10 @@ describe('OpenAPI EventCatalog Plugin', () => {
     });
 
     describe('route filtering - combining filters', () => {
+      beforeEach(async () => {
+        await writeConsumerService();
+      });
+
       it('multiple route filter objects are combined (union of matches)', async () => {
         const { getService } = utils(catalogDir);
 
@@ -3556,7 +3587,7 @@ describe('OpenAPI EventCatalog Plugin', () => {
     });
 
     describe('consumer with domain configuration', () => {
-      it('when a domain is configured and the consumer service does not exist, the consumer is created inside that domain', async () => {
+      it('when a domain is configured and the consumer service does not exist, it is not created or added to the domain', async () => {
         const { getService, getDomain } = utils(catalogDir);
 
         await plugin(config, {
@@ -3573,16 +3604,8 @@ describe('OpenAPI EventCatalog Plugin', () => {
         const consumer = await getService('orders-service', '1.0.0');
         const domain = await getDomain('pets', '1.0.0');
 
-        expect(consumer).toBeDefined();
-        expect(consumer.sends).toHaveLength(7);
-
-        // The consumer service should be listed in the domain alongside the producer
-        expect(domain.services).toEqual(
-          expect.arrayContaining([
-            expect.objectContaining({ id: 'swagger-petstore' }),
-            expect.objectContaining({ id: 'orders-service', version: '1.0.0' }),
-          ])
-        );
+        expect(consumer).toBeUndefined();
+        expect(domain.services).toEqual([expect.objectContaining({ id: 'swagger-petstore' })]);
       });
 
       it('when a domain is configured but the consumer service already exists outside it, the consumer is not moved into the domain', async () => {
@@ -3683,6 +3706,8 @@ describe('OpenAPI EventCatalog Plugin', () => {
     describe('consumers with multiple OpenAPI services', () => {
       it('each service can have its own independent consumer configuration', async () => {
         const { getService } = utils(catalogDir);
+        await writeConsumerService();
+        await writeConsumerService('notifications-service');
 
         await plugin(config, {
           services: [
@@ -3723,6 +3748,7 @@ describe('OpenAPI EventCatalog Plugin', () => {
 
       it('the same consumer service can consume from multiple OpenAPI services', async () => {
         const { getService } = utils(catalogDir);
+        await writeConsumerService('shared-consumer');
 
         await plugin(config, {
           services: [
