@@ -12,6 +12,6 @@
   },
   "dependencies": {
     "@eventcatalog/core": "latest",
-    "@eventcatalog/generator-openapi": "^3.3.0"
+    "@eventcatalog/generator-openapi": "^5.0.0"
   }
 }
