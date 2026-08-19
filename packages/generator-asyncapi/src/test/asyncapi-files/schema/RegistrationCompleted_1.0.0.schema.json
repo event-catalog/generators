@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "$id": "example:registrationCompleted/v1.0.0",
+  "title": "Registration Completed",
+  "description": "A registration has been completed",
+  "type": "object",
+  "properties": {
+    "caseId": {
+      "description": "Identifier of the completed case",
+      "type": "string",
+      "format": "uuid",
+      "maxLength": 36
+    },
+    "completedAt": {
+      "description": "Timestamp the registration was completed",
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": ["caseId"],
+  "additionalProperties": false
+}

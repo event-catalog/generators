@@ -31,30 +31,47 @@ import { join } from 'node:path';
 const parser = new Parser();
 
 /**
- * Safely stringify objects that may contain circular references.
- * When a circular ref is detected, it uses the `x-parser-schema-id` property
+ * Deep copy that breaks circular references while preserving shared (non-circular)
+ * references. When a true cycle is detected, it uses the `x-parser-schema-id` property
  * to reconstruct a valid JSON Schema `$ref` (e.g. `#/components/schemas/MySchema`).
+ *
+ * Ancestors are tracked (rather than every object ever seen) because parsed AsyncAPI
+ * documents contain shared references that are not circular — e.g. each operation's
+ * dereferenced `channel` is the same object as the entry under the root `channels`
+ * object. Replacing those with a `$ref` produces an invalid spec that fails to re-parse.
  */
-const safeStringify = (obj: unknown, indent?: number): string => {
-  const seen = new WeakSet();
-  return JSON.stringify(
-    obj,
-    (_key, value) => {
-      if (typeof value === 'object' && value !== null) {
-        if (seen.has(value)) {
-          const schemaId = (value as Record<string, unknown>)['x-parser-schema-id'];
-          if (schemaId && typeof schemaId === 'string') {
-            return { $ref: `#/components/schemas/${schemaId}` };
-          }
-          return { $ref: '#' };
-        }
-        seen.add(value);
-      }
-      return value;
-    },
-    indent
-  );
+const breakCircularReferences = (value: unknown, ancestors = new WeakSet()): unknown => {
+  if (typeof value !== 'object' || value === null) return value;
+
+  if (ancestors.has(value)) {
+    const schemaId = (value as Record<string, unknown>)['x-parser-schema-id'];
+    if (schemaId && typeof schemaId === 'string') {
+      return { $ref: `#/components/schemas/${schemaId}` };
+    }
+    return { $ref: '#' };
+  }
+
+  ancestors.add(value);
+
+  let result: unknown;
+  if (Array.isArray(value)) {
+    result = value.map((item) => breakCircularReferences(item, ancestors));
+  } else {
+    const obj: Record<string, unknown> = {};
+    for (const [key, item] of Object.entries(value as Record<string, unknown>)) {
+      obj[key] = breakCircularReferences(item, ancestors);
+    }
+    result = obj;
+  }
+
+  ancestors.delete(value);
+  return result;
 };
+
+/**
+ * Safely stringify objects that may contain circular references.
+ */
+const safeStringify = (obj: unknown, indent?: number): string => JSON.stringify(breakCircularReferences(obj), null, indent);
 
 // register avro schema support
 parser.registerSchemaParser(AvroSchemaParser());
@@ -822,7 +839,7 @@ const getParsedSpecFile = (service: Service, document: AsyncAPIDocumentInterface
   const isSpecFileJSON = service.path.endsWith('.json');
   return isSpecFileJSON
     ? safeStringify(document.meta().asyncapi.parsed, 4)
-    : yaml.dump(document.meta().asyncapi.parsed, { noRefs: true });
+    : yaml.dump(breakCircularReferences(document.meta().asyncapi.parsed), { noRefs: true });
 };
 
 const getRawSpecFile = async (service: Service) => {

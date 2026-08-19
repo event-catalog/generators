@@ -1,5 +1,6 @@
 import { expect, it, describe, beforeEach, afterEach } from 'vitest';
 import utils from '@eventcatalog/sdk';
+import { Parser } from '@asyncapi/parser';
 import plugin from '../index';
 import { join } from 'node:path';
 import fs from 'fs/promises';
@@ -2387,6 +2388,31 @@ describe('AsyncAPI EventCatalog Plugin', () => {
         const normalizeLineEndings = (str: string) => str.replace(/\r\n/g, '\n');
 
         expect(normalizeLineEndings(asyncAPIFile.trim())).toEqual(normalizeLineEndings(expected.trim()));
+      });
+
+      it('when `saveParsedSpecFile` is true and an AsyncAPI v3 document has operations referencing channels, the saved spec file is still a valid AsyncAPI document', async () => {
+        await plugin(config, {
+          services: [{ path: join(asyncAPIExamplesDir, 'operations-channel-refs.asyncapi.json'), id: 'registrations-service' }],
+          saveParsedSpecFile: true,
+        });
+
+        const savedSpecFile = (
+          await fs.readFile(join(catalogDir, 'services', 'registrations-service', 'operations-channel-refs.asyncapi.json'))
+        ).toString();
+
+        // Shared (non-circular) references, e.g. each operation's dereferenced channel,
+        // must not be collapsed into `$ref: '#'` self references
+        expect(savedSpecFile).not.toContain('"$ref": "#"');
+
+        const parsed = JSON.parse(savedSpecFile);
+        expect(parsed.operations.consumeFromregistrations_inbound.channel.address).toEqual('registrations_inbound');
+        expect(parsed.operations.publishToregistrations_outbound.channel.address).toEqual('registrations_outbound');
+
+        // The saved spec file is what EventCatalog parses and renders on the AsyncAPI page,
+        // an invalid document results in a blank page
+        const { document, diagnostics } = await new Parser().parse(savedSpecFile);
+        expect(document).toBeDefined();
+        expect(diagnostics.filter((diagnostic) => diagnostic.severity === 0)).toEqual([]);
       });
     });
 
