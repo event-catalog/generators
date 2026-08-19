@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "$id": "example:applicantRegistered/v1.0.0",
+  "title": "Applicant Registered",
+  "description": "An applicant has been registered",
+  "type": "object",
+  "properties": {
+    "applicantId": {
+      "description": "Identifier of the applicant",
+      "type": "string",
+      "format": "uuid",
+      "maxLength": 36
+    },
+    "caseId": {
+      "description": "Identifier of the case the applicant belongs to",
+      "type": "string",
+      "format": "uuid",
+      "maxLength": 36
+    },
+    "registeredAt": {
+      "description": "Timestamp the applicant was registered",
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": ["applicantId", "caseId"],
+  "additionalProperties": false
+}

@@ -1,0 +1,100 @@
+{
+  "asyncapi": "3.0.0",
+  "id": "urn:example:registrations-service",
+  "defaultContentType": "application/json",
+  "info": {
+    "title": "registrations-service",
+    "description": "Example service that receives and publishes registration events",
+    "version": "1.0.0"
+  },
+  "channels": {
+    "registrations_inbound": {
+      "address": "registrations_inbound",
+      "title": "registrations inbound",
+      "summary": "events the service receives",
+      "messages": {
+        "ApplicantRegistered_1.0.0": {
+          "name": "Applicant Registered",
+          "description": "An applicant has been registered",
+          "contentType": "application/json",
+          "correlationId": {
+            "description": "Default Correlation ID",
+            "location": "$message.header#/traceparent"
+          },
+          "x-eventcatalog-message-type": "event",
+          "x-eventcatalog-role": "client",
+          "x-eventcatalog-message-version": "1.0.0",
+          "headers": {
+            "type": "object",
+            "properties": {
+              "__TypeId__": {
+                "type": "string",
+                "const": "registrations/inbound/applicantRegistered/1.0.0"
+              },
+              "traceparent": {
+                "type": "string"
+              }
+            },
+            "x-eventcatalog-message-kafka-key": "applicantId"
+          },
+          "payload": {
+            "schema": {
+              "$ref": "./schema/ApplicantRegistered_1.0.0.schema.json"
+            }
+          }
+        }
+      }
+    },
+    "registrations_outbound": {
+      "address": "registrations_outbound",
+      "title": "registrations outbound",
+      "summary": "events the service publishes",
+      "messages": {
+        "RegistrationCompleted_1.0.0": {
+          "name": "Registration Completed",
+          "description": "A registration has been completed",
+          "contentType": "application/json",
+          "correlationId": {
+            "description": "Default Correlation ID",
+            "location": "$message.header#/traceparent"
+          },
+          "x-eventcatalog-message-type": "event",
+          "x-eventcatalog-role": "provider",
+          "x-eventcatalog-message-version": "1.0.0",
+          "headers": {
+            "type": "object",
+            "properties": {
+              "__TypeId__": {
+                "type": "string",
+                "const": "registrations/outbound/registrationCompleted/1.0.0"
+              },
+              "traceparent": {
+                "type": "string"
+              }
+            },
+            "x-eventcatalog-message-kafka-key": "caseId"
+          },
+          "payload": {
+            "schema": {
+              "$ref": "./schema/RegistrationCompleted_1.0.0.schema.json"
+            }
+          }
+        }
+      }
+    }
+  },
+  "operations": {
+    "consumeFromregistrations_inbound": {
+      "action": "receive",
+      "channel": {
+        "$ref": "#/channels/registrations_inbound"
+      }
+    },
+    "publishToregistrations_outbound": {
+      "action": "send",
+      "channel": {
+        "$ref": "#/channels/registrations_outbound"
+      }
+    }
+  }
+}
