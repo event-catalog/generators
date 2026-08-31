@@ -12,7 +12,7 @@ const markdownForParameters = (parameters: OpenAPIParameter[]) => {
       markdown += ' (required)';
     }
     if (parameter.description) {
-      markdown += `: ${parameter.description}`;
+      markdown += `: ${escapeSpecialCharactersThatBreakMarkdown(parameter.description)}`;
     }
     markdown += '\n';
   }
@@ -66,7 +66,7 @@ export const markdownForResponses = (openAPIOperation: OpenAPIOperation) => {
 
     // Add description if available
     if ((content as any).description) {
-      markdown += `${(content as any).description}\n`;
+      markdown += `${escapeSpecialCharactersThatBreakMarkdown((content as any).description)}\n`;
     }
 
     // Add schema viewer or JSON content
@@ -123,8 +123,8 @@ ${markdownForResponses(openAPIOperation)}
 };
 
 export const escapeSpecialCharactersThatBreakMarkdown = (text: string) => {
-  // find code blocks, and don't escape the curly braces within them, but escape the rest
-  const codeBlockRegex = /```[\s\S]*?```/g;
+  // find code blocks (fenced and inline), and don't escape the characters within them, but escape the rest
+  const codeBlockRegex = /```[\s\S]*?```|`[^`\n]*`/g;
   const codeBlocks: string[] = [];
   const placeholders: string[] = [];
 
@@ -136,8 +136,8 @@ export const escapeSpecialCharactersThatBreakMarkdown = (text: string) => {
     return placeholder;
   });
 
-  // Escape curly braces in the text outside of code blocks
-  processedText = processedText.replace(/{/g, '\\{').replace(/}/g, '\\}');
+  // Escape characters that MDX would parse as JSX expressions ({}) or tags (<) outside of code blocks
+  processedText = processedText.replace(/{/g, '\\{').replace(/}/g, '\\}').replace(/</g, '\\<');
 
   // Restore code blocks with their original curly braces
   placeholders.forEach((placeholder, index) => {

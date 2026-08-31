@@ -1387,6 +1387,33 @@ describe('OpenAPI EventCatalog Plugin', () => {
         expect(codeBlock?.[1]).not.toContain('\\}');
       });
 
+      // Regression test: angle brackets in descriptions are parsed as JSX by MDX and break the catalog build
+      // e.g. `<asc/desc>` fails with "Unexpected character `d` (U+0064) after self-closing slash"
+      it('if a parameter description has angle brackets, they are escaped in the markdown', async () => {
+        const { getEvent } = utils(catalogDir);
+
+        await plugin(config, {
+          services: [{ path: join(openAPIExamples, 'petstore-with-special-characters.yml'), id: 'swagger-petstore' }],
+        });
+
+        const event = await getEvent('list-pets');
+        expect(event.markdown).toContain('A parameter has syntax \\<fieldname>,\\<asc/desc>');
+
+        // Angle brackets inside inline code are NOT escaped
+        expect(event.markdown).toContain('e.g. `petId,asc`.');
+      });
+
+      it('if a response schema description has angle brackets, they are escaped in the markdown', async () => {
+        const { getEvent } = utils(catalogDir);
+
+        await plugin(config, {
+          services: [{ path: join(openAPIExamples, 'petstore-with-special-characters.yml'), id: 'swagger-petstore' }],
+        });
+
+        const event = await getEvent('list-pets');
+        expect(event.markdown).toContain('A paged array of pets, sorted by \\<fieldname>');
+      });
+
       describe('OpenAPI eventcatalog extensions', () => {
         it('messages marked as "events" using the custom `x-eventcatalog-message-type` header in an OpenAPI are documented in EventCatalog as events ', async () => {
           const { getEvent } = utils(catalogDir);

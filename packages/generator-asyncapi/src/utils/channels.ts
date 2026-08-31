@@ -1,4 +1,5 @@
 import { AsyncAPIDocumentInterface, ChannelInterface } from '@asyncapi/parser';
+import { escapeSpecialCharactersThatBreakMarkdown } from './markdown';
 
 export const getChannelProtocols = (channel: ChannelInterface): string[] => {
   const protocols = new Set<string>();
@@ -37,7 +38,7 @@ export const defaultMarkdown = (_document: AsyncAPIDocumentInterface, channel: C
     channel.hasDescription()
       ? `
   ## Overview
-  ${channel.description()}
+  ${escapeSpecialCharactersThatBreakMarkdown(channel.description() as string)}
   `
       : ''
   }
