@@ -54,6 +54,14 @@ paths:
             type: integer
             maximum: 100
             format: int32
+        - name: sort
+          in: query
+          description: 'Use multiple sort query parameters to sort on multiple fields. A parameter has syntax <fieldname>,<asc/desc>, e.g. `petId,asc`.'
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
       responses:
         '200':
           description: A paged array of pets
@@ -260,6 +268,7 @@ components:
           type: string
     Pets:
       type: array
+      description: A paged array of pets, sorted by <fieldname>
       maxItems: 100
       items:
         $ref: '#/components/schemas/Pet'

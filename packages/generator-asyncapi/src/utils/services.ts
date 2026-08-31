@@ -1,9 +1,10 @@
 import { AsyncAPIDocumentInterface } from '@asyncapi/parser';
+import { escapeSpecialCharactersThatBreakMarkdown } from './markdown';
 
 export const defaultMarkdown = (document: AsyncAPIDocumentInterface) => {
   return `
 
-${document.info().hasDescription() ? `${document.info().description()}` : ''}  
+${document.info().hasDescription() ? `${escapeSpecialCharactersThatBreakMarkdown(document.info().description() as string)}` : ''}
 
 ## Architecture diagram
 <NodeGraph />

@@ -1,0 +1,32 @@
+asyncapi: 3.0.0
+info:
+  title: Sort Service
+  version: 1.0.0
+  description: |
+    Service that supports sorting users. A sort parameter has syntax <fieldname>,<asc/desc>, e.g. `userId,asc`.
+
+    Example payload { example: { true: false } }
+channels:
+  userSorted:
+    address: user/sorted
+    title: User Sorted Channel
+    description: 'Channel for sort events. A sort parameter has syntax <fieldname>,<asc/desc>, e.g. `userId,asc`.'
+    messages:
+      UserSorted:
+        $ref: '#/components/messages/UserSorted'
+operations:
+  sendUserSorted:
+    action: send
+    channel:
+      $ref: '#/channels/userSorted'
+    messages:
+      - $ref: '#/channels/userSorted/messages/UserSorted'
+components:
+  messages:
+    UserSorted:
+      description: A user was sorted
+      payload:
+        type: object
+        properties:
+          id:
+            type: string

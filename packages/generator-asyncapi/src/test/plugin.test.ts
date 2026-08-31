@@ -2019,6 +2019,40 @@ describe('AsyncAPI EventCatalog Plugin', () => {
       });
     });
 
+    // Regression tests: angle brackets in descriptions are parsed as JSX by MDX and break the catalog build
+    // e.g. `<asc/desc>` fails with "Unexpected character `d` (U+0064) after self-closing slash"
+    describe('special characters in descriptions', () => {
+      it('if the service description has angle brackets or curly braces, they are escaped in the markdown', async () => {
+        const { getService } = utils(catalogDir);
+
+        await plugin(config, {
+          services: [{ path: join(asyncAPIExamplesDir, 'special-characters.asyncapi.yml'), id: 'sort-service' }],
+        });
+
+        const service = await getService('sort-service');
+        expect(service.markdown).toContain('A sort parameter has syntax \\<fieldname>,\\<asc/desc>');
+        expect(service.markdown).toContain('Example payload \\{ example: \\{ true: false \\} \\}');
+
+        // Special characters inside inline code are NOT escaped
+        expect(service.markdown).toContain('e.g. `userId,asc`.');
+      });
+
+      it('if a channel description has angle brackets or curly braces, they are escaped in the markdown', async () => {
+        const { getChannel } = utils(catalogDir);
+
+        await plugin(config, {
+          services: [{ path: join(asyncAPIExamplesDir, 'special-characters.asyncapi.yml'), id: 'sort-service' }],
+          parseChannels: true,
+        });
+
+        const channel = await getChannel('userSorted');
+        expect(channel.markdown).toContain('A sort parameter has syntax \\<fieldname>,\\<asc/desc>');
+
+        // Special characters inside inline code are NOT escaped
+        expect(channel.markdown).toContain('e.g. `userId,asc`.');
+      });
+    });
+
     describe('channels', () => {
       describe('when `channels` is set to true in the generator configuration file', () => {
         it('all channels in the AsyncAPI file are documented in EventCatalog', async () => {
