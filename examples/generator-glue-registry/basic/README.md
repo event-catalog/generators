@@ -8,13 +8,11 @@ This gives you the ability to add semantic meaning to your schemas, assign them 
 
 - AWS Account
 - AWS Glue Registry
-- EventCatalog license key
 
 ## Setup
 
 1. Clone this example
 1. Run `npm install`
-1. Get a EventCatalog license key from [EventCatalog](https://eventcatalog.cloud) (14 day free trial)
 1. Run the `scripts/create-test-registry.sh` script to create a test registry with a few schemas
     - This will create a test registry called `eventcatalog-test-registry` in the `us-east-1` region
     - It will also create a few schemas in the registry
@@ -35,6 +33,4 @@ This gives you the ability to add semantic meaning to your schemas, assign them 
 
 To dive into how this plugin can help you, you can read the [Glue Registry Plugin Docs](https://www.eventcatalog.dev/integrations/aws-glue-registry)
 
-
-
-
+This generator is source-available under the [Business Source License 1.1](../../../LICENSE), the same licence as EventCatalog. Eligible organisations (under USD 10M revenue and under USD 10M funding) can use it free, as-is. Other production use is covered by an EventCatalog subscription. See [EventCatalog pricing](https://www.eventcatalog.dev/pricing).

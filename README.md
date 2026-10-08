@@ -28,8 +28,6 @@ This repository contains the generators for the EventCatalog project.
 - [Confluent Schema Registry](./packages/generator-confluent-schema-registry/README.md)
   - [Documentation](https://www.eventcatalog.dev/integrations/confluent-schema-registry)
 
-All plugins require a license key. You can get a license key from [EventCatalog Cloud](https://eventcatalog.cloud).
-
 ---
 
 ## Examples
@@ -86,11 +84,9 @@ All plugins require a license key. You can get a license key from [EventCatalog 
 
 Raise a GitHub issue on this project, or contact us on [our Discord server](https://discord.gg/3rjaZMmrAm).
 
-## Commercial use
+## Licence
 
-All plugins are licensed under a [dual-license](./LICENSE-COMMERCIAL.md). To ensure the sustainability of the project, you can freely make use of this software if your projects are Open Source. Otherwise for internal systems you must obtain a [commercial license](./LICENSE-COMMERCIAL.md).
-
-If you would like to obtain a Commercial License, you can get a free trial (14 days) per plugin at https://eventcatalog.cloud or email us at `hello@eventcatalog.dev`
+These generators are source-available under the [Business Source License 1.1](./LICENSE), the same licence as EventCatalog. Eligible organisations (under USD 10M revenue and under USD 10M funding) can use them free, as-is. Other production use is covered by an EventCatalog subscription. See [EventCatalog pricing](https://www.eventcatalog.dev/pricing).
 
 <!-- # Sponsors
 

@@ -109,10 +109,6 @@ The generator uses `DefaultAzureCredential` from `@azure/identity` which automat
 3. **Azure CLI** - If you're logged in with `az login`
 4. **Visual Studio Code** - If you're logged in with the Azure extension
 
-**Additional Environment Variables:**
-
-- `EVENTCATALOG_LICENSE_KEY_AZURE_SCHEMA_REGISTRY` - Your EventCatalog license key (optional)
-
 ### Options
 
 - `schemaRegistryUrl` (required) - The URL of your Azure Schema Registry (e.g., `https://your-namespace.servicebus.windows.net`)
@@ -124,7 +120,6 @@ The generator uses `DefaultAzureCredential` from `@azure/identity` which automat
     - `schemaRegistryUrl` (optional) - Override the registry URL for this specific schema (useful when schemas are in different registries)
     - `messageType` (optional) - Set to `'event'`, `'command'`, or `'query'` (defaults to `'event'`)
 - `domain` (optional) - Domain configuration to group services
-- `licenseKey` (optional) - EventCatalog license key
 
 ## Authentication
 
@@ -134,6 +129,6 @@ This generator uses `DefaultAzureCredential` which supports multiple authenticat
 - **For CI/CD:** Set environment variables for a service principal (AZURE_TENANT_ID, AZURE_CLIENT_ID, AZURE_CLIENT_SECRET)
 - **For Azure-hosted applications:** Use Managed Identity (no credentials needed)
 
-## License
+## Licence
 
-Dual License
+This generator is source-available under the [Business Source License 1.1](../../LICENSE), the same licence as EventCatalog. Eligible organisations (under USD 10M revenue and under USD 10M funding) can use it free, as-is. Other production use is covered by an EventCatalog subscription. See [EventCatalog pricing](https://www.eventcatalog.dev/pricing).

@@ -7,7 +7,7 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "BUSL-1.1",
   "description": "",
   "devDependencies": {
     "tsup": "^8.1.0",

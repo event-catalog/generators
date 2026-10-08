@@ -21,29 +21,18 @@ Any documentation we add to our messages and services are persisted between buil
 
 To dive into how this plugin can help you, you can read the [GitHub Plugin Docs](https://www.eventcatalog.dev/integrations/github)
 
-## Prerequisites
-
-- EventCatalog GitHub Plugin License Key (14 day free trial at [EventCatalog Cloud](https://eventcatalog.cloud))
-
 ### Running this example
 
 Once you have this repository cloned, and setup you can run the example.
 
 1. Run `npm install`
-1. Get a EventCatalog license key for GitHub integration from [EventCatalog Cloud](https://eventcatalog.cloud) (14 day free trial)
-1. Set the `EVENTCATALOG_LICENSE_KEY_GITHUB` environment variable in `.env` file.
-
-```bash
-EVENTCATALOG_LICENSE_KEY_GITHUB=your-license-key
-```
-
-4. Generate the catalog (you can see the configuration in `eventcatalog.config.js`)
+1. Generate the catalog (you can see the configuration in `eventcatalog.config.js`)
 
 ```bash
 npm run generate
 ```
 
-5. Run the catalog locally
+1. Run the catalog locally
 
 ```bash
 npm run dev
@@ -57,9 +46,4 @@ The generator will persist the documentation between builds, so you can keep you
 
 Try and make a changes to the services or message documentation and rerun `npm run generate` to see the documentation persist.
 
-
-
-
-
-
-
+This generator is source-available under the [Business Source License 1.1](../../../LICENSE), the same licence as EventCatalog. Eligible organisations (under USD 10M revenue and under USD 10M funding) can use it free, as-is. Other production use is covered by an EventCatalog subscription. See [EventCatalog pricing](https://www.eventcatalog.dev/pricing).

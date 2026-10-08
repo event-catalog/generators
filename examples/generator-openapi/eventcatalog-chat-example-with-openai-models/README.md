@@ -11,14 +11,12 @@ This example contains
 # Prerequisites
 
 - Node.js 18+
-- EventCatalog OpenAPI license key (get 14 day free trial at https://eventcatalog.cloud)
-- EventCatalog Starter Plan (get 14 day free trial at https://eventcatalog.cloud)
 
 ### Getting Started
 
 1. Clone this project
 1. Run `npm install`
-1. Copy the `.env.example` file to `.env` and add your license keys (14 day free trial keys from [EventCatalog Cloud](https://eventcatalog.cloud))
+1. Add your OpenAI API key to a `.env` file
 1. Run the generators `npm run generate`
 1. Run the catalog `npm run dev`
 1. View your catalog at http://localhost:3000
@@ -34,6 +32,4 @@ This example contains
 
 To dive into how this plugin can help you, you can read the [OpenAPI Plugin Docs](https://www.eventcatalog.dev/integrations/openapi)
 
-
-
-
+This generator is source-available under the [Business Source License 1.1](../../../LICENSE), the same licence as EventCatalog. Eligible organisations (under USD 10M revenue and under USD 10M funding) can use it free, as-is. Other production use is covered by an EventCatalog subscription. See [EventCatalog pricing](https://www.eventcatalog.dev/pricing).

@@ -5,7 +5,7 @@
 
 [![PRs Welcome][prs-badge]][prs]
 <img src="https://img.shields.io/github/actions/workflow/status/event-catalog/generator-eventbridge/verify-build.yml"/>
-[![](https://dcbadge.limes.pink/api/server/https://discord.gg/3rjaZMmrAm?style=flat)](https://discord.gg/3rjaZMmrAm) [<img src="https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white" height="20px" />](https://www.linkedin.com/in/david-boyne/) [![blog](https://img.shields.io/badge/blog-EDA--Visuals-brightgreen)](https://eda-visuals.boyney.io/?utm_source=event-catalog-gihub) [![blog](https://img.shields.io/badge/license-Dual--License-brightgreen)](https://github.com/event-catalog/generator-eventbridge/blob/main/LICENSE.md)
+[![](https://dcbadge.limes.pink/api/server/https://discord.gg/3rjaZMmrAm?style=flat)](https://discord.gg/3rjaZMmrAm) [<img src="https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white" height="20px" />](https://www.linkedin.com/in/david-boyne/) [![blog](https://img.shields.io/badge/blog-EDA--Visuals-brightgreen)](https://eda-visuals.boyney.io/?utm_source=event-catalog-gihub) [![license](https://img.shields.io/badge/license-BUSL--1.1-blue)](https://github.com/event-catalog/generators/blob/main/LICENSE)
 
 <img alt="header" src="https://github.com/event-catalog/generators/blob/main/images/eventbridge.png?raw=true" />
 
@@ -164,8 +164,8 @@ You can find the [contributing guidelines here](https://eventcatalog.dev/docs/co
 1. Install required dependencies `pnpm i`
 1. Run tests `pnpm run tests`
 
-[license-badge]: https://img.shields.io/github/license/event-catalog/eventcatalog.svg?color=yellow
-[license]: https://github.com/event-catalog/eventcatalog/blob/main/LICENSE
+[license-badge]: https://img.shields.io/github/license/event-catalog/generators.svg?color=yellow
+[license]: https://github.com/event-catalog/generators/blob/main/LICENSE
 [prs-badge]: https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square
 [prs]: http://makeapullrequest.com
 [github-watch-badge]: https://img.shields.io/github/watchers/event-catalog/eventcatalog.svg?style=social
@@ -173,8 +173,6 @@ You can find the [contributing guidelines here](https://eventcatalog.dev/docs/co
 [github-star-badge]: https://img.shields.io/github/stars/event-catalog/eventcatalog.svg?style=social
 [github-star]: https://github.com/event-catalog/eventcatalog/stargazers
 
-# Commercial Use
+# Licence
 
-This project is governed by a [dual-license](./LICENSE.md). To ensure the sustainability of the project, you can freely make use of this software if your projects are Open Source. Otherwise for proprietary systems you must obtain a [commercial license](./LICENSE-COMMERCIAL.md).
-
-If you would like to obtain a Commercial License, you can purchase a license at https://eventcatalog.cloud or email us at `hello@eventcatalog.dev`
+This generator is source-available under the [Business Source License 1.1](../../LICENSE), the same licence as EventCatalog. Eligible organisations (under USD 10M revenue and under USD 10M funding) can use it free, as-is. Other production use is covered by an EventCatalog subscription. See [EventCatalog pricing](https://www.eventcatalog.dev/pricing).

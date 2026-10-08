@@ -15,7 +15,7 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "BUSL-1.1",
   "devDependencies": {
     "@types/fs-extra": "^11.0.4",
     "@types/js-yaml": "^4.0.9",
