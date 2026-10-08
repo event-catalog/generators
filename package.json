@@ -1,6 +1,6 @@
 {
   "name": "eventcatalog-generators",
-  "license": "MIT",
+  "license": "BUSL-1.1",
   "scripts": {
     "build": "turbo build",
     "dev": "turbo dev",

@@ -15,7 +15,7 @@
   },
   "keywords": [],
   "author": "",
-  "license": "MIT",
+  "license": "BUSL-1.1",
   "devDependencies": {
     "@types/node": "^20.16.1",
     "prettier": "^3.3.3",
