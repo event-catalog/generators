@@ -14,4 +14,4 @@ This EventCatalog merges many teams catalogs into a single catalog for a single 
 1. Run `npm run dev`
 1. View your catalog at https://localhost:3000
 
-This generator is source-available under the [Business Source License 1.1](../../../../LICENSE), the same licence as [EventCatalog](https://github.com/event-catalog/eventcatalog/blob/main/LICENSE). Eligible organisations (under USD 10M revenue and under USD 10M funding) can use it free, as-is. Other production use is covered by an EventCatalog subscription. See [EventCatalog pricing](https://www.eventcatalog.dev/pricing).
+This generator is source-available under the [Business Source License 1.1](../../../../LICENSE), the same licence as EventCatalog. Eligible organisations (under USD 10M revenue and under USD 10M funding) can use it free, as-is. Other production use is covered by an EventCatalog subscription. See [EventCatalog pricing](https://www.eventcatalog.dev/pricing).
