@@ -10,7 +10,8 @@ This EventCatalog merges many teams catalogs into a single catalog for a single 
 
 1. Clone the repository
 1. Run `npm install`
-1. Get a license key for Federation from [EventCatalog Cloud](https://eventcatalog.cloud)
 1. Run `npm run generate`
 1. Run `npm run dev`
 1. View your catalog at https://localhost:3000
+
+This generator is licensed under the [MIT licence](../../../../LICENSE). It works with EventCatalog. EventCatalog's own licence terms apply to EventCatalog itself. Pricing for EventCatalog is on the [pricing page](https://www.eventcatalog.dev/pricing).

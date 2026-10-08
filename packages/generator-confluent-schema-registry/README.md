@@ -4,7 +4,7 @@
 
 [![PRs Welcome][prs-badge]][prs]
 <img src="https://img.shields.io/github/actions/workflow/status/event-catalog/generator-asyncapi/verify-build.yml"/>
-[![](https://dcbadge.limes.pink/api/server/https://discord.gg/3rjaZMmrAm?style=flat)](https://discord.gg/3rjaZMmrAm) [<img src="https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white" height="20px" />](https://www.linkedin.com/in/david-boyne/) [![blog](https://img.shields.io/badge/blog-EDA--Visuals-brightgreen)](https://eda-visuals.boyney.io/?utm_source=event-catalog-gihub) [![blog](https://img.shields.io/badge/license-Dual--License-brightgreen)](https://github.com/event-catalog/generator-asyncapi/blob/main/LICENSE.md)
+[![](https://dcbadge.limes.pink/api/server/https://discord.gg/3rjaZMmrAm?style=flat)](https://discord.gg/3rjaZMmrAm) [<img src="https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white" height="20px" />](https://www.linkedin.com/in/david-boyne/) [![blog](https://img.shields.io/badge/blog-EDA--Visuals-brightgreen)](https://eda-visuals.boyney.io/?utm_source=event-catalog-gihub) [![license](https://img.shields.io/badge/license-MIT-brightgreen)](https://github.com/event-catalog/generators/blob/main/LICENSE)
 
 <img alt="header" src="https://github.com/event-catalog/generators/blob/main/images/confluent.png?raw=true" />
 
@@ -122,9 +122,6 @@ _Make sure you are on the latest version of EventCatalog_.
 3. Set credentials for your Confluent Schema Registry. Create a `.env` file in the root of your project and add the following:
 
 ```sh
-# From eventcatalog.cloud (14 day free trial)
-EVENTCATALOG_LICENSE_KEY_CONFLUENT_SCHEMA_REGISTRY=
-
 # From Confluent Schema Registry
 CONFLUENT_SCHEMA_REGISTRY_KEY=
 CONFLUENT_SCHEMA_REGISTRY_SECRET=
@@ -146,8 +143,8 @@ npm run dev
 
 Raise a GitHub issue on this project, or contact us on [our Discord server](https://discord.gg/3rjaZMmrAm).
 
-[license-badge]: https://img.shields.io/github/license/event-catalog/eventcatalog.svg?color=yellow
-[license]: https://github.com/event-catalog/eventcatalog/blob/main/LICENSE
+[license-badge]: https://img.shields.io/github/license/event-catalog/generators.svg?color=yellow
+[license]: https://github.com/event-catalog/generators/blob/main/LICENSE
 [prs-badge]: https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square
 [prs]: http://makeapullrequest.com
 [github-watch-badge]: https://img.shields.io/github/watchers/event-catalog/eventcatalog.svg?style=social
@@ -155,6 +152,6 @@ Raise a GitHub issue on this project, or contact us on [our Discord server](http
 [github-star-badge]: https://img.shields.io/github/stars/event-catalog/eventcatalog.svg?style=social
 [github-star]: https://github.com/event-catalog/eventcatalog/stargazers
 
-# Commercial Use
+# Licence
 
-This generator requires a license to be used with EventCatalog. You can get a 14 day free trial at https://eventcatalog.cloud or email us at `hello@eventcatalog.dev`
+This generator is licensed under the [MIT licence](../../LICENSE). It works with EventCatalog. EventCatalog's own licence terms apply to EventCatalog itself. Pricing for EventCatalog is on the [pricing page](https://www.eventcatalog.dev/pricing).

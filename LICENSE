@@ -1,19 +1,21 @@
+MIT License
+
 Copyright (c) 2024-2026 EventCatalog Ltd
 
-This software is dual-licensed:
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-* For open-source projects: licensed under the GNU Affero General Public
-  License v3.0 (AGPL-3.0). See LICENSE-OPENSOURCE.md for the full terms.
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
 
-* For proprietary, internal, or commercial use: licensed under the EventCatalog
-  Commercial License. See LICENSE-COMMERCIAL.md for the full terms.
-
-If you are using these plugins for internal business purposes and do not wish
-to release your source code under AGPL-3.0, you must obtain a Commercial
-License.
-
-To obtain a Commercial License:
-  - Purchase a subscription at https://www.eventcatalog.dev/pricing
-  - Purchase individual plugins at https://eventcatalog.cloud/
-  - Free 14-day trial at https://eventcatalog.cloud/
-  - Contact us at hello@eventcatalog.dev
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.

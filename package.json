@@ -1,5 +1,6 @@
 {
   "name": "eventcatalog-generators",
+  "license": "MIT",
   "scripts": {
     "build": "turbo build",
     "dev": "turbo dev",

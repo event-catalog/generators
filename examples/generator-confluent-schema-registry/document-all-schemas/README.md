@@ -26,7 +26,6 @@ To dive into how this plugin can help you, you can read the [Confluent Schema Re
 
 - Docker
 - Confluent Schema Registry API Key (optional, for local development)
-- EventCatalog Confluent Schema Registry License Key (14 day free trial at [EventCatalog Cloud](https://eventcatalog.cloud))
 
 ## Setup
 
@@ -66,20 +65,13 @@ Once you have the Confluent Schema Registry running, and you added the schemas i
 
 
 1. Run `npm install`
-1. Get a EventCatalog license key for Confluent Schema Registry integration from [EventCatalog Cloud](https://eventcatalog.cloud) (14 day free trial)
-1. Set the `EVENTCATALOG_LICENSE_KEY_CONFLUENT_SCHEMA_REGISTRY` environment variable in `.env` file.
-
-```bash
-EVENTCATALOG_LICENSE_KEY_CONFLUENT_SCHEMA_REGISTRY=your-license-key
-```
-
-4. Generate the catalog from the schema registry
+1. Generate the catalog from the schema registry
 
 ```bash
 npm run generate
 ```
 
-5. Run the catalog locally
+1. Run the catalog locally
 
 ```bash
 npm run dev
@@ -87,7 +79,4 @@ npm run dev
 
 You can then view your catalog at http://localhost:3000
 
-
-
-
-
+This generator is licensed under the [MIT licence](../../../LICENSE). It works with EventCatalog. EventCatalog's own licence terms apply to EventCatalog itself. Pricing for EventCatalog is on the [pricing page](https://www.eventcatalog.dev/pricing).

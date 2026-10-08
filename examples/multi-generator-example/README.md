@@ -11,9 +11,8 @@ This example contains
 
 1. Clone this project
 1. Run `npm install`
-1. Get and configure AsyncAPI and OpenAPI License Keys from [EventCatalog Cloud](https://eventcatalog.cloud) (14 days free trial)
 1. Run the generators `npm run generate`
 1. Run the catalog `npm run dev`
 1. View your catalog at https://localhost:3000
 
-
+This generator is licensed under the [MIT licence](../../LICENSE). It works with EventCatalog. EventCatalog's own licence terms apply to EventCatalog itself. Pricing for EventCatalog is on the [pricing page](https://www.eventcatalog.dev/pricing).

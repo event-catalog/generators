@@ -5,7 +5,7 @@
 
 [![PRs Welcome][prs-badge]][prs]
 <img src="https://img.shields.io/github/actions/workflow/status/event-catalog/generator-asyncapi/verify-build.yml"/>
-[![](https://dcbadge.limes.pink/api/server/https://discord.gg/3rjaZMmrAm?style=flat)](https://discord.gg/3rjaZMmrAm) [<img src="https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white" height="20px" />](https://www.linkedin.com/in/david-boyne/) [![blog](https://img.shields.io/badge/license-Dual--License-brightgreen)](https://github.com/event-catalog/generator-federation/blob/main/LICENSE.md)
+[![](https://dcbadge.limes.pink/api/server/https://discord.gg/3rjaZMmrAm?style=flat)](https://discord.gg/3rjaZMmrAm) [<img src="https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white" height="20px" />](https://www.linkedin.com/in/david-boyne/) [![license](https://img.shields.io/badge/license-MIT-brightgreen)](https://github.com/event-catalog/generators/blob/main/LICENSE)
 
 <img alt="header" src="https://github.com/event-catalog/generators/blob/main/images/federation.png?raw=true" />
 
@@ -155,8 +155,8 @@ You can find the [contributing guidelines here](https://eventcatalog.dev/docs/co
 1. Run the examples `npx tsx examples/streelights-mqtt/index.ts
 1. Run tests `pnpm run tests`
 
-[license-badge]: https://img.shields.io/github/license/event-catalog/eventcatalog.svg?color=yellow
-[license]: https://github.com/event-catalog/eventcatalog/blob/main/LICENSE
+[license-badge]: https://img.shields.io/github/license/event-catalog/generators.svg?color=yellow
+[license]: https://github.com/event-catalog/generators/blob/main/LICENSE
 [prs-badge]: https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square
 [prs]: http://makeapullrequest.com
 [github-watch-badge]: https://img.shields.io/github/watchers/event-catalog/eventcatalog.svg?style=social
@@ -164,8 +164,6 @@ You can find the [contributing guidelines here](https://eventcatalog.dev/docs/co
 [github-star-badge]: https://img.shields.io/github/stars/event-catalog/eventcatalog.svg?style=social
 [github-star]: https://github.com/event-catalog/eventcatalog/stargazers
 
-# Commercial Use
+# Licence
 
-This project is governed by a [dual-license](./LICENSE.md). To ensure the sustainability of the project, you can freely make use of this software if your projects are Open Source. Otherwise for internal systems you must obtain a [commercial license](./LICENSE-COMMERCIAL.md).
-
-If you would like to obtain a Commercial License, you can purchase a license at https://eventcatalog.cloud or email us at `hello@eventcatalog.dev`.
+This generator is licensed under the [MIT licence](../../LICENSE). It works with EventCatalog. EventCatalog's own licence terms apply to EventCatalog itself. Pricing for EventCatalog is on the [pricing page](https://www.eventcatalog.dev/pricing).

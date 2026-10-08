@@ -13,8 +13,6 @@ This demo shows how you can use the EventCatalog AI Chat to:
 - Docker
 - Confluent Schema Registry API Key (optional, for local development)
 - OpenAPI Key
-- EventCatalog Starter License Key (14 day free trial at [EventCatalog Cloud](https://eventcatalog.cloud))
-- EventCatalog Confluent Schema Registry License Key (14 day free trial at [EventCatalog Cloud](https://eventcatalog.cloud))
 
 ## Setup
 
@@ -53,7 +51,7 @@ _This script will add a handful of schemas into your registry, and you should se
 Once you have the Confluent Schema Registry running, and you added the schemas into your registry, you can run EventCatalog.
 
 
-1. Configure your `.env` file, copy the `.env.example` file to `.env` and set the environment variables.
+1. Configure your `.env` file, copy the `.env-example` file to `.env` and set the environment variables.
 1. Run `npm install`
 
 2. Generate the catalog from the schema registry
@@ -70,7 +68,4 @@ npm run dev
 
 You can then view your catalog at http://localhost:3000
 
-
-
-
-
+This generator is licensed under the [MIT licence](../../../LICENSE). It works with EventCatalog. EventCatalog's own licence terms apply to EventCatalog itself. Pricing for EventCatalog is on the [pricing page](https://www.eventcatalog.dev/pricing).
