@@ -5,11 +5,6 @@ import path, { join } from 'node:path';
 import fs from 'fs/promises';
 import { existsSync } from 'node:fs';
 import schemasMock from './mock-data/schemas.json';
-// Add mock for the local checkLicense module
-vi.mock('../../../../shared/checkLicense', () => ({
-  default: () => Promise.resolve(),
-}));
-
 // Fake eventcatalog config
 const config = {
   title: 'My EventCatalog',

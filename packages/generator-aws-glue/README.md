@@ -224,8 +224,8 @@ You can find the [contributing guidelines here](https://eventcatalog.dev/docs/co
 1. Install required dependencies `pnpm i`
 1. Run tests `pnpm run tests`
 
-[license-badge]: https://img.shields.io/github/license/event-catalog/eventcatalog.svg?color=yellow
-[license]: https://github.com/event-catalog/eventcatalog/blob/main/LICENSE
+[license-badge]: https://img.shields.io/github/license/event-catalog/generators.svg?color=yellow
+[license]: https://github.com/event-catalog/generators/blob/main/LICENSE
 [prs-badge]: https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square
 [prs]: http://makeapullrequest.com
 [github-watch-badge]: https://img.shields.io/github/watchers/event-catalog/eventcatalog.svg?style=social
@@ -233,8 +233,6 @@ You can find the [contributing guidelines here](https://eventcatalog.dev/docs/co
 [github-star-badge]: https://img.shields.io/github/stars/event-catalog/eventcatalog.svg?style=social
 [github-star]: https://github.com/event-catalog/eventcatalog/stargazers
 
-# Commercial Use
+# License
 
-This project is governed by a [dual-license](./LICENSE.md). To ensure the sustainability of the project, you can freely make use of this software if your projects are Open Source. Otherwise for proprietary systems you must obtain a [commercial license](./LICENSE-COMMERCIAL.md).
-
-If you would like to obtain a Commercial License, you can purchase a license at https://eventcatalog.cloud or email us at `hello@eventcatalog.dev`.
+This project is licensed under the [MIT License](./LICENSE).

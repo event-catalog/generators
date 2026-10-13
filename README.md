@@ -15,8 +15,6 @@ This repository contains the generators for the EventCatalog project.
   - [Example Projects](./examples/generator-graphql/)
 - [EventCatalog AI](./packages/generator-ai/README.md)
   - [Documentation](https://www.eventcatalog.dev/integrations/ai)
-- [EventCatalog Federation](./packages/generator-federation/README.md)
-  - [Documentation](https://www.eventcatalog.dev/federation)
 - [Amazon EventBridge](./packages/generator-eventbridge/README.md)
   - [Documentation](https://www.eventcatalog.dev/integrations/amazon-eventbridge)
 - [Backstage](https://github.com/event-catalog/backstage-plugin-eventcatalog)
@@ -28,7 +26,7 @@ This repository contains the generators for the EventCatalog project.
 - [Confluent Schema Registry](./packages/generator-confluent-schema-registry/README.md)
   - [Documentation](https://www.eventcatalog.dev/integrations/confluent-schema-registry)
 
-All plugins require a license key. You can get a license key from [EventCatalog Cloud](https://eventcatalog.cloud).
+All generators are free and open source under the [MIT License](./LICENSE).
 
 ---
 
@@ -61,13 +59,6 @@ All plugins require a license key. You can get a license key from [EventCatalog 
 - [Import EventBridge schemas into EventCatalog using schema discovery](./examples/generator-eventbridge/basic/)
 - [Import EventBridge schemas into EventCatalog using a custom schema registry](./examples/generator-eventbridge/custom-registry/)
 
-**EventCatalog Federation [(watch demo)](https://www.youtube.com/watch?v=KnTQkrt-7cc)**
-
-- [Merge multiple catalogs into one central catalog](./examples/generator-federation/basic/)
-  - Give your teams their own EventCatalog instance, and use the federation plugin to merge them together.
-  - Let your teams focus on what they do best, and use the federation plugin to merge their documentation together.
-  - The central catalog is hosted for the organization where people can view the merged catalog and single source of truth.
-
 **Backstage Integrations [(watch demo)](https://www.youtube.com/watch?v=mjf7qwoSAC4)**
 
 - [Integrate Backstage plugin into EventCatalog](https://github.com/event-catalog/backstage-eventcatalog-demo)
@@ -86,11 +77,9 @@ All plugins require a license key. You can get a license key from [EventCatalog 
 
 Raise a GitHub issue on this project, or contact us on [our Discord server](https://discord.gg/3rjaZMmrAm).
 
-## Commercial use
+## License
 
-All plugins are licensed under a [dual-license](./LICENSE-COMMERCIAL.md). To ensure the sustainability of the project, you can freely make use of this software if your projects are Open Source. Otherwise for internal systems you must obtain a [commercial license](./LICENSE-COMMERCIAL.md).
-
-If you would like to obtain a Commercial License, you can get a free trial (14 days) per plugin at https://eventcatalog.cloud or email us at `hello@eventcatalog.dev`
+All generators in this repository are licensed under the [MIT License](./LICENSE).
 
 <!-- # Sponsors
 

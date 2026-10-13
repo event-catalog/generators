@@ -45,7 +45,6 @@ export type Service = {
 };
 
 export type GeneratorProps = {
-  licenseKey?: string;
   region: string;
   registryName: string;
   registryArn?: string;

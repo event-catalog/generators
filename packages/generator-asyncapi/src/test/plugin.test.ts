@@ -12,11 +12,6 @@ const config = {};
 let catalogDir: string;
 const asyncAPIExamplesDir = join(__dirname, 'asyncapi-files');
 
-// Add mock for the local checkLicense module
-vi.mock('../../../../shared/checkLicense', () => ({
-  default: () => Promise.resolve(),
-}));
-
 describe('AsyncAPI EventCatalog Plugin', () => {
   beforeEach(() => {
     catalogDir = join(__dirname, 'catalog') || '';

@@ -54,21 +54,6 @@ examples/**/**/channels
 examples/**/**/commands
 examples/**/**/dependencies
 
-!examples/generator-federation/basic/customer-experience-team/services
-!examples/generator-federation/basic/customer-experience-team/services/**/queries
-!examples/generator-federation/basic/customer-experience-team/services/**/events
-!examples/generator-federation/basic/customer-experience-team/services/**/commands
-
-!examples/generator-federation/basic/order-management-team/services
-!examples/generator-federation/basic/order-management-team/services/**/queries
-!examples/generator-federation/basic/order-management-team/services/**/events
-!examples/generator-federation/basic/order-management-team/services/**/commands
-
-!examples/generator-federation/basic/payment-team/services
-!examples/generator-federation/basic/payment-team/services/**/queries
-!examples/generator-federation/basic/payment-team/services/**/events
-!examples/generator-federation/basic/payment-team/services/**/commands
-
 !packages/generator-ai/src/test/catalog/domains
 !packages/generator-ai/src/test/catalog/teams
 !packages/generator-ai/src/test/catalog/users

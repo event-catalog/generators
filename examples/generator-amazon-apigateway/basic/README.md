@@ -19,7 +19,6 @@ This example contains:
   - Then run `npm run build && cdk deploy`
   - This will create a basic API in your AWS account that this demo will use.
 1. Go back to the root of this project and run `npm install`
-1. Get and configure the Amazon API Gateway and OpenAPI license key from [OpenAPI](https://eventcatalog.cloud) (14 day free trials)
 1. Run the generators `npm run generate`
 1. Run the catalog `npm run dev`
 1. View your catalog at https://localhost:3000

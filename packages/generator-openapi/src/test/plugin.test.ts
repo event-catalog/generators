@@ -6,11 +6,6 @@ import fs from 'fs/promises';
 import { vi } from 'vitest';
 import { existsSync } from 'node:fs';
 
-// Add mock for the local checkLicense module
-vi.mock('../../../../shared/checkLicense', () => ({
-  default: () => Promise.resolve(),
-}));
-
 // Fake eventcatalog config
 const config = {};
 

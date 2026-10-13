@@ -19,7 +19,7 @@
     "github"
   ],
   "author": "EventCatalog",
-  "license": "ISC",
+  "license": "MIT",
   "devDependencies": {
     "@changesets/cli": "^2.27.10",
     "@types/fs-extra": "^11.0.4",

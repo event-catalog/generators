@@ -12,7 +12,6 @@ This example contains
 
 1. Clone this project
 1. Run `npm install`
-1. Get and configure a [AsyncAPI license key](https://eventcatalog.cloud), by going to [AsyncAPI Integration](https://eventcatalog.cloud/dashboard/integrations/asyncapi) (14 day free trial)
 1. Run the generators `npm run generate`
 1. Run the catalog `npm run dev`
 1. View your catalog at https://localhost:3000

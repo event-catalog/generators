@@ -10,7 +10,6 @@ import { getOperationsByType, getExamplesByOperationId, validateAndDereferenceOp
 import { Domain, Service, Message, Operation, Pointer } from './types';
 import { getMessageTypeUtils } from './utils/catalog-shorthand';
 import { OpenAPI } from 'openapi-types';
-import checkLicense from '../../../shared/checkLicense';
 import yaml from 'js-yaml';
 import { join } from 'node:path';
 import pkgJSON from '../package.json';
@@ -29,7 +28,6 @@ type Props = {
   domain?: Domain;
   debug?: boolean;
   saveParsedSpecFile?: boolean;
-  licenseKey?: string;
   writeFilesToRoot?: boolean;
   sidebarBadgeType?: 'HTTP_METHOD' | 'MESSAGE_TYPE';
   httpMethodsToMessages?: HTTP_METHOD_TO_MESSAGE_TYPE;
@@ -180,9 +178,7 @@ export default async (_: any, options: Props) => {
     throw new Error('Please provide catalog url (env variable PROJECT_DIR)');
   }
 
-  // Check if the license is valid
-  const LICENSE_KEY: string = process.env.EVENTCATALOG_LICENSE_KEY_OPENAPI || options.licenseKey || '';
-  await checkLicense(pkgJSON.name, LICENSE_KEY, { allowEventCatalogScaleLicense: true });
+  // Check for package update
   await checkForPackageUpdate(pkgJSON.name);
   const {
     getDomain,

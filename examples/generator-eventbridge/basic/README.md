@@ -13,7 +13,6 @@ This gives you the ability to add semantic meaning to your events in EventBridge
 
 1. Clone this project
 1. Run `npm install`
-1. Get a EventCatalog license key from [EventCatalog](https://eventcatalog.cloud) (14 day free trial)
 1. Run the init.sh script to create the EventBridge bus and start the schema discovery
 1. Run the send-events.sh script to send events to EventBridge
 1. Wait 5 minutes for the schemas to be discovered (AWS takes a while to discover the schemas)

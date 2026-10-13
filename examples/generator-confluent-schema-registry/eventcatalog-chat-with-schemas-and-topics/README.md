@@ -14,7 +14,6 @@ This demo shows how you can use the EventCatalog AI Chat to:
 - Confluent Schema Registry API Key (optional, for local development)
 - OpenAPI Key
 - EventCatalog Starter License Key (14 day free trial at [EventCatalog Cloud](https://eventcatalog.cloud))
-- EventCatalog Confluent Schema Registry License Key (14 day free trial at [EventCatalog Cloud](https://eventcatalog.cloud))
 
 ## Setup
 

@@ -4,11 +4,6 @@ import path, { join } from 'node:path';
 import fs from 'fs/promises';
 import { existsSync } from 'node:fs';
 
-// Add mock for the local checkLicense module
-vi.mock('../../../shared/checkLicense', () => ({
-  default: () => Promise.resolve(),
-}));
-
 // Mock the AWS SDK before importing anything else
 vi.mock('@aws-sdk/client-glue', () => {
   const mockSend = vi.fn((command) => {
@@ -172,11 +167,6 @@ vi.mock('@aws-sdk/client-glue', () => {
     ListSchemaVersionsCommand: vi.fn().mockImplementation((input) => ({ input })),
   };
 });
-
-// Add mock for the local checkLicense module
-vi.mock('../../../../shared/checkLicense', () => ({
-  default: () => Promise.resolve(),
-}));
 
 // Mock the checkForPackageUpdate function
 vi.mock('../../../../shared/check-for-package-update', () => ({

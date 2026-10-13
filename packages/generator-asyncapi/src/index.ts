@@ -23,7 +23,6 @@ import { defaultMarkdown as generateMarkdownForService, getSummary as getService
 import { defaultMarkdown as generateMarkdownForDomain } from './utils/domains';
 import { defaultMarkdown as generateMarkdownForChannel, getChannelProtocols, getChannelTags } from './utils/channels';
 import { isNewerVersion, isSameVersion } from './utils/versions';
-import checkLicense from '../../../shared/checkLicense';
 
 import { EventType, MessageOperations } from './types';
 import { join } from 'node:path';
@@ -78,7 +77,6 @@ parser.registerSchemaParser(AvroSchemaParser());
 const cliArgs = argv(process.argv.slice(2));
 
 const optionsSchema = z.object({
-  licenseKey: z.string().optional(),
   writeFilesToRoot: z.boolean().optional(),
   preserveExistingMessages: z.boolean().optional(),
   services: z.array(
@@ -227,9 +225,7 @@ export default async (config: any, options: Props) => {
     throw new Error('Please provide catalog url (env variable PROJECT_DIR)');
   }
 
-  // Check for license and package update
-  const LICENSE_KEY: string = process.env.EVENTCATALOG_LICENSE_KEY_ASYNCAPI || options.licenseKey || '';
-  await checkLicense(pkgJSON.name, LICENSE_KEY, { allowEventCatalogScaleLicense: true });
+  // Check for package update
   await checkForPackageUpdate(pkgJSON.name);
 
   const {

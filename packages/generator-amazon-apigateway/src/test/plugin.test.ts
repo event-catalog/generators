@@ -6,11 +6,6 @@ import fsSync from 'fs';
 import { vi } from 'vitest';
 import { GetExportCommand, GetRestApisCommand } from '@aws-sdk/client-api-gateway';
 
-// Add mock for the local checkLicense module
-vi.mock('../../../../shared/checkLicense', () => ({
-  default: () => Promise.resolve(),
-}));
-
 // Fake eventcatalog config
 const config = {};
 
