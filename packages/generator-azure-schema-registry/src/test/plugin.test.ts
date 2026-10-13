@@ -7,11 +7,6 @@ import { existsSync } from 'node:fs';
 import schemasMock from './mock-data/schemas.json';
 import axios from 'axios';
 
-// Add mock for the local checkLicense module
-vi.mock('../../../../shared/checkLicense', () => ({
-  default: () => Promise.resolve(),
-}));
-
 // Mock axios for Azure Schema Registry REST API calls
 vi.mock('axios');
 const mockedAxios = vi.mocked(axios);

@@ -15,11 +15,9 @@ import {
 } from './utils/messages';
 import { defaultMarkdown as generateMarkdownForService } from './utils/services';
 import { defaultMarkdown as generateMarkdownForDomain } from './utils/domains';
-import checkLicense from '../../../shared/checkLicense';
 import { join } from 'node:path';
 
 const optionsSchema = z.object({
-  licenseKey: z.string().optional(),
   writeFilesToRoot: z.boolean().optional(),
   services: z.array(
     z.object({
@@ -163,9 +161,7 @@ export default async (_: any, options: Options) => {
     throw new Error('Please provide catalog url (env variable PROJECT_DIR)');
   }
 
-  // Check if the license is valid
-  const LICENSE_KEY: string = process.env.EVENTCATALOG_LICENSE_KEY_GRAPHQL || options.licenseKey || '';
-  await checkLicense(pkgJSON.name, LICENSE_KEY, { allowEventCatalogScaleLicense: true });
+  // Check for package update
   await checkForPackageUpdate(pkgJSON.name);
 
   const {

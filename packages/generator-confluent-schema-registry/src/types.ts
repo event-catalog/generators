@@ -55,7 +55,6 @@ export type Channel = {
 };
 
 export type GeneratorProps = {
-  licenseKey?: string;
   /**
    * URL of the Confluent Schema Registry
    */

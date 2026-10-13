@@ -147,20 +147,13 @@ npm install @eventcatalog/generator-openapi @eventcatalog/generator-asyncapi
 
 3. Configure your `eventcatalog.config.js` file
 
-4. Set your license key. Create a `.env` file in the root of your project and add the following:
-
-```sh
-# From eventcatalog.cloud (14 day free trial)
-EVENTCATALOG_LICENSE_KEY_APICURIO_SCHEMA_REGISTRY=
-```
-
-5. Run the generate command
+4. Run the generate command
 
 ```sh
 npm run generate
 ```
 
-6. See your new domains, services and messages, run
+5. See your new domains, services and messages, run
 
 ```sh
 npm run dev
@@ -168,13 +161,12 @@ npm run dev
 
 ## Configuration Options
 
-| Option               | Type        | Required | Description                                                                                   |
-| -------------------- | ----------- | -------- | --------------------------------------------------------------------------------------------- |
-| `registryUrl`        | `string`    | Yes      | URL of the Apicurio Registry (e.g., `http://localhost:8080/apis/registry/v2`)                 |
-| `includeAllVersions` | `boolean`   | No       | Include all versions of schemas in the catalog (default: `false`, only latest)                |
-| `services`           | `Service[]` | No       | List of services to add to the catalog                                                        |
-| `domain`             | `Domain`    | No       | Domain to add to the catalog and attach services to                                           |
-| `licenseKey`         | `string`    | No       | License key (can also be set via `EVENTCATALOG_LICENSE_KEY_APICURIO_SCHEMA_REGISTRY` env var) |
+| Option               | Type        | Required | Description                                                                    |
+| -------------------- | ----------- | -------- | ------------------------------------------------------------------------------ |
+| `registryUrl`        | `string`    | Yes      | URL of the Apicurio Registry (e.g., `http://localhost:8080/apis/registry/v2`)  |
+| `includeAllVersions` | `boolean`   | No       | Include all versions of schemas in the catalog (default: `false`, only latest) |
+| `services`           | `Service[]` | No       | List of services to add to the catalog                                         |
+| `domain`             | `Domain`    | No       | Domain to add to the catalog and attach services to                            |
 
 ### Service Configuration
 
@@ -210,8 +202,8 @@ receives: [{ events: [{ includes: 'order' }] }];
 
 Raise a GitHub issue on this project, or contact us on [our Discord server](https://discord.gg/3rjaZMmrAm).
 
-[license-badge]: https://img.shields.io/github/license/event-catalog/eventcatalog.svg?color=yellow
-[license]: https://github.com/event-catalog/eventcatalog/blob/main/LICENSE
+[license-badge]: https://img.shields.io/github/license/event-catalog/generators.svg?color=yellow
+[license]: https://github.com/event-catalog/generators/blob/main/LICENSE
 [prs-badge]: https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square
 [prs]: http://makeapullrequest.com
 [github-watch-badge]: https://img.shields.io/github/watchers/event-catalog/eventcatalog.svg?style=social
@@ -219,6 +211,6 @@ Raise a GitHub issue on this project, or contact us on [our Discord server](http
 [github-star-badge]: https://img.shields.io/github/stars/event-catalog/eventcatalog.svg?style=social
 [github-star]: https://github.com/event-catalog/eventcatalog/stargazers
 
-# Commercial Use
+# License
 
-This generator requires a license to be used with EventCatalog. You can get a 14 day free trial at https://eventcatalog.cloud or email us at `hello@eventcatalog.dev`.
+This project is licensed under the [MIT License](./LICENSE).

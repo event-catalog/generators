@@ -1,7 +1,6 @@
 import utils from '@eventcatalog/sdk';
 import chalk from 'chalk';
 import { checkForPackageUpdate } from '../../../shared/check-for-package-update';
-import checkLicense from '../../../shared/checkLicense';
 import { filterSchemas } from './utils/filters';
 import pkgJSON from '../package.json';
 import path, { join } from 'path';
@@ -44,9 +43,7 @@ export default async (config: EventCatalogConfig, options: GeneratorProps) => {
     getResourcePath,
   } = utils(eventCatalogDirectory);
 
-  // Check for license and package update
-  const LICENSE_KEY: string = process.env.EVENTCATALOG_LICENSE_KEY_CONFLUENT_SCHEMA_REGISTRY || options.licenseKey || '';
-  await checkLicense(pkgJSON.name, LICENSE_KEY, { allowEventCatalogScaleLicense: true });
+  // Check for package update
   await checkForPackageUpdate(pkgJSON.name);
 
   console.log(chalk.green(`Fetching schemas from registry: ${SCHEMA_REGISTRY_URL}...`));

@@ -21,29 +21,18 @@ We have documentation for our events, commands, and queries, and the import pers
 
 To dive into how this plugin can help you, you can read the [GitHub Plugin Docs](https://www.eventcatalog.dev/integrations/github)
 
-## Prerequisites
-
-- EventCatalog GitHub Plugin License Key (14 day free trial at [EventCatalog Cloud](https://eventcatalog.cloud))
-
 ### Running this example
 
 Once you have this repository cloned, and setup you can run the example.
 
 1. Run `npm install`
-1. Get a EventCatalog license key for GitHub integration from [EventCatalog Cloud](https://eventcatalog.cloud) (14 day free trial)
-1. Set the `EVENTCATALOG_LICENSE_KEY_GITHUB` environment variable in `.env` file.
-
-```bash
-EVENTCATALOG_LICENSE_KEY_GITHUB=your-license-key
-```
-
-4. Generate the catalog (you can see the configuration in `eventcatalog.config.js`)
+2. Generate the catalog (you can see the configuration in `eventcatalog.config.js`)
 
 ```bash
 npm run generate
 ```
 
-5. Run the catalog locally
+3. Run the catalog locally
 
 ```bash
 npm run dev

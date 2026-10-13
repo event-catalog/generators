@@ -11,14 +11,13 @@ This example contains
 # Prerequisites
 
 - Node.js 18+
-- EventCatalog OpenAPI license key (get 14 day free trial at https://eventcatalog.cloud)
 - EventCatalog Starter Plan (get 14 day free trial at https://eventcatalog.cloud)
 
 ### Getting Started
 
 1. Clone this project
 1. Run `npm install`
-1. Copy the `.env.example` file to `.env` and add your license keys (14 day free trial keys from [EventCatalog Cloud](https://eventcatalog.cloud))
+1. Create a `.env` file and add your EventCatalog license key and OpenAI API key (14 day free trial keys from [EventCatalog Cloud](https://eventcatalog.cloud))
 1. Run the generators `npm run generate`
 1. Run the catalog `npm run dev`
 1. View your catalog at http://localhost:3000

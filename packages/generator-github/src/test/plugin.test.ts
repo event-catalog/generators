@@ -20,11 +20,6 @@ const schemaPath = join(
   'examples/default/domains/E-Commerce/subdomains/Orders/services/InventoryService/events/InventoryAdjusted/schema.avro'
 );
 
-// Add mock for the local checkLicense module
-vi.mock('../../../../shared/checkLicense', () => ({
-  default: () => Promise.resolve(),
-}));
-
 // Store original env
 const originalEnv = process.env;
 

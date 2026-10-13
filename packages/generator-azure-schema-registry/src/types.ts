@@ -46,7 +46,6 @@ export type Domain = {
 };
 
 export type GeneratorProps = {
-  licenseKey?: string;
   /**
    * URL of the Azure Schema Registry (e.g., https://your-namespace.servicebus.windows.net)
    */

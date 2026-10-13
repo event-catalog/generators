@@ -14,7 +14,6 @@ This example shows you how to connect to that schema registry and import the sch
 
 1. Clone this project
 1. Run `npm install`
-1. Get a EventCatalog license key from [EventCatalog](https://eventcatalog.cloud) (14 day free trial)
 1. Run the init.sh script to create a custom schema registry in EventBridge
 1. Run the upload-schemas.sh script to upload the schemas to the custom schema registry
 1. Run the `npm run generate` command to generate EventCatalog from EventBridge (events mapped to schemas in eventcatalog.config.js)

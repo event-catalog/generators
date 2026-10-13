@@ -130,7 +130,6 @@ export type Domain = {
 };
 
 export type GeneratorProps = {
-  licenseKey?: string;
   /**
    * URL of the Apicurio Registry
    */
