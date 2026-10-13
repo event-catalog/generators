@@ -1,5 +1,11 @@
 # @eventcatalog/generator-confluent-schema-registry
 
+## 0.4.0
+
+### Minor Changes
+
+- 8a7c2aa: chore(license): generators are now MIT licensed and no longer require a license key
+
 ## 0.3.1
 
 ### Patch Changes

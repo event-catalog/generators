@@ -1,5 +1,11 @@
 # @eventcatalog/generator-openapi
 
+## 9.1.0
+
+### Minor Changes
+
+- 8a7c2aa: chore(license): generators are now MIT licensed and no longer require a license key
+
 ## 9.0.1
 
 ### Patch Changes

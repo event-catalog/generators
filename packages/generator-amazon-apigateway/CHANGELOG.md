@@ -1,5 +1,11 @@
 # @eventcatalog/generator-amazon-apigateway
 
+## 1.3.0
+
+### Minor Changes
+
+- 8a7c2aa: chore(license): generators are now MIT licensed and no longer require a license key
+
 ## 1.2.8
 
 ### Patch Changes
