@@ -1,5 +1,11 @@
 # @eventcatalog/sdk
 
+## 7.1.0
+
+### Minor Changes
+
+- 8a7c2aa: chore(license): generators are now MIT licensed and no longer require a license key
+
 ## 7.0.3
 
 ### Patch Changes

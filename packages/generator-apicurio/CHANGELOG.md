@@ -1,5 +1,17 @@
 # @eventcatalog/generator-apicurio
 
+## 16.0.0
+
+### Minor Changes
+
+- 8a7c2aa: chore(license): generators are now MIT licensed and no longer require a license key
+
+### Patch Changes
+
+- Updated dependencies [8a7c2aa]
+  - @eventcatalog/generator-asyncapi@7.1.0
+  - @eventcatalog/generator-openapi@9.1.0
+
 ## 15.0.0
 
 ### Patch Changes

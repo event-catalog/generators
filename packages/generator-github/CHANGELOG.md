@@ -1,5 +1,11 @@
 # @eventcatalog/generator-github
 
+## 1.2.0
+
+### Minor Changes
+
+- 8a7c2aa: chore(license): generators are now MIT licensed and no longer require a license key
+
 ## 1.1.1
 
 ### Patch Changes

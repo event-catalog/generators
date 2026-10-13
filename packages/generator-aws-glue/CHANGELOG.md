@@ -1,5 +1,11 @@
 # @eventcatalog/generator-aws-glue
 
+## 0.3.0
+
+### Minor Changes
+
+- 8a7c2aa: chore(license): generators are now MIT licensed and no longer require a license key
+
 ## 0.2.1
 
 ### Patch Changes

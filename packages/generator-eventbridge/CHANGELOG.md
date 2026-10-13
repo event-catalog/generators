@@ -1,5 +1,11 @@
 # @eventcatalog/generator-eventbridge
 
+## 3.5.0
+
+### Minor Changes
+
+- 8a7c2aa: chore(license): generators are now MIT licensed and no longer require a license key
+
 ## 3.4.4
 
 ### Patch Changes
