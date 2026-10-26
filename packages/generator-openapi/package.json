@@ -17,6 +17,7 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
+    "@changesets/cli": "^2.27.7",
     "@types/fs-extra": "^11.0.4",
     "@types/js-yaml": "^4.0.9",
     "@types/lodash": "^4.17.7",
@@ -36,10 +37,9 @@
   "types": "./dist/index.d.ts",
   "dependencies": {
     "@apidevtools/swagger-parser": "^12.1.0",
-    "@changesets/cli": "^2.27.7",
     "@eventcatalog/sdk": "^2.18.4",
     "chalk": "4.1.2",
-    "js-yaml": "^4.3.0",
+    "js-yaml": "^4.3.2",
     "openapi-types": "^12.1.3",
     "semver": "^7.7.2",
     "slugify": "^1.6.6",
