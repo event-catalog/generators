@@ -17,6 +17,7 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
+    "@changesets/cli": "^2.27.8",
     "@smithy/types": "^3.5.0",
     "@types/node": "^20.16.1",
     "@types/semver": "^7.7.0",
@@ -33,10 +34,9 @@
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
   "dependencies": {
-    "@aws-sdk/client-eventbridge": "^3.906.0",
-    "@aws-sdk/client-schemas": "^3.974.0",
+    "@aws-sdk/client-eventbridge": "^3.1154.0",
+    "@aws-sdk/client-schemas": "^3.1154.0",
     "@aws-sdk/util-arn-parser": "^3.568.0",
-    "@changesets/cli": "^2.27.8",
     "@eventcatalog/sdk": "^2.18.2",
     "chalk": "4.1.2",
     "semver": "^7.7.2",

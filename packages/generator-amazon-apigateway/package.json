@@ -17,6 +17,7 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
+    "@changesets/cli": "^2.27.7",
     "@smithy/types": "^3.5.0",
     "@types/node": "^20.16.1",
     "prettier": "^3.3.3",
@@ -32,9 +33,8 @@
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
   "dependencies": {
-    "@aws-sdk/client-api-gateway": "^3.894.0",
-    "@aws-sdk/credential-provider-node": "^3.972.1",
-    "@changesets/cli": "^2.27.7",
+    "@aws-sdk/client-api-gateway": "^3.1154.0",
+    "@aws-sdk/credential-provider-node": "^3.972.87",
     "@eventcatalog/sdk": "^2.9.6",
     "chalk": "4.1.2",
     "update-notifier": "^7.3.1"
