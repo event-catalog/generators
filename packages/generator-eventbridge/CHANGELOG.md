@@ -1,5 +1,11 @@
 # @eventcatalog/generator-eventbridge
 
+## 3.5.2
+
+### Patch Changes
+
+- 000ea47: fix(generator-eventbridge): update existing services in place (e.g. inside a system) instead of writing a duplicate copy to the domain or root services folder
+
 ## 3.5.1
 
 ### Patch Changes
