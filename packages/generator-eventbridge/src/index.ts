@@ -231,10 +231,21 @@ export default async (config: EventCatalogConfig, options: GeneratorProps) => {
       await addServiceToDomain(domainId, { id: service.id, version: service.version }, domainVersion);
     }
 
+    // Check if service is already defined... if the versions do not match then create service.
+    const latestServiceInCatalog = await getService(service.id, 'latest');
+    const existingServiceResource = latestServiceInCatalog
+      ? await getResourcePath(eventCatalogDirectory, service.id, latestServiceInCatalog.version)
+      : undefined;
+
     // Have to ../ as the SDK will put the files into hard coded folders
     // Use getResourcePath to resolve the actual domain location (supports subdomains)
     let servicePath = path.join('../', 'services', service.id);
-    if (options.domain) {
+    if (existingServiceResource) {
+      // The service already exists somewhere in the catalog (e.g. inside a system or another domain).
+      // Write back in-place so we don't create a duplicate copy of the service.
+      // See https://github.com/event-catalog/eventcatalog/issues/3027
+      servicePath = path.join('../', existingServiceResource.directory);
+    } else if (options.domain) {
       const domainResource = await getResourcePath(eventCatalogDirectory, options.domain.id, options.domain.version);
       if (domainResource) {
         servicePath = path.join('../', domainResource.directory, 'services', service.id);
@@ -246,8 +257,6 @@ export default async (config: EventCatalogConfig, options: GeneratorProps) => {
       servicePath = service.id;
     }
 
-    // Check if service is already defined... if the versions do not match then create service.
-    const latestServiceInCatalog = await getService(service.id, 'latest');
     let serviceMarkdown = generateMarkdownForService();
     let serviceWritesTo = service.writesTo || ([] as any);
     let serviceReadsFrom = service.readsFrom || ([] as any);
@@ -300,11 +309,10 @@ export default async (config: EventCatalogConfig, options: GeneratorProps) => {
     // If writing to root but the existing service is nested under a domain/subdomain,
     // remove the stale nested copy so the service is effectively moved to the root.
     // See https://github.com/event-catalog/eventcatalog/issues/2394
-    if (latestServiceInCatalog && (options.writeFilesToRoot || service.writeToRoot)) {
-      const existingServicePath = await getResourcePath(eventCatalogDirectory, service.id, latestServiceInCatalog.version);
+    if (existingServiceResource && (options.writeFilesToRoot || service.writeToRoot)) {
       const expectedRootDir = path.join(path.sep, 'services', service.id);
-      if (existingServicePath && existingServicePath.directory !== expectedRootDir) {
-        await fs.rm(path.join(eventCatalogDirectory, existingServicePath.directory), { recursive: true, force: true });
+      if (existingServiceResource.directory !== expectedRootDir) {
+        await fs.rm(path.join(eventCatalogDirectory, existingServiceResource.directory), { recursive: true, force: true });
         console.log(chalk.cyan(` - Moved service (${service.id}) to the root /services folder`));
       }
     }

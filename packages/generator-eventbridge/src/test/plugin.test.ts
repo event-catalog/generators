@@ -380,6 +380,100 @@ describe('EventBridge EventCatalog Plugin', () => {
       expect(newService).toBeDefined();
     });
 
+    describe('when the service already exists elsewhere in the catalog (e.g. inside a system)', () => {
+      const systemServiceDir = () =>
+        join(catalogDir, 'domains', 'Sales', 'systems', 'orders-system', 'services', 'Orders Service');
+
+      beforeEach(async () => {
+        const { writeDomain } = utils(catalogDir);
+
+        await writeDomain({ id: 'Sales', name: 'Sales', version: '0.0.1', markdown: '' });
+
+        const systemDir = join(catalogDir, 'domains', 'Sales', 'systems', 'orders-system');
+        await fs.mkdir(systemServiceDir(), { recursive: true });
+        await fs.writeFile(
+          join(systemDir, 'index.mdx'),
+          '---\nid: orders-system\nname: Orders System\nversion: 1.0.0\nservices:\n  - id: Orders Service\n---\n'
+        );
+        await fs.writeFile(
+          join(systemServiceDir(), 'index.mdx'),
+          '---\nid: Orders Service\nname: Orders Service\nversion: 1.0.0\n---\nexisting markdown'
+        );
+      });
+
+      it('the service is updated in place and no copy is written to the root services folder when no domain is configured', async () => {
+        const { getService } = utils(catalogDir);
+
+        await plugin(config, {
+          region: 'us-east-1',
+          registryName: 'discovered-schemas',
+          services: [{ id: 'Orders Service', version: '1.0.0', sends: [{ source: 'myapp.users' }] }],
+        });
+
+        const service = await getService('Orders Service');
+
+        expect(service.markdown).toEqual('existing markdown');
+        expect(service.sends).toEqual([
+          { id: 'UserSignedUp', version: '1' },
+          { id: 'UserLoggedIn', version: '3' },
+        ]);
+        expect(existsSync(join(catalogDir, 'services', 'Orders Service'))).toBe(false);
+      });
+
+      it('the service is updated in place and no copy is written to the domain services folder when a domain is configured', async () => {
+        await plugin(config, {
+          region: 'us-east-1',
+          registryName: 'discovered-schemas',
+          services: [{ id: 'Orders Service', version: '1.0.0', sends: [{ source: 'myapp.users' }] }],
+          domain: { id: 'Sales', name: 'Sales', version: '0.0.1' },
+        });
+
+        expect(existsSync(join(systemServiceDir(), 'index.mdx'))).toBe(true);
+        expect(existsSync(join(catalogDir, 'domains', 'Sales', 'services', 'Orders Service'))).toBe(false);
+      });
+
+      it('events for the service are written inside the existing service folder', async () => {
+        await plugin(config, {
+          region: 'us-east-1',
+          registryName: 'discovered-schemas',
+          services: [{ id: 'Orders Service', version: '1.0.0', sends: [{ source: 'myapp.users' }] }],
+        });
+
+        expect(existsSync(join(systemServiceDir(), 'events', 'UserSignedUp', 'index.mdx'))).toBe(true);
+        expect(existsSync(join(systemServiceDir(), 'events', 'UserLoggedIn', 'index.mdx'))).toBe(true);
+      });
+
+      it('when the versions do not match, the existing service is versioned in place and the new version is written to the existing service folder', async () => {
+        const { getService } = utils(catalogDir);
+
+        await plugin(config, {
+          region: 'us-east-1',
+          registryName: 'discovered-schemas',
+          services: [{ id: 'Orders Service', version: '2.0.0' }],
+        });
+
+        const versionedService = await getService('Orders Service', '1.0.0');
+        const newService = await getService('Orders Service', '2.0.0');
+
+        expect(versionedService).toBeDefined();
+        expect(newService).toBeDefined();
+        expect(existsSync(join(systemServiceDir(), 'versioned', '1.0.0', 'index.mdx'))).toBe(true);
+        expect(existsSync(join(catalogDir, 'services', 'Orders Service'))).toBe(false);
+      });
+
+      it('when writeFilesToRoot is set, the service is still moved to the root services folder', async () => {
+        await plugin(config, {
+          region: 'us-east-1',
+          registryName: 'discovered-schemas',
+          services: [{ id: 'Orders Service', version: '1.0.0' }],
+          writeFilesToRoot: true,
+        });
+
+        expect(existsSync(join(catalogDir, 'services', 'Orders Service', 'index.mdx'))).toBe(true);
+        expect(existsSync(systemServiceDir())).toBe(false);
+      });
+    });
+
     describe('produces events (sends)', () => {
       it('maps EventBridge events matching the given `detailType` into the given service', async () => {
         const { getEvent, getService } = utils(catalogDir);
