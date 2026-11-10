@@ -1,5 +1,11 @@
 # @eventcatalog/generator-azure-schema-registry
 
+## 0.2.2
+
+### Patch Changes
+
+- fb9238a: chore: update @eventcatalog/sdk to 2.32.1, which keeps its file cache up to date instead of rebuilding it, so generators importing into an existing catalog run about 10x faster
+
 ## 0.2.1
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 # @eventcatalog/generator-amazon-apigateway
 
+## 1.3.2
+
+### Patch Changes
+
+- fb9238a: chore: update @eventcatalog/sdk to 2.32.1, which keeps its file cache up to date instead of rebuilding it, so generators importing into an existing catalog run about 10x faster
+
 ## 1.3.1
 
 ### Patch Changes

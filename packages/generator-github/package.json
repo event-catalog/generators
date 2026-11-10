@@ -1,6 +1,6 @@
 {
   "name": "@eventcatalog/generator-github",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Pull and Sync schemas from GitHub to EventCatalog",
   "scripts": {
     "build": "tsup",
