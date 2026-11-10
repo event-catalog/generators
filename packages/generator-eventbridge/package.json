@@ -37,7 +37,7 @@
     "@aws-sdk/client-eventbridge": "^3.1154.0",
     "@aws-sdk/client-schemas": "^3.1154.0",
     "@aws-sdk/util-arn-parser": "^3.568.0",
-    "@eventcatalog/sdk": "^2.18.2",
+    "@eventcatalog/sdk": "^2.32.1",
     "chalk": "4.1.2",
     "semver": "^7.7.2",
     "update-notifier": "^7.3.1"
