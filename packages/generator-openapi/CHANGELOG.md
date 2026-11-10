@@ -1,5 +1,12 @@
 # @eventcatalog/generator-openapi
 
+## 9.1.2
+
+### Patch Changes
+
+- fb9238a: chore: update @eventcatalog/sdk to 2.32.1, which keeps its file cache up to date instead of rebuilding it, so generators importing into an existing catalog run about 10x faster
+- 1531a94: fix(generator-openapi): keep a service's `generic` specifications (any other specification file, shown as source) when merging specifications, now that the SDK supports them
+
 ## 9.1.1
 
 ### Patch Changes

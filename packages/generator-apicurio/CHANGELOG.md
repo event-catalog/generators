@@ -1,5 +1,15 @@
 # @eventcatalog/generator-apicurio
 
+## 16.0.2
+
+### Patch Changes
+
+- fb9238a: chore: update @eventcatalog/sdk to 2.32.1, which keeps its file cache up to date instead of rebuilding it, so generators importing into an existing catalog run about 10x faster
+- Updated dependencies [fb9238a]
+- Updated dependencies [1531a94]
+  - @eventcatalog/generator-asyncapi@7.1.2
+  - @eventcatalog/generator-openapi@9.1.2
+
 ## 16.0.1
 
 ### Patch Changes
