@@ -1,4 +1,5 @@
-type SpecificationType = 'openapi' | 'asyncapi' | 'graphql';
+// `generic` is any other specification file (XML, JSON, YAML...), which EventCatalog shows as source
+type SpecificationType = 'openapi' | 'asyncapi' | 'graphql' | 'generic';
 
 type LegacySpecifications = {
   openapiPath?: string;
@@ -66,9 +67,15 @@ const canUseLegacyFormat = (specifications: Specification[]) => {
     openapi: 0,
     asyncapi: 0,
     graphql: 0,
+    generic: 0,
   };
 
   for (const spec of specifications) {
+    // legacy object shape has no field for a generic specification
+    if (spec.type === 'generic') {
+      return false;
+    }
+
     countByType[spec.type] += 1;
 
     // legacy object shape cannot represent name / headers
