@@ -19,7 +19,7 @@ import { mergeSpecifications, type Specification, type Specifications } from './
 import { filterMessagesByRoutes, mergeSends } from './utils/consumers';
 
 type MESSAGE_TYPE = 'command' | 'query' | 'event';
-export type HTTP_METHOD = 'POST' | 'GET' | 'PUT' | 'DELETE' | 'PATCH' | 'HEAD' | 'OPTIONS';
+export type HTTP_METHOD = 'POST' | 'GET' | 'PUT' | 'DELETE' | 'PATCH' | 'HEAD' | 'OPTIONS' | 'QUERY';
 export type HTTP_METHOD_TO_MESSAGE_TYPE = Partial<Record<HTTP_METHOD, MESSAGE_TYPE>>;
 
 type Props = {

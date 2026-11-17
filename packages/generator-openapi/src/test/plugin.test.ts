@@ -1,6 +1,7 @@
 import { expect, it, describe, beforeEach, afterEach } from 'vitest';
 import utils from '@eventcatalog/sdk';
 import plugin from '../index';
+import { buildMessage } from '../utils/messages';
 import { join } from 'node:path';
 import fs from 'fs/promises';
 import { vi } from 'vitest';
@@ -2021,6 +2022,53 @@ describe('OpenAPI EventCatalog Plugin', () => {
             statusCodes: ['200'],
           });
           expect((query as any).operation.statusCodes).not.toContain('default');
+        });
+
+        it('HEAD and OPTIONS messages include the operation frontmatter with method and path', async () => {
+          const { getQuery } = utils(catalogDir);
+
+          await plugin(config, { services: [{ path: join(openAPIExamples, 'http-methods.yml'), id: 'books-api' }] });
+
+          const head = await getQuery('checkBooks');
+          const options = await getQuery('describeBooks');
+
+          // Their responses have no body, so there are no statusCodes
+          expect((head as any).operation).toEqual({ method: 'HEAD', path: '/books' });
+          expect((options as any).operation).toEqual({ method: 'OPTIONS', path: '/books' });
+        });
+
+        it('QUERY operations include the operation frontmatter with method, path, and statusCodes', async () => {
+          // OpenAPI 3.2 specs (where `query` operations live) can't be parsed yet, so build the message directly
+          const document = {
+            openapi: '3.2.0',
+            info: { title: 'Books API', version: '1.0.0' },
+            paths: {
+              '/books': {
+                query: {
+                  operationId: 'searchBooks',
+                  responses: {
+                    '200': { description: 'Matching books', content: { 'application/json': { schema: { type: 'array' } } } },
+                    '400': { description: 'Invalid query', content: { 'application/json': { schema: { type: 'object' } } } },
+                  },
+                },
+              },
+            },
+          };
+
+          const message = await buildMessage(
+            'books.yml',
+            document as any,
+            {
+              path: '/books',
+              method: 'QUERY',
+              operationId: 'searchBooks',
+              type: 'query',
+              action: 'receives',
+              tags: [],
+            } as any
+          );
+
+          expect((message as any).operation).toEqual({ method: 'QUERY', path: '/books', statusCodes: ['200', '400'] });
         });
       });
     });
