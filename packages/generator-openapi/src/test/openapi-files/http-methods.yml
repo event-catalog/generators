@@ -1,0 +1,18 @@
+openapi: '3.0.0'
+info:
+  title: Books API
+  version: 1.0.0
+paths:
+  /books:
+    head:
+      operationId: checkBooks
+      summary: Check the books collection exists
+      responses:
+        '200':
+          description: The books collection exists
+    options:
+      operationId: describeBooks
+      summary: List the methods the books collection supports
+      responses:
+        '204':
+          description: The supported methods are in the Allow header

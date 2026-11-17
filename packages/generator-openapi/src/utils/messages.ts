@@ -2,6 +2,7 @@ import { OpenAPI } from 'openapi-types';
 import { getSchemasByOperationId } from './openapi';
 import { Message, MessageIdConfig, OpenAPIOperation, OpenAPIParameter, Operation } from '../types';
 import slugify from 'slugify';
+import type { HTTP_METHOD } from '../index';
 
 const markdownForParameters = (parameters: OpenAPIParameter[]) => {
   let markdown = '### Parameters\n';
@@ -160,6 +161,19 @@ export const getSummary = (message: Operation) => {
   return escapeSpecialCharactersThatBreakMarkdown(eventCatalogMessageSummary);
 };
 
+// The HTTP methods EventCatalog accepts in a message's `operation.method`
+const OPERATION_METHODS: readonly string[] = [
+  'GET',
+  'POST',
+  'PUT',
+  'DELETE',
+  'PATCH',
+  'HEAD',
+  'OPTIONS',
+  'QUERY',
+] satisfies HTTP_METHOD[];
+const isOperationMethod = (method: string): method is HTTP_METHOD => OPERATION_METHODS.includes(method);
+
 export const buildMessage = async (
   pathToFile: string,
   document: OpenAPI.Document,
@@ -211,17 +225,16 @@ export const buildMessage = async (
   }
 
   // Build the operation frontmatter (method, path, statusCodes)
-  const validOperationMethods = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'];
   const operationMethod = operation.method.toUpperCase();
-  let operationFrontmatter: { method?: string; path?: string; statusCodes?: string[] } | undefined;
+  let operationFrontmatter: { method?: HTTP_METHOD; path?: string; statusCodes?: string[] } | undefined;
 
-  if (validOperationMethods.includes(operationMethod)) {
+  if (isOperationMethod(operationMethod)) {
     const statusCodes = requestBodiesAndResponses?.responses
       ? Object.keys(requestBodiesAndResponses.responses).filter((code) => code !== 'default')
       : [];
 
     operationFrontmatter = {
-      method: operationMethod as 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH',
+      method: operationMethod,
       path: operation.path,
       ...(statusCodes.length > 0 ? { statusCodes } : {}),
     };
