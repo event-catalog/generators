@@ -79,11 +79,11 @@ importers:
   packages/generator-apicurio:
     dependencies:
       '@eventcatalog/generator-asyncapi':
-        specifier: '>=7.1.1'
-        version: 7.1.1
+        specifier: '>=7.1.2'
+        version: 7.1.2
       '@eventcatalog/generator-openapi':
-        specifier: '>=9.1.1'
-        version: 9.1.1
+        specifier: '>=9.1.2'
+        version: 9.1.2
       '@eventcatalog/sdk':
         specifier: ^2.32.1
         version: 2.32.1
@@ -939,14 +939,11 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@eventcatalog/generator-asyncapi@7.1.1':
-    resolution: { integrity: sha512-BFWerWUssFdG/EFkJFC3jNhuyR21AWF1QBf/IapH+hfgqUxQDrlNmquexWjiT9jVH/advEbwVxJwJkbOaPKGsw== }
+  '@eventcatalog/generator-asyncapi@7.1.2':
+    resolution: { integrity: sha512-KK+iZ3c1tDbpVPX9jdnJ4DrO5iCf9Mt0q6ZwKxyM7kCKJjS3oghcFhi0kEveKkGdaGDG6MjH5XvP57sb+o4YMw== }
 
-  '@eventcatalog/generator-openapi@9.1.1':
-    resolution: { integrity: sha512-PCZ2WFK3eIxG1SIrdddeGRZdtsXkSMqO6mHZjE31Z+qScgi5DY/gyF48aLzrfIAo3C0ZDYg5XxKgdjpHS4DSwQ== }
-
-  '@eventcatalog/sdk@2.18.4':
-    resolution: { integrity: sha512-kRTfHknSbVHXaTOaciaTh9I1c788YLKNVsj2fuU3aE7PfviqByEKvaNm9Prbq/v8iynd5RJLooE5k/dObDLmjg== }
+  '@eventcatalog/generator-openapi@9.1.2':
+    resolution: { integrity: sha512-YDMLROhEw4SpnDkG/G/na9AWaBiDb/Ri6oRUegTRWaXxLzbR70hghN0KMmlwoWlVNuvNjTeXodMouWxNBmFSKA== }
 
   '@eventcatalog/sdk@2.32.1':
     resolution: { integrity: sha512-6nidZzh4qtl3sZaa+gE4aFfPRIbkd4dgPcMF9+81Kvw7TNh6ms/NOPOeCiJjGSH/R0vmLjN7WeXct65TOowo4g== }
@@ -3513,11 +3510,11 @@ snapshots:
   '@esbuild/win32-x64@0.25.5':
     optional: true
 
-  '@eventcatalog/generator-asyncapi@7.1.1':
+  '@eventcatalog/generator-asyncapi@7.1.2':
     dependencies:
       '@asyncapi/avro-schema-parser': 3.0.24
       '@asyncapi/parser': 3.6.6
-      '@eventcatalog/sdk': 2.18.4
+      '@eventcatalog/sdk': 2.32.1
       chalk: 4.1.2
       fs-extra: 11.3.3
       glob: 12.0.0
@@ -3532,7 +3529,7 @@ snapshots:
     transitivePeerDependencies:
       - encoding
 
-  '@eventcatalog/generator-openapi@9.1.1':
+  '@eventcatalog/generator-openapi@9.1.2':
     dependencies:
       '@apidevtools/swagger-parser': 12.1.0(openapi-types@12.1.3)
       '@eventcatalog/sdk': 2.32.1
@@ -3542,15 +3539,6 @@ snapshots:
       semver: 7.7.3
       slugify: 1.6.6
       update-notifier: 7.3.1
-
-  '@eventcatalog/sdk@2.18.4':
-    dependencies:
-      fs-extra: 11.3.3
-      glob: 13.0.6
-      gray-matter: 4.0.3
-      proper-lockfile: 4.1.2
-      semver: 7.7.3
-      slugify: 1.6.6
 
   '@eventcatalog/sdk@2.32.1':
     dependencies:
