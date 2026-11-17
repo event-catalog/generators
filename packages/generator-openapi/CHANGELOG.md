@@ -1,5 +1,11 @@
 # @eventcatalog/generator-openapi
 
+## 9.1.3
+
+### Patch Changes
+
+- 966d561: Keep the `operation` frontmatter (method, path and status codes) on messages generated from `HEAD` and `OPTIONS` operations, and accept `QUERY` in `httpMethodsToMessages`
+
 ## 9.1.2
 
 ### Patch Changes
