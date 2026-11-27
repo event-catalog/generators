@@ -45,6 +45,15 @@ type Props = {
   groupMessagesBy?: 'x-extension' | 'path-prefix' | 'single-group';
 };
 
+const findMessageInCatalog = async (id: string, version?: string) => {
+  const { getEvent, getCommand, getQuery } = utils(process.env.PROJECT_DIR as string);
+  for (const getMessage of [getCommand, getEvent, getQuery]) {
+    const found = await getMessage(id, version || 'latest');
+    if (found) return found;
+  }
+  return undefined;
+};
+
 const toUniqueArray = (array: Pointer[]) => {
   return array.filter((item, index, self) => index === self.findIndex((t) => t.id === item.id && t.version === item.version));
 };
@@ -654,10 +663,30 @@ const processMessagesForOpenAPISpec = async (
 
     // If the message send or recieved by the service?
     const group = getMessageGroup(operation, options.groupMessagesBy, groupablePrefixes);
+    // Messages the operation triggers (x-eventcatalog-triggers), e.g. a command the API publishes to a queue
+    const triggers: NonNullable<Pointer['triggers']> = [];
+    for (const trigger of operation.triggers || []) {
+      const resolved = await findMessageInCatalog(trigger.id, trigger.version);
+      if (!resolved) {
+        console.warn(
+          chalk.yellow(
+            `  - x-eventcatalog-triggers: message ${trigger.id}${trigger.version ? ` (v${trigger.version})` : ''} not found in the catalog, skipping. Make sure the generator that produces it runs first.`
+          )
+        );
+        continue;
+      }
+      triggers.push({
+        id: resolved.id,
+        version: resolved.version,
+        ...(trigger.condition ? { condition: trigger.condition } : {}),
+      });
+    }
+
     const pointer: Pointer = {
       id: message.id,
       version: message.version,
       ...(group ? { group } : {}),
+      ...(triggers.length > 0 ? { triggers } : {}),
     };
 
     if (messageAction === 'sends') {

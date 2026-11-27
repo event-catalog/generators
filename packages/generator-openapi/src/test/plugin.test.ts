@@ -1484,6 +1484,30 @@ describe('OpenAPI EventCatalog Plugin', () => {
           expect(service.sends).toEqual([{ id: 'petVaccinated', version: '1.0.0' }]);
         });
 
+        it('operations with `x-eventcatalog-triggers` add the listed messages as triggers on the received message (unknown messages are skipped)', async () => {
+          const { getService, writeCommand } = utils(catalogDir);
+
+          await writeCommand({
+            id: 'ProcessOrder',
+            name: 'Process Order',
+            version: '1.0.0',
+            markdown: 'Process an order',
+          });
+
+          await plugin(config, { services: [{ path: join(openAPIExamples, 'orders-with-triggers.yml'), id: 'orders-api' }] });
+
+          const service = await getService('orders-api');
+
+          expect(service.receives).toEqual([
+            {
+              id: 'placeOrder',
+              version: '1.0.0',
+              triggers: [{ id: 'ProcessOrder', version: '1.0.0', condition: 'Order is valid' }],
+            },
+          ]);
+          expect(service.sends ?? []).toEqual([]);
+        });
+
         it('when messages have the `x-eventcatalog-message-name` extension defined, this value is used for the message name', async () => {
           const { getQuery } = utils(catalogDir);
 

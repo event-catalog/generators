@@ -1,5 +1,5 @@
 import SwaggerParser from '@apidevtools/swagger-parser';
-import { OpenAPIDocument, OpenAPIOperation, OpenAPIParameter, Operation } from '../types';
+import { OpenAPIDocument, OpenAPIOperation, OpenAPIParameter, Operation, OperationTrigger } from '../types';
 import { HTTP_METHOD, HTTP_METHOD_TO_MESSAGE_TYPE } from '../index';
 const DEFAULT_MESSAGE_TYPE = 'query';
 
@@ -200,6 +200,23 @@ function getDeprecatedValues(openAPIOperation: any) {
   return deprecated;
 }
 
+/**
+ * Parses the `x-eventcatalog-triggers` extension: messages (by id and optional version and condition) that the
+ * operation triggers, e.g. a command the API publishes to a queue after receiving the operation.
+ * Accepts `{ id, version?, condition? }` objects or plain id strings.
+ */
+const getTriggersValues = (value: unknown): OperationTrigger[] => {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((entry) => (typeof entry === 'string' ? { id: entry } : entry))
+    .filter((entry): entry is OperationTrigger => !!entry && typeof entry.id === 'string' && entry.id.length > 0)
+    .map(({ id, version, condition }) => ({
+      id,
+      ...(version ? { version: String(version) } : {}),
+      ...(condition ? { condition: String(condition) } : {}),
+    }));
+};
+
 export async function getOperationsByType(
   openApiPath: string,
   httpMethodsToMessages?: HTTP_METHOD_TO_MESSAGE_TYPE,
@@ -235,6 +252,8 @@ export async function getOperationsByType(
           return acc;
         }, {});
 
+        const triggers = getTriggersValues(openAPIOperation['x-eventcatalog-triggers']);
+
         const operation = {
           path: path,
           method: method.toUpperCase(),
@@ -246,6 +265,7 @@ export async function getOperationsByType(
           summary: openAPIOperation.summary,
           tags: openAPIOperation.tags || [],
           extensions,
+          ...(triggers.length > 0 ? { triggers } : {}),
           ...(deprecated ? { deprecated } : {}),
         } as Operation;
 
