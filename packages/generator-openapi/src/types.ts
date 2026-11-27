@@ -9,10 +9,17 @@ export type Domain = {
   draft?: boolean;
 };
 
+export type OperationTrigger = {
+  id: string;
+  version?: string;
+  condition?: string;
+};
+
 export type Pointer = {
   id: string;
   version?: string;
   group?: string;
+  triggers?: { id: string; version?: string; condition?: string }[];
 };
 
 export type RouteFilter = {
@@ -63,6 +70,7 @@ export type Operation = {
   description?: string;
   type: string;
   action: string;
+  triggers?: OperationTrigger[];
   externalDocs?: OpenAPIV3_1.ExternalDocumentationObject;
   tags: string[];
   extensions?: {
